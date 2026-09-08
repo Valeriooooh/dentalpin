@@ -27,7 +27,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // ``/p/budget/<token>`` is the patient-facing budget view (ADR 0006),
   // authorized server-side via a token-scoped 2FA cookie; let it render.
-  const publicRoutes = ['/login', SETUP_PATH, '/set-password', '/p/budget']
+  // ``/check-in`` is the QR check-in landing (signed 15-minute token,
+  // consumed by the public agenda endpoint, no account needed).
+  const publicRoutes = ['/login', SETUP_PATH, '/set-password', '/p/budget', '/check-in']
   const isPublicRoute = publicRoutes.some(route => to.path === route || to.path.startsWith(route + '/'))
 
   // Initialize auth state (fetch user if token exists) - works on server and client
