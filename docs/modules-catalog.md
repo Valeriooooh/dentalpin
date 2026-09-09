@@ -35,12 +35,13 @@ Maintained by `backend/scripts/generate_catalogs.py`. CI fails if a manifest cha
 | `notifications` | 0.1.0 | official | patients, agenda, budget, billing, catalog | auto | no | 8 | 7 | 7 | yes |
 | `odontogram` | 0.3.0 | official | patients, catalog | auto | no | 4 | 7 | 0 | yes |
 | `patient_relationships` | 0.2.0 | community | patients | manual | yes | 2 | 0 | 0 | yes |
-| `patient_timeline` | 0.1.0 | official | patients | auto | no | 1 | 0 | 35 | yes |
+| `patient_timeline` | 0.1.0 | official | patients | auto | no | 1 | 0 | 37 | yes |
 | `patients` | 0.1.0 | official | — | auto | no | 2 | 3 | 0 | yes |
 | `patients_clinical` | 0.1.0 | official | patients | auto | no | 4 | 1 | 0 | yes |
 | `payments` | 0.1.0 | official | patients, budget | auto | no | 4 | 3 | 2 | yes |
 | `payroll` | 0.1.0 | official | — | manual | yes | 3 | 2 | 0 | yes |
 | `periodontogram` | 0.1.0 | official | patients, odontogram | manual | yes | 2 | 1 | 2 | yes |
+| `prescriptions` | 0.1.0 | official | patients | manual | yes | 3 | 2 | 0 | yes |
 | `purchase_orders` | 0.1.0 | official | contacts, inventory, suppliers | manual | yes | 2 | 3 | 0 | yes |
 | `recall_reminders` | 0.1.0 | community | recalls, notifications, patients | manual | yes | 0 | 0 | 1 | yes |
 | `recalls` | 0.1.0 | official | patients, agenda | auto | yes | 3 | 4 | 5 | yes |
@@ -680,6 +681,8 @@ Patient timeline — unified activity log.
   - `notification.sent`
   - `odontogram.treatment.performed`
   - `patient.medical_updated`
+  - `prescription.cancelled`
+  - `prescription.issued`
   - `treatment_plan.closed`
   - `treatment_plan.confirmed`
   - `treatment_plan.created`
@@ -791,6 +794,26 @@ SEPA periodontal charting — snapshots, probing sites, BoP/PI/CAL indices.
   - `odontogram.treatment.performed`
   - `patient.archived`
 - **Module CLAUDE.md:** [`backend/app/modules/periodontogram/CLAUDE.md`](../backend/app/modules/periodontogram/CLAUDE.md)
+
+### `prescriptions` — v0.1.0
+
+Clinical prescriptions with per-country compliance hooks.
+
+- **Author:** DentalPin Core Team
+- **License:** BSL-1.1
+- **Category:** official
+- **Install policy:** installable=True · auto_install=False · removable=True
+- **Depends:** `patients`
+- **Frontend layer:** `frontend`
+- **Permissions:**
+  - `prescriptions.issue`
+  - `prescriptions.read`
+  - `prescriptions.write`
+- **Events emitted:**
+  - `prescription.cancelled`
+  - `prescription.issued`
+- **Events consumed:** —
+- **Module CLAUDE.md:** [`backend/app/modules/prescriptions/CLAUDE.md`](../backend/app/modules/prescriptions/CLAUDE.md)
 
 ### `purchase_orders` — v0.1.0
 
