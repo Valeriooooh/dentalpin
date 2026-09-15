@@ -4,7 +4,7 @@
  * Links out to the full prescriptions page; no inline editing here.
  */
 import type { PatientExtended } from '~~/app/types'
-import type { Prescription } from '../composables/usePrescriptions'
+import type { Prescription } from '../../composables/usePrescriptions'
 
 interface Ctx {
   patient: PatientExtended

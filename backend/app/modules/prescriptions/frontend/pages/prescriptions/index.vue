@@ -4,7 +4,7 @@
  * template fill), issue/cancel actions, PDF download, safety banner.
  * Deep-linkable via ?patient_id= (&new=1 starts a draft).
  */
-import type { Prescription, PrescriptionItem, PrescriptionTemplate } from '../composables/usePrescriptions'
+import type { Prescription, PrescriptionItem, PrescriptionTemplate } from '../../composables/usePrescriptions'
 
 const { t, locale } = useI18n()
 const { can } = usePermissions()
