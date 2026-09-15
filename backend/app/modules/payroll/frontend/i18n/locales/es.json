@@ -40,6 +40,7 @@
       "paid": "Pagado",
       "close": "Cerrar período",
       "markPaid": "Marcar como pagado",
+      "deleteConfirm": "¿Eliminar el período {month}? Solo se pueden eliminar borradores vacíos.",
       "transitionConfirm": "¿Mover {month} a {status}?",
       "empty": "Aún no hay períodos"
     },
@@ -52,6 +53,7 @@
       "notes": "Notas",
       "add": "Añadir movimiento",
       "edit": "Editar movimiento",
+      "deleteConfirm": "¿Eliminar este movimiento? No se puede deshacer.",
       "staff": "Miembro del personal",
       "empty": "Aún no hay movimientos"
     },
@@ -73,6 +75,7 @@
       "cancel": "Cancelar",
       "edit": "Editar",
       "close": "Cerrar",
+      "delete": "Eliminar",
       "back": "Atrás",
       "retry": "Reintentar",
       "loadError": "No se pudieron cargar los datos",

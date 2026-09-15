@@ -97,6 +97,15 @@
             >
               {{ t('payroll.periods.markPaid') }}
             </UButton>
+            <UButton
+              v-if="period.status === 'draft'"
+              variant="ghost"
+              color="error"
+              icon="i-lucide-trash-2"
+              @click="askDelete(period)"
+            >
+              {{ t('payroll.common.delete') }}
+            </UButton>
           </div>
         </div>
       </UCard>
@@ -135,6 +144,32 @@
         </UCard>
       </template>
     </UModal>
+    <UModal v-model:open="showDelete">
+      <template #content>
+        <UCard>
+          <p class="text-sm">
+            {{ t('payroll.periods.deleteConfirm', { month: deleting?.month ?? '' }) }}
+          </p>
+          <template #footer>
+            <div class="flex justify-end gap-2">
+              <UButton
+                variant="ghost"
+                @click="showDelete = false"
+              >
+                {{ t('payroll.common.cancel') }}
+              </UButton>
+              <UButton
+                color="error"
+                :loading="saving"
+                @click="removePeriod"
+              >
+                {{ t('payroll.common.delete') }}
+              </UButton>
+            </div>
+          </template>
+        </UCard>
+      </template>
+    </UModal>
   </div>
 </template>
 
@@ -146,7 +181,7 @@ import type { PayrollPeriod, PayrollPeriodStatus } from '../../../composables/us
 const { t } = useI18n()
 const { can } = usePermissions()
 const toast = useToast()
-const { listPeriods, createPeriod, transitionPeriod } = usePayroll()
+const { listPeriods, createPeriod, transitionPeriod, deletePeriod } = usePayroll()
 
 const periods = ref<PayrollPeriod[]>([])
 const loading = ref(true)
@@ -157,6 +192,8 @@ const pageSize = 20
 const total = ref(0)
 const newMonth = ref('')
 const showConfirm = ref(false)
+const showDelete = ref(false)
+const deleting = ref<PayrollPeriod | null>(null)
 const pending = ref<PayrollPeriod | null>(null)
 const pendingTo = ref<PayrollPeriodStatus | null>(null)
 
@@ -213,6 +250,27 @@ async function confirmTransition() {
     pendingTo.value = null
     await fetchPeriods()
   } catch (e) {
+    toast.add({ title: t('payroll.common.saveError'), description: errorMessage(e, ''), color: 'error' })
+  } finally {
+    saving.value = false
+  }
+}
+
+function askDelete(period: PayrollPeriod) {
+  deleting.value = period
+  showDelete.value = true
+}
+
+async function removePeriod() {
+  if (!deleting.value) return
+  saving.value = true
+  try {
+    await deletePeriod(deleting.value.id)
+    showDelete.value = false
+    deleting.value = null
+    await fetchPeriods()
+  } catch (e) {
+    // A period with entries refuses with 409 — the error renders.
     toast.add({ title: t('payroll.common.saveError'), description: errorMessage(e, ''), color: 'error' })
   } finally {
     saving.value = false

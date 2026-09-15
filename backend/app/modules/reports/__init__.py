@@ -19,21 +19,40 @@ class ReportsModule(BaseModule):
 
     manifest = {
         "name": "reports",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "summary": "Cross-module reporting: billing, budgets, scheduling.",
         "author": "DentalPin Core Team",
         "license": "BSL-1.1",
         "category": "official",
-        "depends": ["patients", "agenda", "catalog", "budget", "billing", "payments"],
+        "depends": [
+            "patients",
+            "agenda",
+            "catalog",
+            "budget",
+            "billing",
+            "payments",
+            "treatment_plan",
+        ],
         "installable": True,
         "auto_install": True,
         "removable": False,
         "role_permissions": {
             "admin": ["*"],
-            "dentist": ["billing.read", "scheduling.read"],
-            "hygienist": ["scheduling.read"],
+            "dentist": [
+                "billing.read",
+                "scheduling.read",
+                "financial.read",
+                "patient_stats.read",
+                "operational.read",
+            ],
+            "hygienist": ["scheduling.read", "operational.read"],
             "assistant": ["scheduling.read"],
-            "receptionist": ["billing.read", "scheduling.read"],
+            "receptionist": [
+                "billing.read",
+                "scheduling.read",
+                "financial.read",
+                "patient_stats.read",
+            ],
         },
         "frontend": {
             "layer_path": "frontend",
@@ -61,6 +80,9 @@ class ReportsModule(BaseModule):
             "billing.read",  # View billing reports
             "budgets.read",  # View budget reports
             "scheduling.read",  # View scheduling reports
+            "financial.read",  # Outstanding aging + issued trend (invoice axis)
+            "patient_stats.read",  # Patient demographics family (next)
+            "operational.read",  # Operational KPI family (next)
         ]
 
     def get_tools(self) -> list:

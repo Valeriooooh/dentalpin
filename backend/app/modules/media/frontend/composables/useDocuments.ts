@@ -8,7 +8,7 @@ interface UploadProgress {
 
 export function useDocuments() {
   const config = useRuntimeConfig()
-  const auth = useAuth()
+  const { csrfHeaders } = useSessionRequest()
   const { t } = useI18n()
   const toast = useToast()
 
@@ -18,6 +18,8 @@ export function useDocuments() {
   const uploadProgress = ref<UploadProgress | null>(null)
   const total = ref(0)
 
+  const api = useApi()
+  const auth = useAuth()
   const apiBaseUrl = computed(() =>
     import.meta.server ? config.apiBaseUrlServer : config.public.apiBaseUrl
   )
@@ -31,30 +33,23 @@ export function useDocuments() {
   ) {
     loading.value = true
     try {
-      let url = `/api/v1/media/patients/${patientId}/documents?page=${page}&page_size=${pageSize}`
-      if (documentType) {
-        url += `&document_type=${documentType}`
-      }
-      if (mediaKind) {
-        url += `&media_kind=${mediaKind}`
-      }
-
-      const response = await $fetch<PaginatedResponse<Document>>(url, {
-        baseURL: apiBaseUrl.value,
-        headers: {
-          Authorization: `Bearer ${auth.accessToken.value}`
+      const response = await api.get<PaginatedResponse<Document>>(
+        `/api/v1/media/patients/${patientId}/documents`,
+        {
+          query: {
+            page,
+            page_size: pageSize,
+            document_type: documentType,
+            media_kind: mediaKind
+          }
         }
-      })
+      )
 
       documents.value = response.data
       total.value = response.total
     } catch (error) {
+      // useApi already toasts 403/5xx/network; don't say it twice.
       console.error('Error fetching documents:', error)
-      toast.add({
-        title: t('common.error'),
-        description: t('documents.fetchError', 'Error loading documents'),
-        color: 'error'
-      })
     } finally {
       loading.value = false
     }
@@ -78,26 +73,41 @@ export function useDocuments() {
       formData.append('description', description)
     }
 
-    try {
-      const response = await $fetch<ApiResponse<Document>>(
-        `/api/v1/media/patients/${patientId}/documents`,
-        {
-          baseURL: apiBaseUrl.value,
-          method: 'POST',
-          body: formData,
-          headers: {
-            Authorization: `Bearer ${auth.accessToken.value}`
-          },
-          // No Content-Type: ofetch leaves it unset for FormData bodies so
-          // the browser adds the multipart boundary.
-          onRequestError() {
-            uploadProgress.value = null
-          },
-          onResponse() {
-            uploadProgress.value = { loaded: file.size, total: file.size, percentage: 100 }
-          }
+    // The upload stays on ``$fetch``: it carries FormData and reports
+    // progress, neither of which ``useApi`` models. So it carries its own
+    // 401 recovery instead — one refresh, one retry, the same contract as
+    // ``useApi`` (#452).
+    const send = () => $fetch<ApiResponse<Document>>(
+      `/api/v1/media/patients/${patientId}/documents`,
+      {
+        baseURL: apiBaseUrl.value,
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+        headers: csrfHeaders('POST'),
+        // No Content-Type: ofetch leaves it unset for FormData bodies so
+        // the browser adds the multipart boundary.
+        onRequestError() {
+          uploadProgress.value = null
+        },
+        onResponse() {
+          uploadProgress.value = { loaded: file.size, total: file.size, percentage: 100 }
         }
-      )
+      }
+    )
+
+    try {
+      let response: ApiResponse<Document>
+      try {
+        response = await send()
+      } catch (error: unknown) {
+        if ((error as { statusCode?: number })?.statusCode !== 401) throw error
+        if (!(await auth.refresh())) {
+          await auth.logout()
+          throw error
+        }
+        response = await send()
+      }
 
       toast.add({
         title: t('common.success'),
@@ -122,19 +132,13 @@ export function useDocuments() {
 
   async function downloadDocument(documentId: string, filename: string) {
     try {
-      const response = await $fetch<Blob>(
-        `/api/v1/media/documents/${documentId}/download`,
-        {
-          baseURL: apiBaseUrl.value,
-          headers: {
-            Authorization: `Bearer ${auth.accessToken.value}`
-          },
-          responseType: 'blob'
-        }
-      )
+      // api.raw carries the session cookies and refreshes once on 401, so
+      // a download after a long idle still works (#440).
+      const response = await api.raw(`/api/v1/media/documents/${documentId}/download`)
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
 
       // Create download link
-      const url = window.URL.createObjectURL(response)
+      const url = window.URL.createObjectURL(await response.blob())
       const link = document.createElement('a')
       link.href = url
       link.download = filename
@@ -158,17 +162,9 @@ export function useDocuments() {
    */
   async function getDocumentBlobUrl(documentId: string): Promise<string | null> {
     try {
-      const response = await $fetch<Blob>(
-        `/api/v1/media/documents/${documentId}/download`,
-        {
-          baseURL: apiBaseUrl.value,
-          headers: {
-            Authorization: `Bearer ${auth.accessToken.value}`
-          },
-          responseType: 'blob'
-        }
-      )
-      return URL.createObjectURL(response)
+      const response = await api.raw(`/api/v1/media/documents/${documentId}/download`)
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      return URL.createObjectURL(await response.blob())
     } catch (error) {
       console.error('Error fetching document blob:', error)
       toast.add({
@@ -182,16 +178,7 @@ export function useDocuments() {
 
   async function deleteDocument(documentId: string): Promise<boolean> {
     try {
-      await $fetch(
-        `/api/v1/media/documents/${documentId}`,
-        {
-          baseURL: apiBaseUrl.value,
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${auth.accessToken.value}`
-          }
-        }
-      )
+      await api.del(`/api/v1/media/documents/${documentId}`)
 
       // Remove from local list
       documents.value = documents.value.filter(d => d.id !== documentId)
@@ -205,11 +192,6 @@ export function useDocuments() {
       return true
     } catch (error) {
       console.error('Error deleting document:', error)
-      toast.add({
-        title: t('common.error'),
-        description: t('documents.deleteError', 'Error deleting document'),
-        color: 'error'
-      })
       return false
     }
   }
@@ -219,17 +201,9 @@ export function useDocuments() {
     data: { title?: string, description?: string, document_type?: DocumentType }
   ): Promise<Document | null> {
     try {
-      const response = await $fetch<ApiResponse<Document>>(
+      const response = await api.put<ApiResponse<Document>>(
         `/api/v1/media/documents/${documentId}`,
-        {
-          baseURL: apiBaseUrl.value,
-          method: 'PUT',
-          body: data,
-          headers: {
-            'Authorization': `Bearer ${auth.accessToken.value}`,
-            'Content-Type': 'application/json'
-          }
-        }
+        data
       )
 
       // Update local list
@@ -247,11 +221,6 @@ export function useDocuments() {
       return response.data
     } catch (error) {
       console.error('Error updating document:', error)
-      toast.add({
-        title: t('common.error'),
-        description: t('documents.updateError', 'Error updating document'),
-        color: 'error'
-      })
       return null
     }
   }

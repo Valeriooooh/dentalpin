@@ -115,6 +115,13 @@ from app.modules.schedules.models import (  # noqa: F401
     ProfessionalWeeklySchedule,
     ScheduleShift,
 )
+from app.modules.sdi_it.models import SdiItRecord, SdiItSettings  # noqa: F401
+from app.modules.sistema_ts.models import (  # noqa: F401
+    SistemaTsDocument,
+    SistemaTsItemType,
+    SistemaTsPatientOpposition,
+    SistemaTsSettings,
+)
 from app.modules.telephony.models import (  # noqa: F401
     CallLog,
     TelephonySettings,

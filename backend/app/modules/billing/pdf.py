@@ -11,14 +11,13 @@ from zoneinfo import ZoneInfo
 
 from babel.numbers import format_decimal as _babel_format_decimal
 
+from app.core.pdf_locales import LOCALE_BY_LANG as _LOCALE_BY_LANG
 from app.core.utils.currency import format_currency as _fmt_currency
 
 if TYPE_CHECKING:
     from app.core.auth.models import Clinic
 
 from .models import Invoice
-
-_LOCALE_BY_LANG = {"es": "es_ES", "en": "en_US", "ta": "en_IN"}
 
 
 class InvoicePDFService:
@@ -881,4 +880,5 @@ class InvoicePDFService:
             return labels_es
         if locale == "ta":
             return labels_ta
+        # fr/pt/de/hu/pl/it/ar: English labels until translated (#422).
         return labels_en

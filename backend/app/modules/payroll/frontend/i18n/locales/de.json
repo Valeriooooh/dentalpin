@@ -40,6 +40,7 @@
       "paid": "Bezahlt",
       "close": "Zeitraum abschließen",
       "markPaid": "Als bezahlt markieren",
+      "deleteConfirm": "Zeitraum {month} löschen? Nur leere Entwürfe.",
       "transitionConfirm": "{month} nach {status} verschieben?",
       "empty": "Noch keine Zeiträume"
     },
@@ -52,6 +53,7 @@
       "notes": "Notizen",
       "add": "Buchung hinzufügen",
       "edit": "Buchung bearbeiten",
+      "deleteConfirm": "Diese Buchung löschen? Kann nicht rückgängig gemacht werden.",
       "staff": "Mitarbeiter",
       "empty": "Noch keine Buchungen"
     },
@@ -73,6 +75,7 @@
       "cancel": "Abbrechen",
       "edit": "Bearbeiten",
       "close": "Schließen",
+      "delete": "Löschen",
       "back": "Zurück",
       "retry": "Erneut versuchen",
       "loadError": "Daten konnten nicht geladen werden",

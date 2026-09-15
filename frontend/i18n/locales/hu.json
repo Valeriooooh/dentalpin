@@ -35,6 +35,13 @@
     "menu": "Menü",
     "openMenu": "Menü megnyitása",
     "close": "Bezárás",
+    "sections": {
+      "clinical": "Klinikai",
+      "lab": "Labor",
+      "financials": "Pénzügyek",
+      "inventory": "Készlet",
+      "practice": "Rendelő"
+    },
     "toggleSidebar": "Oldalsáv be/ki",
     "documents": "Dokumentumok"
   },
@@ -1190,6 +1197,8 @@
       "title": "Modulok",
       "subtitle": "A rendelő moduljainak telepítése, eltávolítása és frissítése.",
       "description": "Kezelje, mely modulok aktívak a rendelőjében.",
+      "searchPlaceholder": "Modulok keresése…",
+      "filterState": "Állapot",
       "deps": "Függőségek",
       "noDeps": "Nincs függőség",
       "state": {
@@ -2419,11 +2428,22 @@
       "whatsappUnavailableHint": "A WhatsApp addig nem érhető el, amíg a rendelő száma nincs csatlakoztatva.",
       "whatsappConnect": "WhatsApp (Kapso) csatlakoztatása",
       "noEmail": "A páciensnek nincs rögzített e-mail-címe",
-      "noPhone": "A páciensnek nincs rögzített telefonszáma"
+      "noPhone": "A páciensnek nincs rögzített telefonszáma",
+      "sms": "SMS",
+      "smsUnavailableHint": "Az SMS csak SMS-szolgáltató beállítása után érhető el.",
+      "smsConnect": "Beállítás",
+      "smsDailyLimitLabel": "Napi SMS-limit",
+      "smsDailyLimitHelp": "A klinikáról naponta küldhető SMS-ek maximális száma."
     },
     "channelSent": {
       "email": "E-mail sikeresen elküldve",
-      "whatsapp": "WhatsApp-üzenet sikeresen elküldve"
+      "whatsapp": "WhatsApp-üzenet sikeresen elküldve",
+      "sms": "SMS-üzenet sikeresen elküldve"
+    },
+    "prefs": {
+      "title": "Értesítési beállítások",
+      "description": "Mely csatornákon érhető el a páciens. A leiratkozás kényszerített küldésnél is blokkolja a csatornát.",
+      "saved": "Beállítások mentve"
     }
   },
   "invoice": {
@@ -2815,6 +2835,10 @@
       "missingNumbers": "Hiányzó sorszámok:",
       "noData": "Nincs adat a kiválasztott időszakra",
       "noOverdue": "Nincs lejárt számla",
+      "invoiceAging": "Számla korosítás",
+      "invoiceAgingDescription": "Kintlévőség korosítás szerint. A még nem esedékes külön.",
+      "notDue": "Nem esedékes",
+      "issuedTrend": "Kibocsátási trend",
       "daysOverdue": "napja lejárt",
       "vatType": "Áfakulcs",
       "base": "Adóalap",

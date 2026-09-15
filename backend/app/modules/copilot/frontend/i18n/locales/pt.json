@@ -177,6 +177,7 @@
     },
     "budgetExceeded": "Foi atingido o limite mensal de utilização da IA.",
     "error": "Algo correu mal.",
+    "sessionExpired": "A sua sessão expirou. Inicie sessão novamente para continuar.",
     "page": {
       "title": "IA",
       "subtitle": "O assistente da sua clínica, limitado às suas permissões."

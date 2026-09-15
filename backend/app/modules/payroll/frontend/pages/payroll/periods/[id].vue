@@ -97,6 +97,14 @@
             >
               {{ t('payroll.common.edit') }}
             </UButton>
+            <UButton
+              variant="ghost"
+              color="error"
+              icon="i-lucide-trash-2"
+              @click="askDelete(entry)"
+            >
+              {{ t('payroll.common.delete') }}
+            </UButton>
           </div>
         </div>
       </UCard>
@@ -178,6 +186,33 @@
         </UCard>
       </template>
     </UModal>
+
+    <UModal v-model:open="showDelete">
+      <template #content>
+        <UCard>
+          <p class="text-sm">
+            {{ t('payroll.entries.deleteConfirm') }}
+          </p>
+          <template #footer>
+            <div class="flex justify-end gap-2">
+              <UButton
+                variant="ghost"
+                @click="showDelete = false"
+              >
+                {{ t('payroll.common.cancel') }}
+              </UButton>
+              <UButton
+                color="error"
+                :loading="saving"
+                @click="removeEntry"
+              >
+                {{ t('payroll.common.delete') }}
+              </UButton>
+            </div>
+          </template>
+        </UCard>
+      </template>
+    </UModal>
   </div>
 </template>
 
@@ -190,7 +225,7 @@ const { t } = useI18n()
 const { can } = usePermissions()
 const toast = useToast()
 const route = useRoute()
-const { listEntries, createEntry, updateEntry, listStaff } = usePayroll()
+const { listEntries, createEntry, updateEntry, deleteEntry, listStaff } = usePayroll()
 const api = useApi()
 
 const periodId = computed(() => String(route.params.id))
@@ -201,6 +236,8 @@ const loading = ref(true)
 const error = ref(false)
 const saving = ref(false)
 const showForm = ref(false)
+const showDelete = ref(false)
+const deleting = ref<PayrollEntry | null>(null)
 const editing = ref<PayrollEntry | null>(null)
 const form = ref({
   user_id: '',
@@ -298,6 +335,26 @@ async function save() {
       })
     }
     showForm.value = false
+    await fetchAll()
+  } catch (e) {
+    toast.add({ title: t('payroll.common.saveError'), description: errorMessage(e, ''), color: 'error' })
+  } finally {
+    saving.value = false
+  }
+}
+
+function askDelete(entry: PayrollEntry) {
+  deleting.value = entry
+  showDelete.value = true
+}
+
+async function removeEntry() {
+  if (!deleting.value) return
+  saving.value = true
+  try {
+    await deleteEntry(deleting.value.id)
+    showDelete.value = false
+    deleting.value = null
     await fetchAll()
   } catch (e) {
     toast.add({ title: t('payroll.common.saveError'), description: errorMessage(e, ''), color: 'error' })

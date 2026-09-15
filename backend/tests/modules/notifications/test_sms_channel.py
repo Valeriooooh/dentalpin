@@ -189,9 +189,13 @@ async def test_do_not_contact_blocks_sms(db_session, test_patient, sms_adapter):
 
 @pytest.mark.asyncio
 async def test_clinic_channels_sms_fallback_order(
-    db_session, test_clinic, sms_adapter, whatsapp_adapter
+    db_session, test_clinic, sms_adapter, whatsapp_adapter, monkeypatch
 ):
     """Preferred SMS + fallback: connected channels follow in enum order."""
+    from app.config import settings
+
+    # A VAPID key in the runner's env would append "push" to the order.
+    monkeypatch.setattr(settings, "DENTALPIN_VAPID_PRIVATE_KEY", "")
     clinic_id = test_clinic.id
     await _channel_settings(db_session, clinic_id, preferred="sms", fallback=True)
     order = await NotificationGateway._clinic_channels(db_session, clinic_id)
@@ -264,3 +268,47 @@ async def test_settings_put_sms_daily_limit_round_trips(client, auth_headers, te
 
     response = await client.get("/api/v1/notifications/settings", headers=auth_headers)
     assert response.json()["data"]["sms_daily_limit"] == 50
+
+
+@pytest.mark.asyncio
+async def test_manual_send_sms_accepts_phone_only_patient(
+    client, auth_headers, test_clinic, db_session, sms_adapter
+):
+    """POST /notifications/send with channels=["sms"] must not 400 when the
+    patient has a phone but no email (issue #392 review)."""
+    from uuid import uuid4
+
+    from app.modules.notifications.models import NotificationTemplate
+    from app.modules.patients.models import Patient
+
+    patient = Patient(
+        id=uuid4(),
+        clinic_id=test_clinic.id,
+        first_name="Movil",
+        last_name="Solo",
+        email=None,
+        phone="+34600999888",
+    )
+    db_session.add(patient)
+    db_session.add(
+        NotificationTemplate(
+            clinic_id=None,
+            channel="sms",
+            template_key="welcome",
+            locale="es",
+            body_text="Bienvenido.",
+            is_system=True,
+        )
+    )
+    await db_session.commit()
+    response = await client.post(
+        "/api/v1/notifications/send",
+        json={
+            "notification_type": "welcome",
+            "patient_id": str(patient.id),
+            "channels": ["sms"],
+        },
+        headers=auth_headers,
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["data"]["success"] is True

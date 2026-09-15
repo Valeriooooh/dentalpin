@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Draft delete actions (follow-up to #390, now merged): remove-entry
+  and delete-empty-period buttons with confirmation on the entries and
+  periods pages; 409s render as error toasts.
 - Admin-only frontend layer (issue #391): profiles, periods,
   period-detail entries and reports pages under `/payroll/*`, backend-
   driven nav (manifest `frontend.navigation`), `PERMISSIONS.payroll.*`

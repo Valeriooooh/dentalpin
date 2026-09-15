@@ -4,6 +4,14 @@ export interface NavigationItem {
   to: string
   permission?: string
   order?: number
+  /**
+   * Optional sidebar grouping key (issue #232). Items sharing a key
+   * render under one collapsible, non-clickable header; items without
+   * a key stay flat. Free-form — the host never hardcodes section
+   * names; headers translate via `nav.sections.<key>` with the raw key
+   * as fallback.
+   */
+  section?: string
 }
 
 export interface ModuleDefinition {
@@ -36,6 +44,7 @@ export type ModuleCategory = 'official' | 'community'
 export interface ModuleInfo {
   name: string
   version: string
+  installed_version: string | null
   state: ModuleState
   category: ModuleCategory
   removable: boolean
@@ -49,6 +58,8 @@ export interface ModuleInfo {
   summary: string
   depends: string[]
   in_disk: boolean
+  installable: boolean
+  upgrade_available: boolean
 }
 
 export interface ModuleStatus {

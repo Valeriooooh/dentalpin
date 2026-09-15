@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- feat(i18n): full locale set for the shared procurement frontend
+  (fr, de, pl, it, ta, hu, ar, pt alongside en/es).
 - Shared procurement frontend (suite #227): one Nuxt layer owned here
   with five pages (suppliers, vendor items, orders, reorder, ratings),
   `useProcurement` composable, `en`/`es` locales, nav entries in the
