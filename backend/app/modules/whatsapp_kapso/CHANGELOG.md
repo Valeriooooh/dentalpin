@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: getting-started rule links to `/settings/integrations/whatsapp-kapso` (was a 404).
+
 - fix(#326): the connect-WhatsApp onboarding rule carries `permission: 'whatsapp_kapso.settings.read'`.
 
 - fix(#126): de/it/pl locale parity with en (onboarding + message-type labels).

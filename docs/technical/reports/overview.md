@@ -5,11 +5,29 @@ last_verified_commit: 0000000
 
 # Reports — technical overview
 
-> _Scaffolded stub — replace with proper documentation when this module is next touched._
+Read-only analytics over billing, budgets, scheduling, and (roadmap
+#230) financial, patient-stats, and operational families. Every
+endpoint is a `GET` gated by its family's `reports.<family>.read`
+permission; list endpoints accept `?format=csv` for export. No events
+published or consumed; no mutations.
 
-Auto-discovered facts about the `reports` module. See the module's
-own notes at `backend/app/modules/reports/CLAUDE.md` for context
-the scaffold could not infer.
+## Families
+
+- **billing / budgets / scheduling** — the original families
+  (per-endpoint list under API surface below).
+- **financial** (roadmap #230) — invoice-axis only (never payments):
+  `GET /billing/aging` (outstanding buckets) +
+  `GET /billing/issued-trend` (issued totals over time), both under
+  `reports.financial.read`, plus the `financial_report` copilot tool.
+  An off-books guard test pins the invoice-axis scope.
+- **patient-stats** (roadmap #230) — `GET /patients/demographics`
+  (age bands, sex split) + `GET /patients/visits` (first vs
+  returning), under `reports.patient_stats.read`, plus the
+  `patient_stats_report` copilot tool.
+- **operational** (roadmap #230) — `GET /operational/productivity`
+  (per-professional completed visits, cabinets, plan pipeline counts),
+  under `reports.operational.read`, plus the `operational_report`
+  copilot tool. Reads agenda + treatment_plan.
 
 ## API surface
 

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- feat(i18n): Arabic (`ar`) locale for the module's frontend layer.
 - fix: the records-page state filter's 'all states' option used `''` as its value, which reka-ui rejects in `<SelectItem />`; it now uses `null`.
 
 - feat(#341): initial release — phase 1 of NAV Online Számla reporting:

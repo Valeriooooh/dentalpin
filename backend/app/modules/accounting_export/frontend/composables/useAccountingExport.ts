@@ -27,8 +27,6 @@ function qs(filters: ExportFilters, extra: Record<string, string> = {}): string 
 
 export function useAccountingExport() {
   const api = useApi()
-  const auth = useAuth()
-  const config = useRuntimeConfig()
 
   async function preview(filters: ExportFilters): Promise<ApiOk<ExportPreview>> {
     const s = qs(filters)
@@ -37,15 +35,10 @@ export function useAccountingExport() {
     )
   }
 
-  // Authenticated blob download (JWT in header, so a plain <a href> won't do).
+  // Authenticated blob download: a plain <a href> would miss the session
+  // and the 401 refresh, so it goes through api.raw.
   async function download(filters: ExportFilters, separator: ',' | ';' = ';'): Promise<void> {
-    const url = config.public.apiBaseUrl
-      + `/api/v1/accounting_export/run?${qs(filters, { separator })}`
-    const res = await fetch(url, {
-      headers: auth.accessToken.value
-        ? { Authorization: `Bearer ${auth.accessToken.value}` }
-        : {}
-    })
+    const res = await api.raw(`/api/v1/accounting_export/run?${qs(filters, { separator })}`)
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const blob = await res.blob()
     const blobUrl = URL.createObjectURL(blob)

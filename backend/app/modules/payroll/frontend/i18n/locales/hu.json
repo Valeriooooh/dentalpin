@@ -40,6 +40,7 @@
       "paid": "Kifizetett",
       "close": "Időszak lezárása",
       "markPaid": "Megjelölés kifizetettként",
+      "deleteConfirm": "Törli a(z) {month} időszakot? Csak üres vázlatok.",
       "transitionConfirm": "{month} áthelyezése ide: {status}?",
       "empty": "Még nincsenek időszakok"
     },
@@ -52,6 +53,7 @@
       "notes": "Megjegyzések",
       "add": "Tétel hozzáadása",
       "edit": "Tétel szerkesztése",
+      "deleteConfirm": "Törli ezt a tételt? Nem vonható vissza.",
       "staff": "Munkatárs",
       "empty": "Még nincsenek tételek"
     },
@@ -73,6 +75,7 @@
       "cancel": "Mégse",
       "edit": "Szerkesztés",
       "close": "Bezárás",
+      "delete": "Törlés",
       "back": "Vissza",
       "retry": "Újra",
       "loadError": "Az adatok nem tölthetők be",

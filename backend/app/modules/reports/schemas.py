@@ -80,6 +80,37 @@ class OverdueInvoice(BaseModel):
     balance_due: Decimal
 
 
+class AgingBucket(BaseModel):
+    """One outstanding-age bucket (invoice axis only)."""
+
+    label: str
+    total: Decimal
+    count: int
+    patient_count: int
+
+
+class AgingReport(BaseModel):
+    """Aging buckets snapshot, same shape the dashboard card renders."""
+
+    currency: str
+    buckets: list[AgingBucket]
+
+
+class TrendPoint(BaseModel):
+    """Issued invoice totals for one YYYY-MM point."""
+
+    month: str
+    total: Decimal
+    count: int
+
+
+class IssuedTrend(BaseModel):
+    """Issued trend over a window (invoice axis only)."""
+
+    currency: str
+    points: list[TrendPoint]
+
+
 class NumberingGap(BaseModel):
     """Invoice numbering gap."""
 
@@ -286,3 +317,66 @@ class DayOfWeekStats(BaseModel):
     completed_count: int
     cancelled_count: int
     no_show_count: int
+
+
+# ============================================================================
+# Patient-stats + operational families (v0.2.0)
+# ============================================================================
+
+
+class AgeBand(BaseModel):
+    band: str
+    count: int
+
+
+class GenderSplit(BaseModel):
+    gender: str
+    count: int
+
+
+class AreaSplit(BaseModel):
+    area: str
+    count: int
+
+
+class Demographics(BaseModel):
+    """As-of-now patient snapshot. Unknown buckets are explicit."""
+
+    total_patients: int
+    age_bands: list[AgeBand]
+    genders: list[GenderSplit]
+    areas: list[AreaSplit]
+
+
+class VisitFrequency(BaseModel):
+    """New-vs-returning + visits per patient in a window."""
+
+    new_patients: int
+    returning_patients: int
+    total_visits: int
+    visits_per_patient: float
+
+
+class ProductivityProfessional(BaseModel):
+    professional_id: UUID
+    professional_name: str
+    completed: int
+
+
+class ProductivityCabinet(BaseModel):
+    cabinet: str
+    completed: int
+
+
+class PlanPipelineItem(BaseModel):
+    status: str
+    count: int
+
+
+class Productivity(BaseModel):
+    """Completed-appointment productivity + plan pipeline snapshot."""
+
+    completed_total: int
+    by_professional: list[ProductivityProfessional]
+    by_cabinet: list[ProductivityCabinet]
+    plan_pipeline: list[PlanPipelineItem]

@@ -177,6 +177,7 @@
     },
     "budgetExceeded": "È stato raggiunto il limite mensile di utilizzo dell'IA.",
     "error": "Qualcosa è andato storto.",
+    "sessionExpired": "La sessione è scaduta. Accedi di nuovo per continuare.",
     "page": {
       "title": "IA",
       "subtitle": "L'assistente del tuo studio, nei limiti dei tuoi permessi."

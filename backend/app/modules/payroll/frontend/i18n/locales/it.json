@@ -40,6 +40,7 @@
       "paid": "Pagato",
       "close": "Chiudi periodo",
       "markPaid": "Segna come pagato",
+      "deleteConfirm": "Eliminare il periodo {month}? Solo bozze vuote.",
       "transitionConfirm": "Spostare {month} in {status}?",
       "empty": "Ancora nessun periodo"
     },
@@ -52,6 +53,7 @@
       "notes": "Note",
       "add": "Aggiungi voce",
       "edit": "Modifica voce",
+      "deleteConfirm": "Eliminare questa voce? Impossibile annullare.",
       "staff": "Membro dello staff",
       "empty": "Ancora nessuna voce"
     },
@@ -73,6 +75,7 @@
       "cancel": "Annulla",
       "edit": "Modifica",
       "close": "Chiudi",
+      "delete": "Elimina",
       "back": "Indietro",
       "retry": "Riprova",
       "loadError": "Impossibile caricare i dati",

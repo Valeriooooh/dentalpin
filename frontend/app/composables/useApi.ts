@@ -43,6 +43,12 @@ function _withQuery(path: string, query?: UseApiOptions['query']): string {
 export function useApi() {
   const config = useRuntimeConfig()
   const auth = useAuth()
+  const { csrfHeaders } = useSessionRequest()
+  // SSR: the browser's session cookies arrive on the incoming request;
+  // forward them to the backend so server-rendered pages authenticate
+  // the same way the client does (ADR 0023). Read per call, not once:
+  // a server-side refresh earlier in the same render rotates the jar.
+  const { cookieHeaders } = useSsrCookies()
   const { t } = useI18n()
   const toast = useToast()
 
@@ -61,9 +67,10 @@ export function useApi() {
       ...(optionHeaders || {})
     }
 
-    // Add auth header if authenticated and not skipping auth
-    if (!skipAuth && auth.accessToken.value) {
-      headers.Authorization = `Bearer ${auth.accessToken.value}`
+    // Session cookie auth (ADR 0023): the browser attaches the HttpOnly
+    // cookies itself; unsafe methods add the double-submit CSRF header.
+    if (!skipAuth) {
+      Object.assign(headers, csrfHeaders(method), cookieHeaders())
     }
 
     const url = _withQuery(path, query)
@@ -75,6 +82,7 @@ export function useApi() {
         method,
         body,
         headers,
+        credentials: 'include',
         signal
       })
     } catch (error: unknown) {
@@ -92,13 +100,15 @@ export function useApi() {
         // Try to refresh token
         const refreshed = await auth.refresh()
         if (refreshed) {
-          // Retry the request with new token
-          headers.Authorization = `Bearer ${auth.accessToken.value}`
+          // Retry with the rotated cookies (+ the CSRF token, unchanged
+          // across refreshes but re-read in case this was a fresh login).
+          Object.assign(headers, csrfHeaders(method), cookieHeaders())
           return await $fetch<T>(url, {
             baseURL: apiBaseUrl.value,
             method,
             body,
-            headers
+            headers,
+            credentials: 'include'
           })
         }
         // Redirect to login
@@ -168,6 +178,36 @@ export function useApi() {
     }
   }
 
+  /**
+   * Raw ``fetch`` against the API with the session cookies attached —
+   * for blob downloads and streams where ``$fetch``'s JSON handling gets
+   * in the way. Returns the ``Response``; the caller checks ``ok``.
+   *
+   * A 401 is refreshed and retried once, exactly like ``$api``: a blob
+   * download is a plain fetch, so without this an idle longer than the
+   * access cookie's lifetime turns "Download PDF" into "Not
+   * authenticated" while the rest of the page recovers silently (#440).
+   */
+  async function raw(path: string, init: RequestInit = {}): Promise<Response> {
+    const method = (init.method || 'GET').toUpperCase()
+    const send = () => fetch(`${apiBaseUrl.value}${path}`, {
+      ...init,
+      credentials: 'include',
+      headers: {
+        ...csrfHeaders(method),
+        ...cookieHeaders(),
+        ...(init.headers as Record<string, string> | undefined)
+      }
+    })
+    const response = await send()
+    if (response.status !== 401) return response
+    if (await auth.refresh()) return await send()
+    // The family is gone: end the session as $api does, and hand the 401
+    // back so the caller still shows its own message.
+    await auth.logout()
+    return response
+  }
+
   // Convenience methods
   async function get<T>(path: string, options: Omit<UseApiOptions, 'method' | 'body'> = {}): Promise<T> {
     return $api<T>(path, { ...options, method: 'GET' })
@@ -195,7 +235,8 @@ export function useApi() {
     post,
     put,
     patch,
-    del
+    del,
+    raw
   }
 }
 

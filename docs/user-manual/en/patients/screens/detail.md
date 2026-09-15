@@ -14,7 +14,7 @@ related_permissions:
 related_paths:
   - backend/app/modules/patients/router.py
   - backend/app/modules/patients/frontend/pages/patients/[id].vue
-last_verified_commit: 829bdd25
+last_verified_commit: 838a6767
 ---
 
 # Patient detail
@@ -116,6 +116,21 @@ The `do_not_contact` flag is the operational opt-out. When enabled:
 - Future outreach modules (email, SMS) MUST honour the flag.
 - The patient still appears in the list and can be opened normally —
   they just won't be pestered automatically.
+
+## Notification preferences
+
+The summary card carries per-patient channel preferences: preferred
+channel (email, WhatsApp or SMS), an SMS opt-in toggle (SMS sends only
+when enabled), and the UI language. `do_not_contact` overrides
+everything.
+
+## Groups
+
+The **Groups** card lists the clinic-local tags assigned to the
+patient (e.g. *vip*, *recall-risk*). With
+`patient_segments.write` you can assign existing groups, create new
+ones inline, or remove them. Groups are labels only — no points, no
+expiry.
 
 ## Permissions
 

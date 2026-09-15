@@ -177,6 +177,7 @@
     },
     "budgetExceeded": "La limite mensuelle d'utilisation de l'IA a été atteinte.",
     "error": "Une erreur s'est produite.",
+    "sessionExpired": "Votre session a expiré. Reconnectez-vous pour continuer.",
     "page": {
       "title": "IA",
       "subtitle": "Votre assistant de clinique, limité à vos permissions."

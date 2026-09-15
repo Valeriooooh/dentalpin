@@ -12,7 +12,8 @@ export default defineNuxtConfig({
       { code: 'pt', file: 'pt.json' },
       { code: 'ta', file: 'ta.json' },
       { code: 'pl', file: 'pl.json' },
-      { code: 'it', file: 'it.json' }
+      { code: 'it', file: 'it.json' },
+      { code: 'ar', file: 'ar.json' }
     ],
     langDir: 'locales'
   }

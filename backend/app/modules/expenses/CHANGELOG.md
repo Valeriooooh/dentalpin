@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- fix(#431 review): CSV `amount` accepts the decimal comma (`1200,50`),
+  matching the `;` sniffing for Spanish Excel exports.
+- fix(#431 review round 3): oversize-upload 422 test mirrored from
+  patients (expenses `read_upload_limited` path now covered).
+- fix(#431 review): all-or-nothing bulk commit for CSV import;
+  `,`/`;` sniffing + DD/MM/YYYY dates; bounded upload reads; CSV
+  agent tool dropped (HTTP-only).
+- feat: CSV expense import — `POST /expenses/import.csv` (dry-run default,
+  commit with `dry_run=false`). Validation
+  reuses `ExpenseCreate`; unknown columns ignored, 1000 rows / 1 MiB caps.
+
 - feat(#334): Hungarian (hu) locale for the module's frontend layer.
 
 - feat(i18n): Arabic (ar) locale for the module's frontend layer.

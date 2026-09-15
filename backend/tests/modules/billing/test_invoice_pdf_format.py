@@ -102,3 +102,21 @@ def test_vat_rate_formats_like_the_amounts() -> None:
 def test_legal_notices_render_the_vat_clause() -> None:
     html = _html(_invoice(), _clinic(), extra_pdf_data={"legal_notices": [ES_NOTE]})
     assert "art. 20.Uno.5º de la Ley 37/1992" in html
+
+
+def test_every_ui_locale_renders_a_pdf() -> None:
+    """The download button sends the UI language; every locale the host
+    ships must render (labels fall back to English where untranslated).
+    That the list covers the host's languages is guarded in
+    tests/test_pdf_locales.py, next to the list itself."""
+    import re
+
+    from app.core.pdf_locales import PDF_LOCALE_PATTERN, PDF_LOCALES
+
+    for locale in PDF_LOCALES:
+        assert re.match(PDF_LOCALE_PATTERN, locale)
+        html = _html(_invoice(), _clinic(), locale=locale)
+        assert f'lang="{locale}"' in html
+    assert "Rechnung" not in _html(_invoice(), _clinic(), locale="de")  # English fallback for now
+    assert "60,00" in _html(_invoice(), _clinic(), locale="de")  # but German separators
+    assert not re.match(PDF_LOCALE_PATTERN, "xx")

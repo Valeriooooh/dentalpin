@@ -35,6 +35,13 @@
     "menu": "Menu",
     "openMenu": "Ouvrir le menu",
     "close": "Fermer",
+    "sections": {
+      "clinical": "Clinique",
+      "lab": "Labo",
+      "financials": "Finances",
+      "inventory": "Inventaire",
+      "practice": "Cabinet"
+    },
     "toggleSidebar": "Basculer la barre latérale",
     "documents": "Documents"
   },
@@ -1190,6 +1197,8 @@
       "title": "Modules",
       "subtitle": "Installer, désinstaller et mettre à jour les modules de la clinique.",
       "description": "Gérez les modules actifs dans votre clinique.",
+      "searchPlaceholder": "Rechercher des modules…",
+      "filterState": "État",
       "deps": "Dépendances",
       "noDeps": "Aucune dépendance",
       "state": {
@@ -2419,11 +2428,22 @@
       "whatsappUnavailableHint": "WhatsApp n'est pas disponible tant que le numéro de la clinique n'est pas connecté.",
       "whatsappConnect": "Connecter WhatsApp (Kapso)",
       "noEmail": "Le patient n'a pas d'email enregistré",
-      "noPhone": "Le patient n'a pas de téléphone enregistré"
+      "noPhone": "Le patient n'a pas de téléphone enregistré",
+      "sms": "SMS",
+      "smsUnavailableHint": "Les SMS ne sont pas disponibles tant qu'un fournisseur SMS n'est pas configuré.",
+      "smsConnect": "Configurer",
+      "smsDailyLimitLabel": "Limite quotidienne de SMS",
+      "smsDailyLimitHelp": "Nombre maximal de SMS sortants par jour pour la clinique."
     },
     "channelSent": {
       "email": "Email envoyé avec succès",
-      "whatsapp": "Message WhatsApp envoyé avec succès"
+      "whatsapp": "Message WhatsApp envoyé avec succès",
+      "sms": "Message SMS envoyé avec succès"
+    },
+    "prefs": {
+      "title": "Préférences de notification",
+      "description": "Quels canaux peuvent joindre ce patient. Se désinscrire bloque ce canal même pour les envois forcés.",
+      "saved": "Préférences enregistrées"
     }
   },
   "invoice": {
@@ -2815,6 +2835,10 @@
       "missingNumbers": "Numéros manquants :",
       "noData": "Aucune donnée pour la période sélectionnée",
       "noOverdue": "Aucune facture en retard",
+      "invoiceAging": "Ancienneté des factures",
+      "invoiceAgingDescription": "Totaux émis en souffrance par tranche. Le non échu est à part.",
+      "notDue": "Non échues",
+      "issuedTrend": "Tendance émise",
       "daysOverdue": "jours de retard",
       "vatType": "Type de TVA",
       "base": "Base",

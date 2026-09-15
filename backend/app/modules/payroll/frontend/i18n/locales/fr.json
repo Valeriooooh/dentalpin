@@ -40,6 +40,7 @@
       "paid": "Payée",
       "close": "Clôturer la période",
       "markPaid": "Marquer comme payée",
+      "deleteConfirm": "Supprimer la période {month} ? Seuls les brouillons vides.",
       "transitionConfirm": "Passer {month} à {status} ?",
       "empty": "Aucune période pour le moment"
     },
@@ -52,6 +53,7 @@
       "notes": "Notes",
       "add": "Ajouter une écriture",
       "edit": "Modifier l'écriture",
+      "deleteConfirm": "Supprimer cette écriture ? Irréversible.",
       "staff": "Membre du personnel",
       "empty": "Aucune écriture pour le moment"
     },
@@ -73,6 +75,7 @@
       "cancel": "Annuler",
       "edit": "Modifier",
       "close": "Fermer",
+      "delete": "Supprimer",
       "back": "Retour",
       "retry": "Réessayer",
       "loadError": "Impossible de charger les données",

@@ -51,6 +51,8 @@ dependencies = [
     "anthropic>=0.40",
     # telephony module: E.164 normalization of caller numbers (issue #64).
     "phonenumbers>=8.13",
+    # WebPush channel (notifications): push delivery to patient browsers.
+    "pywebpush>=1.14.0",
 ]
 
 [project.optional-dependencies]
@@ -101,6 +103,8 @@ documents = "app.modules.documents:DocumentsModule"
 whatsapp_webhook = "app.modules.whatsapp_webhook:WhatsappWebhookModule"
 telephony = "app.modules.telephony:TelephonyModule"
 nav_online = "app.modules.nav_online:NavOnlineModule"
+sdi_it = "app.modules.sdi_it:SdiItModule"
+sistema_ts = "app.modules.sistema_ts:SistemaTsModule"
 suppliers = "app.modules.suppliers:SuppliersModule"
 supplier_items = "app.modules.supplier_items:SupplierItemsModule"
 purchase_orders = "app.modules.purchase_orders:PurchaseOrdersModule"
@@ -109,6 +113,10 @@ inventory_reorder = "app.modules.inventory_reorder:InventoryReorderModule"
 supplier_ratings = "app.modules.supplier_ratings:SupplierRatingsModule"
 payroll = "app.modules.payroll:PayrollModule"
 prescriptions = "app.modules.prescriptions:PrescriptionsModule"
+payment_gateways = "app.modules.payment_gateways:PaymentGatewaysModule"
+razorpay = "app.modules.razorpay:RazorpayModule"
+sms_gateway = "app.modules.sms_gateway:SmsGatewayModule"
+patient_segments = "app.modules.patient_segments:PatientSegmentsModule"
 
 [tool.setuptools.packages.find]
 where = ["."]
