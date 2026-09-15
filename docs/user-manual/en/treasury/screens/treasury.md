@@ -2,7 +2,7 @@
 module: treasury
 screen: treasury
 route: /treasury
-last_verified_commit: HEAD
+last_verified_commit: 695eb0f9
 related_endpoints:
   - GET /api/v1/treasury/accounts
   - POST /api/v1/treasury/accounts

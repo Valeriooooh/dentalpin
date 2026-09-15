@@ -5,7 +5,7 @@
  * transfer-derived; payment/expense auto-posting is explicitly Later
  * (see module CLAUDE.md).
  */
-import type { TreasuryAccount, TreasuryEntry } from '../composables/useTreasury'
+import type { TreasuryAccount, TreasuryEntry } from '../../composables/useTreasury'
 
 const { t } = useI18n()
 const { listAccounts, createAccount, transfer, statement } = useTreasury()
@@ -31,7 +31,7 @@ async function refresh() {
   isLoading.value = true
   try {
     accounts.value = await listAccounts()
-    if (!selectedId.value && accounts.value.length > 0) selectedId.value = accounts.value[0].id
+    if (!selectedId.value && accounts.value.length > 0) selectedId.value = accounts.value[0]!.id
     if (selectedId.value) entries.value = await statement(selectedId.value)
   } finally {
     isLoading.value = false

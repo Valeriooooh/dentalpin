@@ -252,7 +252,7 @@ export const PERMISSIONS = {
     read: 'supplier_ratings.read',
     write: 'supplier_ratings.write'
   },
-patientSegments: {
+  patientSegments: {
     read: 'patient_segments.read',
     write: 'patient_segments.write'
   },
