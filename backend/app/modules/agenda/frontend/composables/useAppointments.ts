@@ -198,23 +198,17 @@ export function useAppointments() {
   }
 
   /**
-   * Fetch the check-in QR PNG as an object URL. Raw `$fetch` (not the
-   * `useApi` JSON client) because `<img>` needs bytes and the request
-   * carries the Bearer header manually.
+   * Fetch the check-in QR PNG as an object URL. Uses `useApi.raw`
+   * (session-cookie auth + refresh/retry + CSRF) because `<img>` needs
+   * bytes and the download should authenticate like every other call.
    */
   async function fetchCheckinQr(id: string): Promise<string> {
-    const config = useRuntimeConfig()
-    const auth = useAuth()
-    const baseURL = import.meta.server ? config.apiBaseUrlServer : config.public.apiBaseUrl
-    const blob: Blob = await $fetch(
-      `/api/v1/agenda/appointments/${id}/check-in-qr`,
-      {
-        baseURL,
-        query: { origin: import.meta.client ? window.location.origin : '' },
-        headers: { Authorization: `Bearer ${auth.accessToken.value}` }
-      }
+    const origin = import.meta.client ? window.location.origin : ''
+    const response = await api.raw(
+      `/api/v1/agenda/appointments/${id}/check-in-qr?origin=${encodeURIComponent(origin)}`
     )
-    return URL.createObjectURL(blob)
+    if (!response.ok) throw new Error(`check-in QR: ${response.status}`)
+    return URL.createObjectURL(await response.blob())
   }
 
   return {
