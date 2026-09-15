@@ -163,6 +163,14 @@ export function usePayroll() {
     return api.patch<ApiResponse<PayrollEntry>>(`/api/v1/payroll/entries/${id}`, payload)
   }
 
+  async function deleteEntry(id: string) {
+    await api.del<null>(`/api/v1/payroll/entries/${id}`, { errorToast: false })
+  }
+
+  async function deletePeriod(id: string) {
+    await api.del<null>(`/api/v1/payroll/periods/${id}`, { errorToast: false })
+  }
+
   async function monthlyReport(month: string) {
     return api.get<ApiResponse<PeriodReport>>('/api/v1/payroll/reports/monthly', { query: { month } })
   }
@@ -187,6 +195,8 @@ export function usePayroll() {
     listEntries,
     createEntry,
     updateEntry,
+    deleteEntry,
+    deletePeriod,
     monthlyReport,
     annualReport,
     listStaff

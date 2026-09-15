@@ -14,7 +14,7 @@ related_permissions:
 related_paths:
   - backend/app/modules/patients/router.py
   - backend/app/modules/patients/frontend/pages/patients/[id].vue
-last_verified_commit: 829bdd25
+last_verified_commit: 838a6767
 ---
 
 # Ficha del paciente
@@ -118,6 +118,20 @@ está activo:
 - Futuros módulos de comunicación (email, SMS) DEBEN respetarlo.
 - El paciente sigue apareciendo en el listado y se puede abrir con
   normalidad — solo deja de recibir contactos automatizados.
+
+## Preferencias de notificación
+
+La tarjeta de resumen lleva preferencias por paciente y canal: canal
+preferido (email, WhatsApp o SMS), interruptor de SMS (solo se envía
+con opt-in) e idioma. `do_not_contact` prevalece sobre todo.
+
+## Grupos
+
+La tarjeta de **Grupos** lista las etiquetas locales asignadas al
+paciente (p. ej. *vip*, *riesgo-recall*). Con
+`patient_segments.write` puedes asignar grupos existentes, crear
+nuevos sobre la marcha o quitarlos. Los grupos son solo etiquetas —
+sin puntos ni caducidad.
 
 ## Permisos
 

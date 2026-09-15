@@ -1,10 +1,12 @@
 """Reports module router."""
 
+import csv
+import io
 from datetime import date
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth.dependencies import ClinicContext, get_clinic_context, require_permission
@@ -12,7 +14,11 @@ from app.core.schemas import ApiResponse
 from app.database import get_db
 
 from .schemas import (
+    AgeBand,
+    AgingBucket,
+    AgingReport,
     AppointmentFunnel,
+    AreaSplit,
     BillingSummary,
     BudgetByProfessional,
     BudgetByStatus,
@@ -20,22 +26,34 @@ from .schemas import (
     BudgetSummary,
     CabinetUtilization,
     DayOfWeekStats,
+    Demographics,
     DurationVarianceStats,
     FirstVisitsSummary,
+    GenderSplit,
     HoursByProfessional,
+    IssuedTrend,
     NumberingGap,
     OverdueInvoice,
     PaymentMethodSummary,
+    PlanPipelineItem,
+    Productivity,
+    ProductivityCabinet,
+    ProductivityProfessional,
     ProfessionalBillingSummary,
     PunctualityStats,
     SchedulingSummary,
+    TrendPoint,
     VatSummaryItem,
+    VisitFrequency,
     WaitingTimeStats,
 )
 from .services import (
     AppointmentLifecycleService,
     BillingReportService,
     BudgetReportService,
+    FinancialReportService,
+    OperationalReportService,
+    PatientStatsService,
     SchedulingReportService,
 )
 
@@ -143,6 +161,81 @@ async def get_numbering_gaps(
     """
     data = await BillingReportService.get_numbering_gaps(db, ctx.clinic_id)
     return ApiResponse(data=[NumberingGap(**item) for item in data])
+
+
+# ============================================================================
+# Financial family (invoice axis only — off-books rule is structural)
+# ============================================================================
+
+
+def _csv_response(filename: str, header: list[str], rows: list[list]) -> Response:
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(header)
+    writer.writerows(rows)
+    return Response(
+        content=buf.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/billing/aging", response_model=ApiResponse[AgingReport])
+async def get_aging_buckets(
+    ctx: Annotated[ClinicContext, Depends(get_clinic_context)],
+    _: Annotated[None, Depends(require_permission("reports.financial.read"))],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    response_format: str = Query(default="json", pattern="^(json|csv)$", alias="format"),
+):
+    """Outstanding invoice totals per age bucket (invoice axis only).
+
+    Buckets are due-date anchored (not-yet-due/"no vencidas" plus
+    0-30/31-60/61-90/90+); invoices with no due date count as current.
+    Totals are issued amounts, never net of collected ones. Labelled as
+    invoice aging wherever rendered — never as the earned-paid
+    receivables card.
+    """
+    buckets = await FinancialReportService.aging_buckets(db, ctx.clinic_id)
+    if response_format == "csv":
+        return _csv_response(
+            "aging.csv",
+            ["bucket", "total", "invoices", "patients"],
+            [[b["label"], b["total"], b["count"], b["patient_count"]] for b in buckets],
+        )
+    return ApiResponse(
+        data=AgingReport(
+            currency=ctx.clinic.currency,
+            buckets=[AgingBucket(**b) for b in buckets],
+        )
+    )
+
+
+@router.get("/billing/issued-trend", response_model=ApiResponse[IssuedTrend])
+async def get_issued_trend(
+    ctx: Annotated[ClinicContext, Depends(get_clinic_context)],
+    _: Annotated[None, Depends(require_permission("reports.financial.read"))],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    date_from: date = Query(..., description="Start date for the trend window"),
+    date_to: date = Query(..., description="End date for the trend window"),
+    response_format: str = Query(default="json", pattern="^(json|csv)$", alias="format"),
+):
+    """Issued invoice totals per month (invoice axis only).
+
+    Drafts, cancelled, voided and soft-deleted invoices never count.
+    """
+    points = await FinancialReportService.issued_trend(db, ctx.clinic_id, date_from, date_to)
+    if response_format == "csv":
+        return _csv_response(
+            "issued-trend.csv",
+            ["month", "total", "invoices"],
+            [[p["month"], p["total"], p["count"]] for p in points],
+        )
+    return ApiResponse(
+        data=IssuedTrend(
+            currency=ctx.clinic.currency,
+            points=[TrendPoint(**p) for p in points],
+        )
+    )
 
 
 # ============================================================================
@@ -408,3 +501,102 @@ async def get_appointment_funnel(
 
         raise HTTPException(status_code=http_status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     return ApiResponse(data=AppointmentFunnel(**data))
+
+
+# ============================================================================
+# Patient-stats + operational families (v0.2.0)
+# ============================================================================
+
+
+@router.get("/patients/demographics")
+async def get_demographics(
+    ctx: Annotated[ClinicContext, Depends(get_clinic_context)],
+    _: Annotated[None, Depends(require_permission("reports.patient_stats.read"))],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    format: str = Query(default="json", pattern="^(json|csv)$"),
+):
+    """As-of-now demographics: age bands, gender split, area split.
+
+    Unknown birth dates and unparseable addresses group under explicit
+    ``unknown`` buckets rather than being guessed.
+    """
+    data = await PatientStatsService.demographics(db, ctx.clinic_id)
+    if format == "csv":
+        rows = (
+            [["dimension", "key", "count"]]
+            + [["age", b["band"], b["count"]] for b in data["age_bands"]]
+            + [["gender", g["gender"], g["count"]] for g in data["genders"]]
+            + [["area", a["area"], a["count"]] for a in data["areas"]]
+        )
+        return _csv_response("demographics.csv", rows[0], rows[1:])
+    return ApiResponse(
+        data=Demographics(
+            total_patients=data["total_patients"],
+            age_bands=[AgeBand(**b) for b in data["age_bands"]],
+            genders=[GenderSplit(**g) for g in data["genders"]],
+            areas=[AreaSplit(**a) for a in data["areas"]],
+        )
+    )
+
+
+@router.get("/patients/visits")
+async def get_visit_frequency(
+    ctx: Annotated[ClinicContext, Depends(get_clinic_context)],
+    _: Annotated[None, Depends(require_permission("reports.patient_stats.read"))],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    date_from: date = Query(...),
+    date_to: date = Query(...),
+    format: str = Query(default="json", pattern="^(json|csv)$"),
+):
+    """New-vs-returning patients + visits per patient (date_to inclusive).
+
+    Cancelled and no-show appointments never count as visits.
+    """
+    data = await PatientStatsService.visit_frequency(db, ctx.clinic_id, date_from, date_to)
+    if format == "csv":
+        return _csv_response(
+            "visits.csv",
+            ["new_patients", "returning_patients", "total_visits", "visits_per_patient"],
+            [
+                [
+                    data["new_patients"],
+                    data["returning_patients"],
+                    data["total_visits"],
+                    data["visits_per_patient"],
+                ]
+            ],
+        )
+    return ApiResponse(data=VisitFrequency(**data))
+
+
+@router.get("/operational/productivity")
+async def get_productivity(
+    ctx: Annotated[ClinicContext, Depends(get_clinic_context)],
+    _: Annotated[None, Depends(require_permission("reports.operational.read"))],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    date_from: date = Query(...),
+    date_to: date = Query(...),
+    format: str = Query(default="json", pattern="^(json|csv)$"),
+):
+    """Completed-appointment productivity per professional and cabinet,
+    plus the treatment-plan pipeline snapshot (date_to inclusive)."""
+    data = await OperationalReportService.productivity(db, ctx.clinic_id, date_from, date_to)
+    if format == "csv":
+        return _csv_response(
+            "productivity.csv",
+            ["scope", "key", "completed"],
+            [["total", "all", data["completed_total"]]]
+            + [
+                ["professional", p["professional_name"], p["completed"]]
+                for p in data["by_professional"]
+            ]
+            + [["cabinet", c["cabinet"], c["completed"]] for c in data["by_cabinet"]],
+        )
+    return ApiResponse(
+        data=Productivity(
+            completed_total=data["completed_total"],
+            by_professional=[ProductivityProfessional(**p) for p in data["by_professional"]],
+            by_cabinet=[ProductivityCabinet(**c) for c in data["by_cabinet"]],
+            plan_pipeline=[PlanPipelineItem(**p) for p in data["plan_pipeline"]],
+        )
+    )

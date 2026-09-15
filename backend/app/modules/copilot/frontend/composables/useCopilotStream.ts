@@ -24,21 +24,36 @@ function parseFrame(frame: string): { event: string, data: Record<string, unknow
 
 export function useCopilotStream() {
   const config = useRuntimeConfig()
-  const { accessToken } = useAuth()
+  const auth = useAuth()
+  const { csrfHeaders } = useSessionRequest()
+  const { t } = useI18n()
 
   async function stream(path: string, body: unknown, handlers: StreamHandlers): Promise<void> {
+    const send = () => fetch(`${config.public.apiBaseUrl}${path}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...csrfHeaders('POST')
+      },
+      body: JSON.stringify(body)
+    })
+
     let res: Response
     try {
-      res = await fetch(`${config.public.apiBaseUrl}${path}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken.value}`
-        },
-        body: JSON.stringify(body)
-      })
+      res = await send()
+      // The access cookie can expire while the chat panel sits open. A 401
+      // arrives before any frame is read, so one refresh and one retry is
+      // safe here — a failure mid-stream is not, and is left alone (#452).
+      if (res.status === 401 && await auth.refresh()) res = await send()
     } catch (e) {
       handlers.onError?.(String(e))
+      return
+    }
+
+    if (res.status === 401) {
+      handlers.onError?.(t('copilot.sessionExpired', 'Your session has expired. Sign in again to continue.'))
+      await auth.logout()
       return
     }
 

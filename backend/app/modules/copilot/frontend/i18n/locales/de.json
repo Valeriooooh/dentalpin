@@ -177,6 +177,7 @@
     },
     "budgetExceeded": "Das monatliche IA-Nutzungslimit wurde erreicht.",
     "error": "Etwas ist schiefgelaufen.",
+    "sessionExpired": "Ihre Sitzung ist abgelaufen. Melden Sie sich erneut an, um fortzufahren.",
     "page": {
       "title": "IA",
       "subtitle": "Ihr Praxisassistent, beschränkt auf Ihre Berechtigungen."

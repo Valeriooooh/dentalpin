@@ -40,6 +40,7 @@
       "paid": "Opłacony",
       "close": "Zamknij okres",
       "markPaid": "Oznacz jako opłacony",
+      "deleteConfirm": "Usunąć okres {month}? Tylko puste szkice.",
       "transitionConfirm": "Przenieść {month} do {status}?",
       "empty": "Brak okresów"
     },
@@ -52,6 +53,7 @@
       "notes": "Notatki",
       "add": "Dodaj wpis",
       "edit": "Edytuj wpis",
+      "deleteConfirm": "Usunąć ten wpis? Tej operacji nie można cofnąć.",
       "staff": "Pracownik",
       "empty": "Brak wpisów"
     },
@@ -73,6 +75,7 @@
       "cancel": "Anuluj",
       "edit": "Edytuj",
       "close": "Zamknij",
+      "delete": "Usuń",
       "back": "Wstecz",
       "retry": "Ponów",
       "loadError": "Nie można załadować danych",

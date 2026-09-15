@@ -34,10 +34,20 @@ const entries = computed(() => {
 </script>
 
 <template>
-  <component
-    :is="entry.component"
-    v-for="entry in entries"
-    :key="entry.id"
-    :ctx="props.ctx"
-  />
+  <!--
+    Client-only on purpose (#424). Every module layer registers its slot
+    entries from a ``*.client.ts`` plugin, so the server resolves an empty
+    slot and the client a full one; rendering both would be a guaranteed
+    hydration mismatch on every page that hosts a slot. Registering
+    universally instead would need all 38 plugins and every registered
+    component to be SSR-safe — a separate decision, recorded in #424.
+  -->
+  <ClientOnly>
+    <component
+      :is="entry.component"
+      v-for="entry in entries"
+      :key="entry.id"
+      :ctx="props.ctx"
+    />
+  </ClientOnly>
 </template>

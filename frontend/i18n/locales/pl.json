@@ -35,6 +35,13 @@
     "menu": "Menu",
     "openMenu": "Otwórz menu",
     "close": "Zamknij",
+    "sections": {
+      "clinical": "Kliniczne",
+      "lab": "Lab",
+      "financials": "Finanse",
+      "inventory": "Magazyn",
+      "practice": "Gabinet"
+    },
     "toggleSidebar": "Przełącz pasek boczny",
     "documents": "Dokumenty"
   },
@@ -1198,6 +1205,8 @@
       "title": "Moduły",
       "subtitle": "Instaluj, odinstalowuj i aktualizuj moduły gabinetu.",
       "description": "Zarządzaj modułami aktywnymi w Twoim gabinecie.",
+      "searchPlaceholder": "Szukaj modułów…",
+      "filterState": "Stan",
       "deps": "Zależności",
       "noDeps": "Brak zależności",
       "state": {
@@ -2427,11 +2436,22 @@
       "whatsappUnavailableHint": "WhatsApp będzie dostępny po podłączeniu numeru kliniki.",
       "whatsappConnect": "Połącz WhatsApp (Kapso)",
       "noEmail": "Pacjent nie ma e-maila w kartotece",
-      "noPhone": "Pacjent nie ma telefonu w kartotece"
+      "noPhone": "Pacjent nie ma telefonu w kartotece",
+      "sms": "SMS",
+      "smsUnavailableHint": "SMS będą dostępne po skonfigurowaniu dostawcy SMS.",
+      "smsConnect": "Konfiguruj",
+      "smsDailyLimitLabel": "Dzienny limit SMS",
+      "smsDailyLimitHelp": "Maksymalna liczba wychodzących SMS dziennie dla kliniki."
     },
     "channelSent": {
       "email": "E-mail wysłany pomyślnie",
-      "whatsapp": "Wiadomość WhatsApp wysłana pomyślnie"
+      "whatsapp": "Wiadomość WhatsApp wysłana pomyślnie",
+      "sms": "Wiadomość SMS wysłana pomyślnie"
+    },
+    "prefs": {
+      "title": "Preferencje powiadomień",
+      "description": "Jakimi kanałami można kontaktować się z tym pacjentem. Rezygnacja blokuje kanał nawet przy wysyłkach wymuszonych.",
+      "saved": "Zapisano preferencje"
     }
   },
   "invoice": {
@@ -2823,6 +2843,10 @@
       "missingNumbers": "Brakujące numery:",
       "noData": "Brak danych dla wybranego okresu",
       "noOverdue": "Brak faktur po terminie",
+      "invoiceAging": "Wiek faktur",
+      "invoiceAgingDescription": "Należne wystawione sumy wg przedziałów. Niewymagalne osobno.",
+      "notDue": "Niewymagalne",
+      "issuedTrend": "Trend wystawionych",
       "daysOverdue": "dni po terminie",
       "vatType": "Stawka VAT",
       "base": "Podstawa",

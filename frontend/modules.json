@@ -22,6 +22,7 @@
     "/module_layers/notifications/frontend",
     "/module_layers/odontogram/frontend",
     "/module_layers/patient_relationships/frontend",
+    "/module_layers/patient_segments/frontend",
     "/module_layers/patient_timeline/frontend",
     "/module_layers/patients/frontend",
     "/module_layers/patients_clinical/frontend",
@@ -29,10 +30,14 @@
     "/module_layers/payroll/frontend",
     "/module_layers/periodontogram/frontend",
     "/module_layers/purchase_orders/frontend",
+    "/module_layers/razorpay/frontend",
     "/module_layers/recall_reminders/frontend",
     "/module_layers/recalls/frontend",
     "/module_layers/reports/frontend",
     "/module_layers/schedules/frontend",
+    "/module_layers/sdi_it/frontend",
+    "/module_layers/sistema_ts/frontend",
+    "/module_layers/sms_gateway/frontend",
     "/module_layers/staff_tasks/frontend",
     "/module_layers/telephony/frontend",
     "/module_layers/treatment_consumables/frontend",
@@ -178,6 +183,7 @@
       "name": "notifications",
       "path": "/module_layers/notifications/frontend",
       "routes": [
+        "/p/push/:token",
         "/settings/notifications"
       ]
     },
@@ -189,6 +195,11 @@
     {
       "name": "patient_relationships",
       "path": "/module_layers/patient_relationships/frontend",
+      "routes": []
+    },
+    {
+      "name": "patient_segments",
+      "path": "/module_layers/patient_segments/frontend",
       "routes": []
     },
     {
@@ -244,6 +255,13 @@
       ]
     },
     {
+      "name": "razorpay",
+      "path": "/module_layers/razorpay/frontend",
+      "routes": [
+        "/settings/razorpay"
+      ]
+    },
+    {
       "name": "recall_reminders",
       "path": "/module_layers/recall_reminders/frontend",
       "routes": []
@@ -268,6 +286,21 @@
     {
       "name": "schedules",
       "path": "/module_layers/schedules/frontend",
+      "routes": []
+    },
+    {
+      "name": "sdi_it",
+      "path": "/module_layers/sdi_it/frontend",
+      "routes": []
+    },
+    {
+      "name": "sistema_ts",
+      "path": "/module_layers/sistema_ts/frontend",
+      "routes": []
+    },
+    {
+      "name": "sms_gateway",
+      "path": "/module_layers/sms_gateway/frontend",
       "routes": []
     },
     {

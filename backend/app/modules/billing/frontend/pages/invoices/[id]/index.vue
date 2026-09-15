@@ -61,7 +61,7 @@ const creditNoteForm = ref({
 
 // Manual Send buttons follow the clinic channel config (issue #287).
 const {
-  buttonsForPatient,
+  documentButtonsForPatient,
   preferredChannel,
   ensureLoaded: ensureChannelsLoaded
 } = useClinicNotificationChannels()
@@ -80,13 +80,14 @@ function channelDisabledReason(reason?: 'no_email' | 'no_phone' | 'channel_not_m
 }
 
 const sendMethodOptions = computed(() => {
-  const options = buttonsForPatient(currentInvoice.value?.patient ?? null).map(btn => ({
-    value: btn.channel as DocumentSendMethod,
-    label: btn.channel === 'email' ? t('invoice.send.sendByEmail') : t('invoice.send.sendByWhatsapp'),
-    icon: btn.channel === 'email' ? 'i-lucide-mail' : 'i-lucide-message-circle',
-    disabled: btn.disabled,
-    hint: channelDisabledReason(btn.reason)
-  }))
+  const options = documentButtonsForPatient(currentInvoice.value?.patient ?? null)
+    .map(btn => ({
+      value: btn.channel as DocumentSendMethod,
+      label: btn.channel === 'email' ? t('invoice.send.sendByEmail') : t('invoice.send.sendByWhatsapp'),
+      icon: btn.channel === 'email' ? 'i-lucide-mail' : 'i-lucide-message-circle',
+      disabled: btn.disabled,
+      hint: channelDisabledReason(btn.reason)
+    }))
   options.push({
     value: 'manual',
     label: t('invoice.send.markAsSent'),
@@ -278,10 +279,12 @@ async function handleCreateCreditNote() {
 function openSendModal() {
   // Default to the clinic's preferred channel when the patient can
   // receive it; else the first viable channel; else "Mark as sent".
-  const enabled = buttonsForPatient(currentInvoice.value?.patient ?? null).filter(b => !b.disabled)
+  const enabled = documentButtonsForPatient(currentInvoice.value?.patient ?? null).filter(b => !b.disabled)
   const preferred = enabled.find(b => b.channel === preferredChannel.value) ?? enabled[0]
   sendForm.value = {
-    method: preferred?.channel ?? 'manual',
+    // SMS filtered above, but narrow explicitly: only email/WhatsApp
+    // methods reach the invoice send API.
+    method: preferred && preferred.channel !== 'sms' ? preferred.channel : 'manual',
     custom_message: ''
   }
   showSendModal.value = true

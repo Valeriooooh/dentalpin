@@ -1,0 +1,11 @@
+{
+  "patientSegments": {
+    "title": "Grupos",
+    "emptyHint": "Sem grupos atribuídos.",
+    "add": "Gerir grupos",
+    "remove": "Remover do grupo",
+    "pickExisting": "Adicionar a grupo existente",
+    "newName": "Nome do novo grupo",
+    "create": "Criar e atribuir"
+  }
+}

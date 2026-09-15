@@ -177,6 +177,7 @@
     },
     "budgetExceeded": "Osiągnięto miesięczny limit użycia IA.",
     "error": "Coś poszło nie tak.",
+    "sessionExpired": "Twoja sesja wygasła. Zaloguj się ponownie, aby kontynuować.",
     "page": {
       "title": "IA",
       "subtitle": "Asystent Twojego gabinetu, działający w granicach Twoich uprawnień."

@@ -63,7 +63,8 @@ export const PERMISSIONS = {
   reports: {
     billingRead: 'reports.billing.read',
     budgetsRead: 'reports.budgets.read',
-    schedulingRead: 'reports.scheduling.read'
+    schedulingRead: 'reports.scheduling.read',
+    financialRead: 'reports.financial.read'
   },
   documents: {
     read: 'media.documents.read',
@@ -135,6 +136,10 @@ export const PERMISSIONS = {
     settingsRead: 'whatsapp_kapso.settings.read',
     settingsWrite: 'whatsapp_kapso.settings.write'
   },
+  razorpay: {
+    settingsRead: 'razorpay.settings.read',
+    settingsWrite: 'razorpay.settings.write'
+  },
   whatsappWebhook: {
     settingsRead: 'whatsapp_webhook.settings.read',
     settingsWrite: 'whatsapp_webhook.settings.write'
@@ -144,6 +149,20 @@ export const PERMISSIONS = {
     settingsConfigure: 'nav_online.settings.configure',
     recordsRead: 'nav_online.records.read',
     queueManage: 'nav_online.queue.manage'
+  },
+  sdiIt: {
+    settingsRead: 'sdi_it.settings.read',
+    settingsConfigure: 'sdi_it.settings.configure',
+    recordsRead: 'sdi_it.records.read',
+    recordsManage: 'sdi_it.records.manage'
+  },
+  sistemaTs: {
+    settingsRead: 'sistema_ts.settings.read',
+    settingsConfigure: 'sistema_ts.settings.configure',
+    documentsRead: 'sistema_ts.documents.read',
+    documentsManage: 'sistema_ts.documents.manage',
+    oppositionRead: 'sistema_ts.opposition.read',
+    oppositionWrite: 'sistema_ts.opposition.write'
   },
   telephony: {
     settingsRead: 'telephony.settings.read',
@@ -232,5 +251,9 @@ export const PERMISSIONS = {
   supplierRatings: {
     read: 'supplier_ratings.read',
     write: 'supplier_ratings.write'
+  },
+  patientSegments: {
+    read: 'patient_segments.read',
+    write: 'patient_segments.write'
   }
 } as const

@@ -40,6 +40,7 @@
       "paid": "Paid",
       "close": "Close period",
       "markPaid": "Mark as paid",
+      "deleteConfirm": "Delete the {month} period? Only empty draft periods can be deleted.",
       "transitionConfirm": "Move {month} to {status}?",
       "empty": "No periods yet"
     },
@@ -52,6 +53,7 @@
       "notes": "Notes",
       "add": "Add entry",
       "edit": "Edit entry",
+      "deleteConfirm": "Delete this entry? This cannot be undone.",
       "staff": "Staff member",
       "empty": "No entries yet"
     },
@@ -73,6 +75,7 @@
       "cancel": "Cancel",
       "edit": "Edit",
       "close": "Close",
+      "delete": "Delete",
       "back": "Back",
       "retry": "Retry",
       "loadError": "Could not load data",

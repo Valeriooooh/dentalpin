@@ -177,6 +177,7 @@
     },
     "budgetExceeded": "The monthly IA usage limit has been reached.",
     "error": "Something went wrong.",
+    "sessionExpired": "Your session has expired. Sign in again to continue.",
     "page": {
       "title": "IA",
       "subtitle": "Your clinic assistant, scoped to your permissions."

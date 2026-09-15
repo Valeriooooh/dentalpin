@@ -39,7 +39,8 @@ const {
 } = useBudgets()
 
 // Manual Send buttons follow the clinic channel config (issue #287).
-const { buttonsForPatient, ensureLoaded: ensureChannelsLoaded } = useClinicNotificationChannels()
+// Budget PDFs travel over document channels only (issue #392 review).
+const { documentButtonsForPatient, ensureLoaded: ensureChannelsLoaded } = useClinicNotificationChannels()
 
 const hasActiveInvoice = ref(false)
 
@@ -124,7 +125,7 @@ function channelDisabledReason(reason?: 'no_email' | 'no_phone' | 'channel_not_m
 }
 
 const sendMethodOptions = computed(() => {
-  const options = buttonsForPatient(currentBudget.value?.patient ?? null).map(btn => ({
+  const options = documentButtonsForPatient(currentBudget.value?.patient ?? null).map(btn => ({
     value: btn.channel as DocumentSendMethod,
     label: btn.channel === 'email' ? t('budget.send.sendByEmail') : t('budget.send.sendByWhatsapp'),
     icon: btn.channel === 'email' ? 'i-lucide-mail' : 'i-lucide-message-circle',

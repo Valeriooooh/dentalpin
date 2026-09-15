@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from jose import JWTError
 from slowapi import Limiter
@@ -20,6 +20,14 @@ from app.core.plugins import module_registry
 from app.core.schemas import ApiResponse, PaginatedApiResponse
 from app.database import get_db
 
+from .cookies import (
+    ACCESS_COOKIE,
+    CSRF_COOKIE,
+    REFRESH_COOKIE,
+    clear_session_cookies,
+    new_csrf_token,
+    set_session_cookies,
+)
 from .country_presets import COUNTRY_PRESETS, GENERIC, get_preset, tax_id_matches
 from .dependencies import (
     ClinicContext,
@@ -34,8 +42,8 @@ from .permissions import (
     PROFESSIONAL_ROLES,
     ROLES,
     expand_permissions,
-    get_role_permissions,
 )
+from .rbac import granted_permissions_for, resolve_role_id
 from .schemas import (
     AuthResponse,
     ClinicMetadataResponse,
@@ -56,11 +64,14 @@ from .schemas import (
     UserWithRoleResponse,
 )
 from .service import (
+    RefreshTokenError,
     create_access_token,
     create_invite_token,
-    create_refresh_token,
     decode_token,
     hash_password,
+    issue_refresh_token,
+    revoke_family,
+    rotate_refresh_token,
     validate_password_strength,
     verify_password,
 )
@@ -96,9 +107,14 @@ async def _refresh_rate_key(request: Request) -> str:
     here gives a per-user bucket; we fall back to the proxy-aware client
     IP if the body is missing or unreadable.
     """
+    # The browser's cookie-only refresh sends no body: read the cookie
+    # first, or ``request.json()`` raises and the cookie branch is skipped
+    # (IP-keyed bucket shared by the whole tenant behind the proxy).
+    token: str | None = request.cookies.get(REFRESH_COOKIE)
     try:
-        body = await request.json()
-        token = body.get("refresh_token") if isinstance(body, dict) else None
+        if not token:
+            body = await request.json()
+            token = body.get("refresh_token") if isinstance(body, dict) else None
         if token:
             payload = decode_token(token)
             sub = payload.get("sub")
@@ -133,6 +149,7 @@ async def setup_presets() -> ApiResponse[SetupPresetsResponse]:
 @limiter.limit("5/hour")
 async def setup(
     request: Request,
+    response: Response,
     data: SystemSetup,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> TokenResponse:
@@ -209,6 +226,7 @@ async def setup(
             user_id=user.id,
             clinic_id=clinic.id,
             role="admin",
+            role_id=await resolve_role_id(db, clinic.id, "admin"),
             is_professional=data.admin_is_professional,
         )
     )
@@ -231,18 +249,14 @@ async def setup(
         },
     )
 
-    access_token = create_access_token(
-        user.id, clinic_id=clinic.id, token_version=user.token_version
-    )
-    refresh_token = create_refresh_token(user.id, token_version=user.token_version)
-
-    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+    return await _start_session(request, response, db, user, clinic.id)
 
 
 @router.post("/login", response_model=TokenResponse)
 @limiter.limit("5/minute")
 async def login(
     request: Request,
+    response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> TokenResponse:
@@ -271,64 +285,113 @@ async def login(
     if user.memberships:
         clinic_id = user.memberships[0].clinic_id
 
-    # Generate tokens
-    access_token = create_access_token(
-        user.id,
-        clinic_id=clinic_id,
-        token_version=user.token_version,
-    )
-    refresh_token = create_refresh_token(user.id, token_version=user.token_version)
+    return await _start_session(request, response, db, user, clinic_id)
 
-    return TokenResponse(
+
+def _client_ip(request: Request) -> str | None:
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else None
+
+
+async def _start_session(
+    request: Request, response: Response, db: AsyncSession, user: User, clinic_id
+) -> TokenResponse:
+    """Issue a tracked refresh family + access token and set the session
+    cookies (ADR 0023). The body still carries the pair for one release so
+    bearer clients and the e2e API context keep working unchanged."""
+    refresh_token, family_id = await issue_refresh_token(
+        db, user, user_agent=request.headers.get("user-agent"), client_ip=_client_ip(request)
+    )
+    access_token = create_access_token(
+        user.id, clinic_id=clinic_id, token_version=user.token_version, family_id=family_id
+    )
+    await db.commit()
+    set_session_cookies(
+        response,
         access_token=access_token,
         refresh_token=refresh_token,
+        csrf_token=new_csrf_token(),
+        request=request,
     )
+    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("30/minute")
+async def logout(
+    request: Request,
+    response: Response,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> Response:
+    """End the session: revoke the refresh family, clear the cookies.
+
+    Best-effort and always 204 — an already-expired access token must
+    still clear the cookies so the browser lands cleanly on /login. The
+    family comes from the access token's ``fam`` claim or the refresh
+    cookie; a bearer client may also pass ``{"refresh_token": …}`` in
+    the body.
+    """
+    candidates: list[str] = []
+    auth_header = request.headers.get("authorization", "")
+    if auth_header.lower().startswith("bearer "):
+        candidates.append(auth_header[7:])
+    # Both session cookies carry ``fam``; the refresh one still does once
+    # the browser has dropped the expired access cookie (max-age).
+    for name in (ACCESS_COOKIE, REFRESH_COOKIE):
+        if request.cookies.get(name):
+            candidates.append(request.cookies[name])
+    try:
+        body = await request.json()
+        if isinstance(body, dict) and body.get("refresh_token"):
+            candidates.append(str(body["refresh_token"]))
+    except Exception:  # noqa: BLE001 — no/invalid body is fine here
+        pass
+
+    for token in candidates:
+        try:
+            payload = decode_token(token)
+        except JWTError:
+            continue
+        fam = payload.get("fam")
+        if fam:
+            await revoke_family(db, UUID(fam))
+    await db.commit()
+    clear_session_cookies(response)
+    return Response(status_code=status.HTTP_204_NO_CONTENT, headers=response.headers)
 
 
 @router.post("/refresh", response_model=AuthResponse)
 @limiter.limit("10/minute", key_func=_refresh_rate_key)
 async def refresh_token(
     request: Request,
-    data: TokenRefresh,
+    response: Response,
     db: Annotated[AsyncSession, Depends(get_db)],
+    data: TokenRefresh | None = None,
 ) -> AuthResponse:
-    """Refresh access token using refresh token."""
+    """Rotate the refresh token and mint a new access token (ADR 0023).
+
+    The refresh token comes from the JSON body (bearer clients) or the
+    ``dp_refresh`` cookie (browser). The presented token is
+    revoked and replaced; presenting a revoked one burns its family.
+    """
+    presented = (data.refresh_token if data else None) or request.cookies.get(REFRESH_COOKIE)
+    if not presented:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
+        )
     try:
-        payload = decode_token(data.refresh_token)
-        user_id = payload.get("sub")
-        token_type = payload.get("type")
-        token_version = payload.get("token_version", 0)
-
-        if user_id is None or token_type != "refresh":
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid refresh token",
-            )
-
-    except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired refresh token",
+        user, new_refresh_token, family_id = await rotate_refresh_token(
+            db,
+            presented,
+            user_agent=request.headers.get("user-agent"),
+            client_ip=_client_ip(request),
         )
-
-    # Fetch user with memberships and clinics
-    result = await db.execute(
-        select(User).options(selectinload(User.memberships)).where(User.id == UUID(user_id))
-    )
-    user = result.scalar_one_or_none()
-
-    if not user or not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found or inactive",
-        )
-
-    # Check token version for revocation
-    if user.token_version != token_version:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has been revoked",
-        )
+    except RefreshTokenError as exc:
+        await db.commit()  # persist a reuse-detection family revoke
+        clear_session_cookies(response)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc))
 
     # Fetch memberships with clinics for response
     memberships_result = await db.execute(
@@ -352,13 +415,24 @@ async def refresh_token(
     if memberships:
         clinic_id = memberships[0].clinic_id
 
-    # Generate new tokens
+    # New access token bound to the same family; cookies re-set.
     access_token = create_access_token(
         user.id,
         clinic_id=clinic_id,
         token_version=user.token_version,
+        family_id=family_id,
     )
-    new_refresh_token = create_refresh_token(user.id, token_version=user.token_version)
+    await db.commit()
+    # The CSRF token is per family, not per access token: keep the one the
+    # browser already holds so tabs that captured it before this refresh
+    # (or browsers without the CookieStore API) keep passing the gate.
+    set_session_cookies(
+        response,
+        access_token=access_token,
+        refresh_token=new_refresh_token,
+        csrf_token=request.cookies.get(CSRF_COOKIE) or new_csrf_token(),
+        request=request,
+    )
 
     return AuthResponse(
         access_token=access_token,
@@ -391,20 +465,16 @@ async def get_me(
         for m in memberships
     ]
 
-    # Compute effective permissions (use first clinic's role for MVP)
+    # Compute effective permissions (use first clinic's role for MVP).
+    # granted_permissions_for is flag-aware (DB when RBAC_FROM_DB is on,
+    # static merged map otherwise) — one call covers both.
     permissions: list[str] = []
     if memberships:
         role = memberships[0].role
         clinic_id = memberships[0].clinic.id
         all_perms = module_registry.get_all_permissions() + CORE_PERMISSIONS
-        if settings.RBAC_FROM_DB:
-            from .rbac import resolve_granted_permissions
-
-            role_perms = await resolve_granted_permissions(db, clinic_id, role)
-            permissions = expand_permissions(role_perms, all_perms)
-        else:
-            role_perms = get_role_permissions(role)
-            permissions = expand_permissions(role_perms, all_perms)
+        role_perms = await granted_permissions_for(db, clinic_id, role)
+        permissions = expand_permissions(role_perms, all_perms)
 
     return ApiResponse(
         data=MeResponse(
@@ -521,6 +591,7 @@ async def create_user(
         user_id=user.id,
         clinic_id=clinic_id,
         role=data.role,
+        role_id=await resolve_role_id(db, clinic_id, data.role),
         is_professional=(
             data.is_professional
             if data.is_professional is not None
@@ -566,6 +637,7 @@ async def create_user_invite_link(
 @limiter.limit("10/hour")
 async def set_password_from_invite(
     request: Request,
+    response: Response,
     data: SetPasswordRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> TokenResponse:
@@ -599,12 +671,7 @@ async def set_password_from_invite(
     await db.commit()
 
     clinic_id = user.memberships[0].clinic_id if user.memberships else None
-    return TokenResponse(
-        access_token=create_access_token(
-            user.id, clinic_id=clinic_id, token_version=user.token_version
-        ),
-        refresh_token=create_refresh_token(user.id, token_version=user.token_version),
-    )
+    return await _start_session(request, response, db, user, clinic_id)
 
 
 @router.put("/users/{user_id}", response_model=ApiResponse[UserWithRoleResponse])
@@ -672,6 +739,7 @@ async def update_user(
     # Update role in membership
     if data.role is not None:
         membership.role = data.role
+        membership.role_id = await resolve_role_id(db, membership.clinic_id, data.role)
 
     # Explicit flag wins; a role-only change re-derives it so switching
     # someone to dentist keeps them schedulable without a second click.

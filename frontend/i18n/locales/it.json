@@ -35,6 +35,13 @@
     "menu": "Menu",
     "openMenu": "Apri menu",
     "close": "Chiudi",
+    "sections": {
+      "clinical": "Clinica",
+      "lab": "Laboratorio",
+      "financials": "Finanze",
+      "inventory": "Magazzino",
+      "practice": "Studio"
+    },
     "toggleSidebar": "Mostra/nascondi barra laterale",
     "documents": "Documenti"
   },
@@ -1198,6 +1205,8 @@
       "title": "Moduli",
       "subtitle": "Installa, disinstalla e aggiorna i moduli dello studio.",
       "description": "Gestisci quali moduli sono attivi nel tuo studio.",
+      "searchPlaceholder": "Cerca moduli…",
+      "filterState": "Stato",
       "deps": "Dipendenze",
       "noDeps": "Nessuna dipendenza",
       "state": {
@@ -2427,11 +2436,22 @@
       "whatsappUnavailableHint": "WhatsApp non è disponibile finché il numero della clinica non è collegato.",
       "whatsappConnect": "Collega WhatsApp (Kapso)",
       "noEmail": "Il paziente non ha un'e-mail in scheda",
-      "noPhone": "Il paziente non ha un telefono in scheda"
+      "noPhone": "Il paziente non ha un telefono in scheda",
+      "sms": "SMS",
+      "smsUnavailableHint": "Gli SMS non sono disponibili finché non viene configurato un provider SMS.",
+      "smsConnect": "Configura",
+      "smsDailyLimitLabel": "Limite giornaliero SMS",
+      "smsDailyLimitHelp": "Massimo di SMS in uscita al giorno per la clinica."
     },
     "channelSent": {
       "email": "E-mail inviata con successo",
-      "whatsapp": "Messaggio WhatsApp inviato con successo"
+      "whatsapp": "Messaggio WhatsApp inviato con successo",
+      "sms": "Messaggio SMS inviato con successo"
+    },
+    "prefs": {
+      "title": "Preferenze di notifica",
+      "description": "Tramite quali canali è possibile contattare questo paziente. La disiscrizione blocca il canale anche per gli invii forzati.",
+      "saved": "Preferenze salvate"
     }
   },
   "invoice": {
@@ -2823,6 +2843,10 @@
       "missingNumbers": "Numeri mancanti:",
       "noData": "Nessun dato per il periodo selezionato",
       "noOverdue": "Nessuna fattura scaduta",
+      "invoiceAging": "Anzianità fatture",
+      "invoiceAgingDescription": "Totali emessi in sospeso per fascia. Il non scaduto a parte.",
+      "notDue": "Non scadute",
+      "issuedTrend": "Trend emesse",
       "daysOverdue": "giorni di ritardo",
       "vatType": "Aliquota IVA",
       "base": "Imponibile",

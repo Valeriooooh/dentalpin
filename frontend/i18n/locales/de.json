@@ -35,6 +35,13 @@
     "menu": "Menü",
     "openMenu": "Menü öffnen",
     "close": "Schließen",
+    "sections": {
+      "clinical": "Klinisch",
+      "lab": "Labor",
+      "financials": "Finanzen",
+      "inventory": "Inventar",
+      "practice": "Praxis"
+    },
     "toggleSidebar": "Seitenleiste umschalten",
     "documents": "Dokumente"
   },
@@ -1198,6 +1205,8 @@
       "title": "Module",
       "subtitle": "Module der Praxis installieren, deinstallieren und aktualisieren.",
       "description": "Verwalten Sie, welche Module in Ihrer Praxis aktiv sind.",
+      "searchPlaceholder": "Module suchen…",
+      "filterState": "Status",
       "deps": "Abhängigkeiten",
       "noDeps": "Keine Abhängigkeiten",
       "state": {
@@ -2427,11 +2436,22 @@
       "whatsappUnavailableHint": "WhatsApp ist erst verfügbar, wenn die Nummer der Klinik verbunden ist.",
       "whatsappConnect": "WhatsApp (Kapso) verbinden",
       "noEmail": "Für den Patienten ist keine E-Mail hinterlegt",
-      "noPhone": "Für den Patienten ist keine Telefonnummer hinterlegt"
+      "noPhone": "Für den Patienten ist keine Telefonnummer hinterlegt",
+      "sms": "SMS",
+      "smsUnavailableHint": "SMS ist erst verfügbar, wenn ein SMS-Anbieter konfiguriert ist.",
+      "smsConnect": "Konfigurieren",
+      "smsDailyLimitLabel": "Tägliches SMS-Limit",
+      "smsDailyLimitHelp": "Maximal versendbare SMS pro Tag für die Klinik."
     },
     "channelSent": {
       "email": "E-Mail erfolgreich gesendet",
-      "whatsapp": "WhatsApp-Nachricht erfolgreich gesendet"
+      "whatsapp": "WhatsApp-Nachricht erfolgreich gesendet",
+      "sms": "SMS-Nachricht erfolgreich gesendet"
+    },
+    "prefs": {
+      "title": "Benachrichtigungseinstellungen",
+      "description": "Über welche Kanäle dieser Patient erreichbar ist. Eine Abmeldung blockiert den Kanal auch bei erzwungenen Sendungen.",
+      "saved": "Einstellungen gespeichert"
     }
   },
   "invoice": {
@@ -2823,6 +2843,10 @@
       "missingNumbers": "Fehlende Nummern:",
       "noData": "Keine Daten für den gewählten Zeitraum",
       "noOverdue": "Keine überfälligen Rechnungen",
+      "invoiceAging": "Rechnungsalter",
+      "invoiceAgingDescription": "Ausstehende Rechnungssummen je Altersgruppe. Noch nicht Fälliges separat.",
+      "notDue": "Nicht fällig",
+      "issuedTrend": "Ausstellungstrend",
       "daysOverdue": "Tage überfällig",
       "vatType": "Steuersatz",
       "base": "Bemessungsgrundlage",
