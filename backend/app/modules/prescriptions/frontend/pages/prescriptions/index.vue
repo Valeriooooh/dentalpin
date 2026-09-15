@@ -63,7 +63,7 @@ function startNew() {
 
 function editDraft(rx: Prescription) {
   editing.value = rx
-  editItems.value = rx.items.map(i => ({ ...i }))
+  editItems.value = rx.items.map(i => ({ ...i, dosage: i.dosage ?? '', unit: i.unit ?? '', frequency: i.frequency ?? '', duration: i.duration ?? '', instructions: i.instructions ?? '' }))
   editNotes.value = rx.notes || ''
   showEditor.value = true
 }
@@ -77,7 +77,7 @@ function removeLine(idx: number) {
 }
 
 function applyTemplate(tpl: PrescriptionTemplate) {
-  editItems.value = tpl.items.map((i, idx) => ({ ...i, sort_order: idx }))
+  editItems.value = tpl.items.map((i, idx) => ({ ...i, sort_order: idx, dosage: i.dosage ?? '', unit: i.unit ?? '', frequency: i.frequency ?? '', duration: i.duration ?? '', instructions: i.instructions ?? '' }))
 }
 
 async function save() {

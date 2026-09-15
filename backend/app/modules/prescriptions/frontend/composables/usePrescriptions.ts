@@ -4,12 +4,12 @@ export interface PrescriptionItem {
   id?: string
   medication_name: string
   catalog_ref?: string | null
-  dosage?: string | null
-  unit?: string | null
+  dosage?: string
+  unit?: string
   route?: string | null
-  frequency?: string | null
-  duration?: string | null
-  instructions?: string | null
+  frequency?: string
+  duration?: string
+  instructions?: string
   sort_order?: number
 }
 
