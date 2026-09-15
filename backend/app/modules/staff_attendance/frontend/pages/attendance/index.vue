@@ -4,7 +4,7 @@
  * and a daily pairing report. Small vertical slice — no shifts,
  * rosters, or overtime math (see module CLAUDE.md Later).
  */
-import type { AttendanceEvent, AttendanceReportRow, StaffMember } from '../composables/useAttendance'
+import type { AttendanceEvent, AttendanceReportRow, StaffMember } from '../../composables/useAttendance'
 import { PERMISSIONS } from '~~/app/config/permissions'
 
 definePageMeta({ middleware: ['auth'] })

@@ -1,6 +1,6 @@
 ---
 module: staff_attendance
-last_verified_commit: c649c730
+last_verified_commit: a6660a00
 ---
 
 # Staff attendance

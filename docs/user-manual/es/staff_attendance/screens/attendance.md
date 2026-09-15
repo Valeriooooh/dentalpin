@@ -2,7 +2,7 @@
 module: staff_attendance
 screen: attendance
 route: /attendance
-last_verified_commit: c649c730
+last_verified_commit: a6660a00
 related_endpoints:
   - POST /api/v1/staff_attendance/events
   - GET /api/v1/staff_attendance/members
