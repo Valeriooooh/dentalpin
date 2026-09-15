@@ -22,6 +22,7 @@
     "/module_layers/notifications/frontend",
     "/module_layers/odontogram/frontend",
     "/module_layers/patient_relationships/frontend",
+    "/module_layers/patient_segments/frontend",
     "/module_layers/patient_timeline/frontend",
     "/module_layers/patients/frontend",
     "/module_layers/patients_clinical/frontend",
@@ -195,6 +196,11 @@
     {
       "name": "patient_relationships",
       "path": "/module_layers/patient_relationships/frontend",
+      "routes": []
+    },
+    {
+      "name": "patient_segments",
+      "path": "/module_layers/patient_segments/frontend",
       "routes": []
     },
     {

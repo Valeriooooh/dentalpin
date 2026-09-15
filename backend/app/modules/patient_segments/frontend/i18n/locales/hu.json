@@ -1,0 +1,11 @@
+{
+  "patientSegments": {
+    "title": "Csoportok",
+    "emptyHint": "Nincs hozzárendelt csoport.",
+    "add": "Csoportok kezelése",
+    "remove": "Eltávolítás a csoportból",
+    "pickExisting": "Hozzáadás létező csoporthoz",
+    "newName": "Új csoport neve",
+    "create": "Létrehozás és hozzárendelés"
+  }
+}

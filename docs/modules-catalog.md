@@ -35,6 +35,7 @@ Maintained by `backend/scripts/generate_catalogs.py`. CI fails if a manifest cha
 | `notifications` | 0.1.0 | official | patients, agenda, budget, billing, catalog | auto | no | 10 | 7 | 7 | yes |
 | `odontogram` | 0.3.0 | official | patients, catalog | auto | no | 4 | 7 | 0 | yes |
 | `patient_relationships` | 0.2.0 | community | patients | manual | yes | 2 | 0 | 0 | yes |
+| `patient_segments` | 0.1.0 | community | patients | manual | yes | 2 | 0 | 0 | yes |
 | `patient_timeline` | 0.1.0 | official | patients | auto | no | 1 | 0 | 35 | yes |
 | `patients` | 0.1.0 | official | — | auto | no | 2 | 4 | 0 | yes |
 | `patients_clinical` | 0.1.0 | official | patients | auto | no | 4 | 1 | 0 | yes |
@@ -645,6 +646,23 @@ Patient family relationships (Lien de Parentée).
 - **Events emitted:** —
 - **Events consumed:** —
 - **Module CLAUDE.md:** [`backend/app/modules/patient_relationships/CLAUDE.md`](../backend/app/modules/patient_relationships/CLAUDE.md)
+
+### `patient_segments` — v0.1.0
+
+Clinic-local patient tags for grouping and campaigns.
+
+- **Author:** DentalPin Core Team
+- **License:** BSL-1.1
+- **Category:** community
+- **Install policy:** installable=True · auto_install=False · removable=True
+- **Depends:** `patients`
+- **Frontend layer:** `frontend`
+- **Permissions:**
+  - `patient_segments.read`
+  - `patient_segments.write`
+- **Events emitted:** —
+- **Events consumed:** —
+- **Module CLAUDE.md:** [`backend/app/modules/patient_segments/CLAUDE.md`](../backend/app/modules/patient_segments/CLAUDE.md)
 
 ### `patient_timeline` — v0.1.0
 
