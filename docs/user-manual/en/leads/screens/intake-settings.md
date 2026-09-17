@@ -125,8 +125,6 @@ Notes for whoever builds the form:
   free text: a sentence typed here is rejected.
 - Keep the hidden `website` field in the form and leave it empty: it is a trap
   for bots, and a filled one is accepted silently and thrown away.
-- `captcha_token` only matters if your administrator has configured a captcha
-  provider for the server.
 - The recommended integration is a **server-side** POST from your website or
   hosting platform. A browser `fetch()` straight from the clinic site also
   needs that site origin allowed in the server CORS configuration.

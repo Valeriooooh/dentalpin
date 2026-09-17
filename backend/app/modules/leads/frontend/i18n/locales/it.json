@@ -98,7 +98,6 @@
       "intakeUrl": "URL di ricezione",
       "example": "Richiesta di esempio",
       "routingNote": "Le richieste il cui telefono o e-mail appartiene già a un paziente non creano una nuova richiesta — vengono aggiunte ai Richiami per una richiamata.",
-      "captchaNote": "Questa clinica richiede un token captcha nel campo captcha_token.",
       "readOnly": "Non hai il permesso di modificare queste impostazioni.",
       "noPermission": "Non hai il permesso di vedere queste impostazioni.",
       "copy": "Copia"

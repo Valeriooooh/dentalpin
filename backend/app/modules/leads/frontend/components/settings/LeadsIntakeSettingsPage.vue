@@ -432,12 +432,6 @@ function lastUsedLabel(iso: string | null): string {
             icon="i-lucide-route"
             :description="t('leads.settings.routingNote')"
           />
-          <p
-            v-if="settings.captcha_required"
-            class="text-caption text-subtle mt-2"
-          >
-            {{ t('leads.settings.captchaNote') }}
-          </p>
         </UCard>
       </template>
     </template>

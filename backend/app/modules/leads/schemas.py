@@ -133,8 +133,6 @@ class LeadIntakeCreate(BaseModel):
     availability_slot: AvailabilitySlot | None = None
     # Honeypot: a real person leaves it empty. Never stored, never echoed.
     website: str = Field(default="", max_length=200)
-    # Only meaningful when LEADS_CAPTCHA_PROVIDER is configured.
-    captcha_token: str | None = Field(default=None, max_length=4096)
 
     _strip_name = field_validator("full_name", "phone", "motive")(_strip_required)
     _strip_free = field_validator("description")(_strip_optional)
@@ -194,10 +192,6 @@ class LeadSettingsResponse(BaseModel):
     day_count_date: date | None
     intake_url: str
     key: LeadIntakeKeyStatus
-    #: True when LEADS_CAPTCHA_PROVIDER is configured (operator-level env
-    #: switch, not per-clinic). The settings page mentions the captcha
-    #: field in its integration example only when it is actually required.
-    captcha_required: bool = False
 
 
 class LeadSettingsUpdate(BaseModel):

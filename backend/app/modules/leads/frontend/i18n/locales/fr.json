@@ -98,7 +98,6 @@
       "intakeUrl": "URL d'entrée",
       "example": "Exemple de requête",
       "routingNote": "Les demandes dont le téléphone ou l'e-mail appartient déjà à un patient ne créent pas de nouvelle demande — elles sont ajoutées aux Rappels pour un appel à effectuer.",
-      "captchaNote": "Cette clinique exige un jeton captcha dans le champ captcha_token.",
       "readOnly": "Vous n'avez pas la permission de modifier ces paramètres.",
       "noPermission": "Vous n'avez pas la permission de consulter ces paramètres.",
       "copy": "Copier"

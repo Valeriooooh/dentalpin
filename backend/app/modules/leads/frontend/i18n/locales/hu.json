@@ -98,7 +98,6 @@
       "intakeUrl": "Beküldési URL",
       "example": "Példakérés",
       "routingNote": "Ha egy érdeklődés telefonszáma vagy e-mail-címe már egy pácienshez tartozik, nem jön létre új érdeklődés — visszahívásként bekerül a Visszahívások közé.",
-      "captchaNote": "Ez a rendelő captcha tokent kér a captcha_token mezőben.",
       "readOnly": "Nincs jogosultsága e beállítások módosításához.",
       "noPermission": "Nincs jogosultsága e beállítások megtekintéséhez.",
       "copy": "Másolás"

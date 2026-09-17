@@ -23,7 +23,6 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import settings as app_settings
 from app.core.auth.dependencies import ClinicContext, get_clinic_context, require_permission
 from app.core.schemas import ApiResponse, PaginatedApiResponse
 from app.database import get_db
@@ -77,7 +76,6 @@ async def _settings_response(db: AsyncSession, clinic_id: UUID) -> LeadSettingsR
             is_active=bool(key.is_active) if key else False,
             last_used_at=key.last_used_at if key else None,
         ),
-        captcha_required=bool((app_settings.LEADS_CAPTCHA_PROVIDER or "").strip()),
     )
 
 

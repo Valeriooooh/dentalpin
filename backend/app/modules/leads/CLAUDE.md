@@ -106,8 +106,8 @@ Two surfaces, and the cap is not in the environment:
   **Settings → Integrations → "Formulario web"**
   (`/settings/integrations/leads`). There is no `LEADS_INTAKE_DAILY_CAP` and
   there must not be one: the column default *is* the default.
-- **Env vars** — only `LEADS_INTAKE_MAX_BODY_KB` (default 8) and the optional
-  captcha credentials `LEADS_CAPTCHA_PROVIDER` / `LEADS_CAPTCHA_SECRET`.
+- **Env vars** — `LEADS_INTAKE_MAX_BODY_KB` (default 8) and nothing else. There
+  is deliberately no captcha switch and no daily cap here.
 
 ## Lifecycle
 

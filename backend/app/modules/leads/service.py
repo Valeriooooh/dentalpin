@@ -124,13 +124,12 @@ class LeadService:
     async def create_lead(db: AsyncSession, clinic_id: UUID, data: dict) -> Lead:
         """The only place a lead row is inserted.
 
-        Only LeadIntakeService.route may call this. website and
-        captcha_token are intake-only fields — dropped here so the
-        honeypot can never be persisted by a future caller.
+        Only LeadIntakeService.route may call this. website is an
+        intake-only field — dropped here so the honeypot can never be
+        persisted by a future caller.
         """
         payload = dict(data)
         payload.pop("website", None)
-        payload.pop("captcha_token", None)
         # Canonical mon..sun order, no duplicates, whatever the caller sent.
         payload["availability_days"] = canonical_days(payload.get("availability_days"))
         row = Lead(

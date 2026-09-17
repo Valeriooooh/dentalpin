@@ -13,8 +13,6 @@ export interface LeadSettings {
   day_count_date: string | null
   intake_url: string
   key: LeadIntakeKeyStatus
-  /** Operator-level env switch (LEADS_CAPTCHA_PROVIDER), not per clinic. */
-  captcha_required: boolean
 }
 
 export interface IntakeKeyRotated {

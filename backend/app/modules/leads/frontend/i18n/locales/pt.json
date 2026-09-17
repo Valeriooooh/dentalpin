@@ -98,7 +98,6 @@
       "intakeUrl": "URL de receção",
       "example": "Exemplo de pedido",
       "routingNote": "Os pedidos cujo telefone ou email já pertence a um paciente não criam um pedido novo — são adicionados às Reconvocações para uma chamada de retorno.",
-      "captchaNote": "Esta clínica exige um token de captcha no campo captcha_token.",
       "readOnly": "Não tem permissão para alterar estas definições.",
       "noPermission": "Não tem permissão para ver estas definições.",
       "copy": "Copiar"

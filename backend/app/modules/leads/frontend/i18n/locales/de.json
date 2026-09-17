@@ -98,7 +98,6 @@
       "intakeUrl": "Eingangs-URL",
       "example": "Beispielanfrage",
       "routingNote": "Anfragen, deren Telefonnummer oder E-Mail bereits zu einem Patienten gehören, werden nicht als neue Anfrage angelegt — sie werden in Recalls für einen Rückruf eingetragen.",
-      "captchaNote": "Diese Praxis verlangt ein Captcha-Token im Feld captcha_token.",
       "readOnly": "Sie haben keine Berechtigung, diese Einstellungen zu ändern.",
       "noPermission": "Sie haben keine Berechtigung, diese Einstellungen einzusehen.",
       "copy": "Kopieren"

@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import importlib
-
-import httpx
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
@@ -18,11 +15,6 @@ from app.modules.patients.models import Patient
 from app.modules.recalls.models import Recall
 
 from .conftest import make_clinic, make_patient
-
-# The package __init__ rebinds the name public_router to the APIRouter
-# object, so the submodule must be resolved through importlib before its
-# helpers can be monkeypatched.
-public_router_module = importlib.import_module("app.modules.leads.public_router")
 
 INTAKE = "/api/v1/leads/public/intake"
 
@@ -342,64 +334,3 @@ async def test_unlimited_cap_never_trips(
             INTAKE, json={**PAYLOAD, "phone": f"69900010{index}"}, headers={"X-Lead-Key": key}
         )
         assert response.status_code == 201
-
-
-# ---------------------------------------------------------------------------
-# Captcha (wired but inert)
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.asyncio
-async def test_captcha_is_inert_when_unconfigured(
-    client: AsyncClient, db_session: AsyncSession, test_clinic: Clinic
-):
-    key = await _mint_key(db_session, test_clinic.id)
-    response = await client.post(
-        INTAKE, json={**PAYLOAD, "captcha_token": "garbage"}, headers={"X-Lead-Key": key}
-    )
-    assert response.status_code == 201
-
-
-@pytest.mark.asyncio
-async def test_captcha_fails_closed_when_configured(
-    client: AsyncClient,
-    db_session: AsyncSession,
-    test_clinic: Clinic,
-    monkeypatch: pytest.MonkeyPatch,
-):
-    key = await _mint_key(db_session, test_clinic.id)
-    monkeypatch.setattr(settings, "LEADS_CAPTCHA_PROVIDER", "turnstile")
-    monkeypatch.setattr(settings, "LEADS_CAPTCHA_SECRET", "secret")
-
-    async def _reject(token, remote_ip):
-        return False
-
-    monkeypatch.setattr(public_router_module, "_verify_captcha", _reject)
-    denied = await client.post(INTAKE, json=PAYLOAD, headers={"X-Lead-Key": key})
-    assert denied.status_code == 403
-    assert (
-        await db_session.execute(select(Lead).where(Lead.clinic_id == test_clinic.id))
-    ).scalars().all() == []
-
-    async def _accept(token, remote_ip):
-        return True
-
-    monkeypatch.setattr(public_router_module, "_verify_captcha", _accept)
-    accepted = await client.post(
-        INTAKE, json={**PAYLOAD, "captcha_token": "ok"}, headers={"X-Lead-Key": key}
-    )
-    assert accepted.status_code == 201
-
-
-@pytest.mark.asyncio
-async def test_captcha_verifier_fails_closed_on_provider_error(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(settings, "LEADS_CAPTCHA_PROVIDER", "hcaptcha")
-    monkeypatch.setattr(settings, "LEADS_CAPTCHA_SECRET", "secret")
-
-    async def _boom(*args, **kwargs):
-        raise httpx.ConnectError("provider unreachable")
-
-    monkeypatch.setattr(httpx.AsyncClient, "post", _boom)
-    assert await public_router_module._verify_captcha("token", "1.2.3.4") is False
-    # No token at all is also a refusal, not a pass.
-    assert await public_router_module._verify_captcha(None, None) is False

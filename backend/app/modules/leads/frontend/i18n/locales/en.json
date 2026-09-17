@@ -98,7 +98,6 @@
       "intakeUrl": "Intake URL",
       "example": "Example request",
       "routingNote": "Enquiries whose phone or email already belongs to a patient do not create a lead — they are added to Recalls for a call-back.",
-      "captchaNote": "This clinic requires a captcha token in the captcha_token field.",
       "readOnly": "You do not have permission to change these settings.",
       "noPermission": "You do not have permission to view these settings.",
       "copy": "Copy"

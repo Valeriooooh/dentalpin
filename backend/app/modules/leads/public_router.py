@@ -21,7 +21,6 @@ import hashlib
 import logging
 from typing import Annotated
 
-import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -52,15 +51,6 @@ def _key_rejected() -> HTTPException:
     )
 
 
-#: Provider endpoints for the optional captcha. Inert unless
-#: LEADS_CAPTCHA_PROVIDER is set to one of these keys.
-_CAPTCHA_ENDPOINTS = {
-    "turnstile": "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-    "hcaptcha": "https://hcaptcha.com/siteverify",
-}
-_CAPTCHA_TIMEOUT_SECONDS = 5.0
-
-
 def _by_lead_key(request: Request) -> str:
     """Rate-limit bucket: sha256 of the presented key.
 
@@ -86,38 +76,6 @@ def _enforce_body_limit(request: Request) -> None:
         )
 
 
-async def _verify_captcha(token: str | None, remote_ip: str | None) -> bool:
-    """Verify the captcha token when a provider is configured.
-
-    Fail-closed: a missing token, a rejected token and a provider error
-    all return False, so a provider outage stops intake rather than
-    opening it. Inert (True) when no provider is configured — the default,
-    so self-hosters need no third-party dependency.
-    """
-    provider = (settings.LEADS_CAPTCHA_PROVIDER or "").strip().lower()
-    if not provider:
-        return True
-
-    endpoint = _CAPTCHA_ENDPOINTS.get(provider)
-    if endpoint is None:
-        logger.error("leads: unknown captcha provider %r — refusing intake", provider)
-        return False
-    if not token:
-        return False
-
-    payload = {"secret": settings.LEADS_CAPTCHA_SECRET, "response": token}
-    if remote_ip:
-        payload["remoteip"] = remote_ip
-    try:
-        async with httpx.AsyncClient(timeout=_CAPTCHA_TIMEOUT_SECONDS) as client:
-            response = await client.post(endpoint, data=payload)
-            response.raise_for_status()
-            return bool(response.json().get("success"))
-    except Exception:  # noqa: BLE001 — any provider problem is a refusal
-        logger.warning("leads: captcha verification failed (%s)", provider, exc_info=True)
-        return False
-
-
 @public_router.post(
     "/intake",
     response_model=ApiResponse[LeadIntakeAck],
@@ -134,9 +92,9 @@ async def intake_lead(
 ) -> ApiResponse[LeadIntakeAck]:
     """Accept one enquiry from the clinic's website.
 
-    Cheapest rejection first: honeypot, body size, key, captcha, daily
-    cap. The outcome is discarded — a matched enquiry must not be
-    distinguishable from a new one (D12).
+    Cheapest rejection first: honeypot, body size, key, daily cap. The
+    outcome is discarded — a matched enquiry must not be distinguishable
+    from a new one (D12).
     """
     # 1. Honeypot: a bot must see success, and nothing is written — not
     #    even a recall.
@@ -152,15 +110,7 @@ async def intake_lead(
     if clinic_id is None:
         raise _key_rejected()
 
-    # 3. Optional captcha (inert unless configured).
-    remote_ip = request.client.host if request.client else None
-    if not await _verify_captcha(data.captcha_token, remote_ip):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Captcha verification failed",
-        )
-
-    # 4. Daily cap: one atomic statement, counted before the write so
+    # 3. Daily cap: one atomic statement, counted before the write so
     #    blocked attempts keep showing in the gauge.
     day_count, daily_cap = await LeadSettingsService.consume_daily_quota(db, clinic_id)
     if daily_cap and day_count > daily_cap:
@@ -178,7 +128,7 @@ async def intake_lead(
             headers={"Retry-After": "3600"},
         )
 
-    # 5. Route, discard the outcome, always the same answer.
+    # 4. Route, discard the outcome, always the same answer.
     await LeadIntakeService.route(
         db,
         clinic_id,

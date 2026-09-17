@@ -130,8 +130,6 @@ Notas para quien construya el formulario:
   escrita aquí se rechaza.
 - Mantén el campo oculto `website` en el formulario y déjalo vacío: es una
   trampa para bots, y si viene relleno se acepta en silencio y se descarta.
-- `captcha_token` solo importa si tu administrador ha configurado un proveedor
-  de captcha en el servidor.
 - La integración recomendada es un POST **desde el servidor** de tu web o de tu
   plataforma. Un `fetch()` de navegador lanzado directamente desde la web de la
   clínica necesita además que el origen de ese sitio esté permitido en la

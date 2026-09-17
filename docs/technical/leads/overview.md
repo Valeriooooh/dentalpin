@@ -33,7 +33,6 @@ POST /api/v1/leads/public/intake          POST /api/v1/leads/
                                     (no lead, no recall — a bot must see success)
   body > LEADS_INTAKE_MAX_BODY_KB ► 413
   key missing/unknown/inactive ...► 401 (one generic message; public path only)
-  captcha configured and failing .► 403 (fail-closed; inert when unconfigured)
   daily cap reached ..............► 429 + Retry-After: 3600 (counted anyway)
   ──────────────────────────────────────────────────────────────────────────
   match patients by phone OR email (this clinic, status != archived, LIMIT 3)
@@ -179,7 +178,6 @@ form, and an actual person double-submitting. The layers, cheapest first:
 | 8 KB body cap + `max_length` on every field | memory/storage abuse | a declared-size ceiling, not a streaming read cap |
 | Honeypot `website` field | naive bots | free; silently 201s with no write |
 | Recall dedupe + 4000-character note cap | spam turning into staff noise | free |
-| Optional captcha (`LEADS_CAPTCHA_PROVIDER` + `_SECRET`) | distributed bot spam | inert unless configured; 5 s timeout; **fail-closed** |
 | Rotate the key, or `PATCH /settings/intake-key {is_active:false}` | an *active* flood | instant, no deploy — the operator kill switch |
 
 **Honest limits — read these before trusting a layer:**
@@ -190,9 +188,10 @@ form, and an actual person double-submitting. The layers, cheapest first:
   is still worth having (it stops the lazy case); the **per-key** limit and the
   **per-clinic daily cap** are the real bounds — which is why the cap lives in
   Postgres and not in process memory.
-- Captcha raises the price of distributed spam; it does not make it impossible.
-  It stays off by default so self-hosters keep working with no third-party
-  dependency; turn it on for a clinic that is actually being targeted.
+- A captcha was considered and deliberately **not** shipped: it is inert without
+  external credentials, and the key + per-clinic cap already bound the damage. An
+  operator facing distributed spam should put Cloudflare or nginx in front
+  (below) rather than expect a third-party dependency to be added here.
 - Rotating the key is the *complete* answer to a leaked key: the old key stops
   working immediately and legitimate intake continues with the new one.
   Rotating never resets `day_count` — it stops a flood, it does not hand the
@@ -211,9 +210,9 @@ backed by the four `/settings` routes. The cap is a `leads_settings` column
 edited in the UI — **never an env var**: a clinic has to be able to raise its
 own ceiling during a campaign without an admin editing `.env` and restarting
 containers. There is no `LEADS_INTAKE_DAILY_CAP`; the column default *is* the
-default. Only two things stay in the environment, and neither is a business
-decision: `LEADS_INTAKE_MAX_BODY_KB` and the optional captcha credentials.
-Lowering the cap below today count blocks intake immediately — that is the
+default. One thing stays in the environment, and it is not a business decision:
+`LEADS_INTAKE_MAX_BODY_KB`. Lowering the cap below today count blocks intake
+immediately — that is the
 intended emergency lever, and the page says so.
 
 ## Events

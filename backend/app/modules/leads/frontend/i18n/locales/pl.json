@@ -98,7 +98,6 @@
       "intakeUrl": "URL przyjmowania zgłoszeń",
       "example": "Przykładowe żądanie",
       "routingNote": "Jeśli numer telefonu lub e-mail ze zgłoszenia należy już do pacjenta, nowe zgłoszenie nie powstaje — trafia ono do Wizyt kontrolnych jako telefon do wykonania.",
-      "captchaNote": "Ten gabinet wymaga tokenu captcha w polu captcha_token.",
       "readOnly": "Nie masz uprawnień do zmiany tych ustawień.",
       "noPermission": "Nie masz uprawnień do przeglądania tych ustawień.",
       "copy": "Kopiuj"

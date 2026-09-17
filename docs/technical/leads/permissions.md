@@ -48,6 +48,6 @@ key in, so it belongs to whoever owns the website. Do not grant
 `POST /api/v1/leads/public/intake` is unauthenticated by design: the caller is
 the clinic website, which has no JWT. Protection is the per-clinic intake key
 (`X-Lead-Key`, SHA-256 hashed at rest, one per clinic, revocable), the honeypot,
-the 8 KB body cap, the optional captcha, the per-clinic daily cap and the rate
+the 8 KB body cap, the per-clinic daily cap and the rate
 limits. It returns the same body in every routing branch, so it can never be
 used to ask "is this phone one of your patients?".

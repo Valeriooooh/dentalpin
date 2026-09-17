@@ -8,8 +8,8 @@
   mounted at `/api/v1/leads/`, with the `/leads` queue page and the
   Settings → Integrations → "Formulario web" settings page.
 - Public, key-gated intake endpoint `POST /api/v1/leads/public/intake`
-  (`X-Lead-Key`): honeypot, 8 KB body cap, optional captcha, per-clinic
-  daily cap and identical responses in every routing branch (D12).
+  (`X-Lead-Key`): honeypot, 8 KB body cap, per-clinic daily cap and identical
+  responses in every routing branch (D12).
 - Routing rule: an enquiry whose phone **or** email matches a non-archived
   patient of the clinic queues a recall (`reason="other"`, `priority="high"`,
   due today) and writes **no** lead row; `do_not_contact` matches land in
