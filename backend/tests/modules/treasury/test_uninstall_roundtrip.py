@@ -2,10 +2,13 @@
 
 Install → uninstall → reinstall must drop ONLY the module's tables
 (``treasury_accounts``, ``treasury_entries``) and leave every other
-module untouched. Branch-scoped target ``treasury@-1`` (the
-<label>@base form would downgrade every branch — see
-_downgrade_target_for). Marked ``alembic_roundtrip`` and excluded from
-the default pytest run.
+module untouched. Branch-scoped target ``treasury@-3`` — one step per
+revision on the branch (tre_0001/tre_0002/tre_0003); the ``-N`` count
+must grow with the branch. Plain ``base`` (or ``<label>@base``) would
+downgrade every branch to the shared ancestor (see
+_downgrade_target_for) — and a bare ``-1`` only peels the newest
+revision. Marked ``alembic_roundtrip`` and excluded from the default
+pytest run.
 """
 
 from __future__ import annotations
@@ -61,7 +64,7 @@ def test_treasury_uninstall_roundtrip_is_branch_scoped() -> None:
     before = _list_tables()
     assert TRE_TABLES.issubset(before), "treasury tables missing after upgrade"
 
-    _alembic("downgrade", "treasury@-1")
+    _alembic("downgrade", "treasury@-3")
     after_down = _list_tables()
     assert TRE_TABLES.isdisjoint(after_down), "treasury tables still present after downgrade"
 

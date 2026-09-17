@@ -30,8 +30,8 @@ const newName = ref('')
 const newKind = ref('cash')
 
 const showTransferModal = ref(false)
-const transferFrom = ref<string | null>(null)
-const transferTo = ref<string | null>(null)
+const transferFrom = ref<string | undefined>(undefined)
+const transferTo = ref<string | undefined>(undefined)
 const transferAmount = ref('')
 const transferMemo = ref('')
 
