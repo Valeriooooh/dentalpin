@@ -54,6 +54,20 @@ class Settings(BaseSettings):
     LOGIN_RATE_LIMIT: str = "5/minute"
     REGISTER_RATE_LIMIT: str = "3/hour"
 
+    # Leads module — public intake endpoint (/api/v1/leads/public/intake).
+    # Only the two things that are NOT business decisions live here: the
+    # request size ceiling and the optional captcha credentials. The daily
+    # cap is a per-clinic leads_settings column edited at
+    # Settings → Integrations → "Formulario web" — deliberately not an env
+    # var (two sources of truth guarantee a support call where the UI says
+    # 200 and the process says 50).
+    LEADS_INTAKE_MAX_BODY_KB: int = 8
+    # "" = captcha disabled (the default: self-hosters need no third-party
+    # dependency). "turnstile" | "hcaptcha" enables verification, which is
+    # fail-closed: missing/rejected token or provider outage → 403.
+    LEADS_CAPTCHA_PROVIDER: str = ""
+    LEADS_CAPTCHA_SECRET: str = ""
+
     # Testing
     TESTING: bool = False
     # RBAC source of truth. When False (default), permission checks use the
