@@ -2,8 +2,10 @@
 
 Install → uninstall → reinstall must drop ONLY ``attendance_events`` and
 leave every other module untouched. Branch-scoped target
-``staff_attendance@-1`` (the <label>@base form would downgrade every
-branch — see _downgrade_target_for). Marked ``alembic_roundtrip`` and
+``staff_attendance@-2`` — one step per revision on the branch
+(satt_0001/satt_0002); the ``-N`` count must grow with the branch. Plain
+``base`` (or ``<label>@base``) would downgrade every branch to the shared
+ancestor — see _downgrade_target_for. Marked ``alembic_roundtrip`` and
 excluded from the default pytest run.
 """
 
@@ -60,7 +62,7 @@ def test_staff_attendance_uninstall_roundtrip_is_branch_scoped() -> None:
     before = _list_tables()
     assert SATT_TABLES.issubset(before), "attendance tables missing after upgrade"
 
-    _alembic("downgrade", "staff_attendance@-1")
+    _alembic("downgrade", "staff_attendance@-2")
     after_down = _list_tables()
     assert SATT_TABLES.isdisjoint(after_down), "attendance tables still present after downgrade"
 

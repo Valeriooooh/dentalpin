@@ -43,7 +43,7 @@ const events = ref<AttendanceEvent[]>([])
 const report = ref<AttendanceReportRow[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
-const clockTarget = ref<string | null>(null)
+const clockTarget = ref<string | undefined>(undefined)
 const clockNote = ref('')
 
 const staffOptions = computed(() =>
