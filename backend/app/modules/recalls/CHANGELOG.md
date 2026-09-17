@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- feat(#232): sidebar entry grouped under the Clinical header (`nav.section` "clinical").
 - fix(#126): de/it/pl locale parity with en (confirms.cancel / confirms.done).
 
 - feat(i18n): Arabic (ar) locale for the module's frontend layer.

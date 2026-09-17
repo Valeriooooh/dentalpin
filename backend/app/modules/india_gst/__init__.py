@@ -52,6 +52,7 @@ class IndiaGstModule(BaseModule):
             "navigation": [
                 {
                     "label": "nav.indiaGst",
+                    "section": "financials",
                     "icon": "i-lucide-receipt-indian-rupee",
                     "to": "/reports/india-gst",
                     "permission": "india_gst.reports.read",

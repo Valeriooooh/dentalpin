@@ -59,6 +59,7 @@ class ReportsModule(BaseModule):
             "navigation": [
                 {
                     "label": "nav.reports",
+                    "section": "practice",
                     "icon": "i-lucide-bar-chart-3",
                     "to": "/reports",
                     "permission": "reports.billing.read",

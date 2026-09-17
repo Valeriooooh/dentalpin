@@ -1084,6 +1084,13 @@
         "description": "உங்கள் சுயவிவரம், கடவுச்சொல் மற்றும் மொழி."
       }
     },
+    "supergroups": {
+      "clinicalSetup": { "label": "மருத்துவ அமைப்பு" },
+      "clinicalManagement": { "label": "மருத்துவ மேலாண்மை" },
+      "financialConfiguration": { "label": "நிதி உள்ளமைவு" },
+      "systemAddons": { "label": "அமைப்பு மற்றும் துணைநிரல்கள்" },
+      "myPreferences": { "label": "என் விருப்பங்கள்" }
+    },
     "search": {
       "placeholder": "அமைப்புகளைத் தேடு…",
       "empty": "அந்தத் தேடலுக்குப் பொருந்தும் முடிவுகள் இல்லை.",

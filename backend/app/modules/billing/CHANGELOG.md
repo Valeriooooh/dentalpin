@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- feat(#232): sidebar entry grouped under the Financials header (`nav.section` "financials").
 - refactor(#441): `PDF_LOCALES` / `PDF_LOCALE_PATTERN` / the Babel locale map moved to `app/core/pdf_locales.py` so budget can share them without depending on billing. No behaviour change.
 
 - fix: `GET /invoices/{id}/pdf` (and `/pdf/preview`) accept every UI locale instead of `es|en|ta` only — a pt/pl/it/de/hu/fr/ar UI got a 422 on "Download PDF". Labels fall back to English until translated (#422); amounts and dates use the locale's separators.

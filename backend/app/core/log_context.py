@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
+import re
 from collections.abc import Iterator
 from contextvars import ContextVar, Token
 from uuid import UUID, uuid4
@@ -130,3 +131,67 @@ def setup_logging(level: int | str = logging.INFO) -> None:
         handler.setFormatter(formatter)
         handler.addFilter(filt)
         root.addHandler(handler)
+
+
+# Path segments that identify a person or grant access: UUIDs (patient ids,
+# budget public tokens) and any long opaque token. Replaced before an event
+# leaves the process; the query string is dropped whole (``?t=<token>``).
+_OPAQUE_SEGMENT = re.compile(
+    r"/(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+    r"|[A-Za-z0-9_-]{20,})(?=[/?#]|$)"
+)
+
+
+def scrub_event(event: dict, hint: dict | None = None) -> dict:
+    """``before_send`` / ``before_send_transaction``: strip identifiers from
+    the request URL. ``send_default_pii=False`` already drops body, cookies
+    and client IP, but not the URL — and that is where our ids live
+    (``/patients/{uuid}``, ``/public/budgets/{token}``, ``?t=...``)."""
+    request = event.get("request")
+    if isinstance(request, dict):
+        request.pop("query_string", None)
+        url = request.get("url")
+        if isinstance(url, str):
+            request["url"] = _OPAQUE_SEGMENT.sub("/[id]", url)
+    return event
+
+
+def setup_error_tracking(
+    dsn: str = "",
+    traces_sample_rate: float = 0.0,
+    environment: str = "",
+    release: str = "",
+) -> bool:
+    """Attach Sentry (or any Sentry-protocol backend, e.g. self-hosted
+    GlitchTip) when a DSN is configured. Returns True when attached.
+
+    No-op (False) without a DSN or without ``sentry_sdk`` installed, and
+    never raises — error reporting must not break boot. PII is never
+    attached (``send_default_pii=False``) and URLs are scrubbed
+    (:func:`scrub_event`): clinic data stays out of error payloads by
+    construction. Tracing is a second data flow (span descriptions carry
+    SQL text) and stays off unless the operator raises the sample rate.
+    """
+    if not dsn:
+        return False
+    try:
+        import sentry_sdk
+    except ImportError:
+        logging.getLogger(__name__).warning(
+            "SENTRY_DSN is set but sentry_sdk is not installed; error tracking off"
+        )
+        return False
+    try:
+        sentry_sdk.init(
+            dsn=dsn,
+            send_default_pii=False,
+            traces_sample_rate=traces_sample_rate,
+            environment=environment or None,
+            release=release or None,
+            before_send=scrub_event,
+            before_send_transaction=scrub_event,
+        )
+    except Exception:
+        logging.getLogger(__name__).exception("sentry_sdk.init failed; error tracking off")
+        return False
+    return True

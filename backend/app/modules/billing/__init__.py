@@ -44,6 +44,7 @@ class BillingModule(BaseModule):
             "navigation": [
                 {
                     "label": "nav.invoices",
+                    "section": "financials",
                     "icon": "i-lucide-receipt",
                     "to": "/invoices",
                     "permission": "billing.read",

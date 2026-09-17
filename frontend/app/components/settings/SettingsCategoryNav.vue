@@ -41,45 +41,63 @@ function categoryHref(cat: VisibleCategory): string {
     :class="fullWidth ? '' : 'sticky top-20'"
     :aria-label="t('settings.navLabel')"
   >
-    <NuxtLink
-      v-for="cat in registry.categories.value"
-      :key="cat.id"
-      :to="categoryHref(cat)"
-      class="group flex items-center gap-3 rounded-md px-3 py-2.5 min-h-[44px] transition border-s-2"
-      :class="[
-        activeId === cat.id
-          ? 'bg-(--color-primary-soft) border-(--color-primary) text-default'
-          : 'border-transparent hover:bg-(--color-surface-muted) text-default'
-      ]"
+    <template
+      v-for="(group, gi) in registry.supergroups.value"
+      :key="group.id"
     >
-      <UIcon
-        :name="cat.icon"
-        class="w-5 h-5 shrink-0"
-        :class="activeId === cat.id ? 'text-(--color-primary-accent)' : 'text-muted group-hover:text-default'"
-      />
-      <div class="min-w-0 flex-1">
-        <div class="flex items-center gap-2">
-          <span class="text-body font-medium truncate">
-            {{ categoryLabel(cat) }}
-          </span>
-          <span
-            v-if="cat.hasAttention"
-            class="w-2 h-2 rounded-full bg-(--color-warning-accent) shrink-0"
-            :aria-label="t('settings.attentionRequired')"
-          />
-        </div>
-        <p
-          v-if="!fullWidth"
-          class="hidden lg:block text-caption text-subtle truncate"
+      <p
+        :id="`settings-group-${group.id}-label`"
+        class="px-3 pb-1 text-caption font-medium text-subtle uppercase tracking-wide"
+        :class="gi === 0 ? 'pt-1' : 'pt-4 mt-3 border-t border-(--color-border-default)'"
+      >
+        {{ t(group.labelKey) }}
+      </p>
+      <div
+        role="group"
+        class="flex flex-col gap-0.5"
+        :aria-labelledby="`settings-group-${group.id}-label`"
+      >
+        <NuxtLink
+          v-for="cat in group.categories"
+          :key="cat.id"
+          :to="categoryHref(cat)"
+          class="group flex items-center gap-3 rounded-md px-3 py-2.5 min-h-[44px] transition border-s-2"
+          :class="[
+            activeId === cat.id
+              ? 'bg-(--color-primary-soft) border-(--color-primary) text-default'
+              : 'border-transparent hover:bg-(--color-surface-muted) text-default'
+          ]"
         >
-          {{ categoryDescription(cat) }}
-        </p>
+          <UIcon
+            :name="cat.icon"
+            class="w-5 h-5 shrink-0"
+            :class="activeId === cat.id ? 'text-(--color-primary-accent)' : 'text-muted group-hover:text-default'"
+          />
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2">
+              <span class="text-body font-medium truncate">
+                {{ categoryLabel(cat) }}
+              </span>
+              <span
+                v-if="cat.hasAttention"
+                class="w-2 h-2 rounded-full bg-(--color-warning-accent) shrink-0"
+                :aria-label="t('settings.attentionRequired')"
+              />
+            </div>
+            <p
+              v-if="!fullWidth"
+              class="hidden lg:block text-caption text-subtle truncate"
+            >
+              {{ categoryDescription(cat) }}
+            </p>
+          </div>
+          <UIcon
+            v-if="fullWidth"
+            name="i-lucide-chevron-right"
+            class="w-5 h-5 text-subtle shrink-0 lg:hidden"
+          />
+        </NuxtLink>
       </div>
-      <UIcon
-        v-if="fullWidth"
-        name="i-lucide-chevron-right"
-        class="w-5 h-5 text-subtle shrink-0 lg:hidden"
-      />
-    </NuxtLink>
+    </template>
   </nav>
 </template>

@@ -34,6 +34,7 @@ class LabOrdersModule(BaseModule):
             "navigation": [
                 {
                     "label": "nav.labOrdersForm",
+                    "section": "lab",
                     "icon": "i-lucide-clipboard-plus",
                     "to": "/lab-orders/new",
                     "permission": "lab_orders.write",
@@ -41,6 +42,7 @@ class LabOrdersModule(BaseModule):
                 },
                 {
                     "label": "nav.labOrdersStatus",
+                    "section": "lab",
                     "icon": "i-lucide-flask-conical",
                     "to": "/lab-orders",
                     "permission": "lab_orders.read",

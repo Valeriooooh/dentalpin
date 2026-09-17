@@ -54,6 +54,7 @@ class RecallsModule(BaseModule):
             "navigation": [
                 {
                     "label": "nav.recalls",
+                    "section": "clinical",
                     "icon": "i-lucide-bell",
                     "to": "/recalls",
                     "permission": "recalls.read",

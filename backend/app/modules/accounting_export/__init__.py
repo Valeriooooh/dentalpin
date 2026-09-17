@@ -36,6 +36,7 @@ class AccountingExportModule(BaseModule):
             "navigation": [
                 {
                     "label": "nav.accountingExport",
+                    "section": "financials",
                     "icon": "i-lucide-file-spreadsheet",
                     "to": "/accounting-export",
                     "permission": "accounting_export.export.read",

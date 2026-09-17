@@ -82,6 +82,24 @@ export interface VisibleCategory extends SettingsCategory {
   hasAttention: boolean
 }
 
+export type SettingsSupergroupId
+  = | 'clinicalSetup'
+    | 'clinicalManagement'
+    | 'financialConfiguration'
+    | 'systemAddons'
+    | 'myPreferences'
+
+/**
+ * Presentation-only grouping of the settings rail. The flat category set,
+ * the routes and the search index are untouched — the supergroup only
+ * orders and labels groups of categories in SettingsCategoryNav.
+ */
+export interface SettingsSupergroup {
+  id: SettingsSupergroupId
+  labelKey: string
+  categories: VisibleCategory[]
+}
+
 export interface SearchEntry {
   id: string
   category: SettingsCategoryId
@@ -201,6 +219,27 @@ const DEFAULT_CATEGORIES: readonly SettingsCategory[] = [
   }
 ]
 
+/** Category → supergroup. Single source of truth for the settings rail. */
+export const CATEGORY_SUPERGROUPS: Record<SettingsCategoryId, SettingsSupergroupId> = {
+  general: 'clinicalSetup',
+  workspace: 'clinicalSetup',
+  people: 'clinicalSetup',
+  clinical: 'clinicalManagement',
+  billing: 'financialConfiguration',
+  communications: 'systemAddons',
+  integrations: 'systemAddons',
+  modules: 'systemAddons',
+  account: 'myPreferences'
+}
+
+export const SUPERGROUP_ORDER: readonly SettingsSupergroupId[] = [
+  'clinicalSetup',
+  'clinicalManagement',
+  'financialConfiguration',
+  'systemAddons',
+  'myPreferences'
+]
+
 // Module-level (NOT in `useState`) because entries carry async-component
 // functions that the SSR payload cannot serialize. The plugin runs on
 // both server and client, so both sides build the same registry
@@ -293,6 +332,18 @@ export function useSettingsRegistry() {
         }
       })
       .sort((a, b) => a.order - b.order)
+  })
+
+  /** Categories grouped for the settings rail; empty groups are dropped. */
+  const supergroups = computed<SettingsSupergroup[]>(() => {
+    const visible = categories.value
+    return SUPERGROUP_ORDER
+      .map(supergroup => ({
+        id: supergroup,
+        labelKey: `settings.supergroups.${supergroup}.label`,
+        categories: visible.filter(cat => CATEGORY_SUPERGROUPS[cat.id] === supergroup)
+      }))
+      .filter(group => group.categories.length > 0)
   })
 
   function findPage(categoryId: SettingsCategoryId, path: string): SettingsPageEntry | null {
@@ -440,6 +491,7 @@ export function useSettingsRegistry() {
 
   return {
     categories,
+    supergroups,
     pagesByCategory,
     findPage,
     findCategory,
