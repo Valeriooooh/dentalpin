@@ -8,6 +8,7 @@ related_endpoints:
   - GET /api/v1/agenda/appointments
   - GET /api/v1/agenda/appointments/{appointment_id}
   - GET /api/v1/agenda/appointments/{appointment_id}/cabinet-history
+  - GET /api/v1/agenda/appointments/{appointment_id}/check-in-qr
   - GET /api/v1/agenda/appointments/{appointment_id}/transitions
   - GET /api/v1/agenda/cabinets
   - GET /api/v1/agenda/kanban/day
@@ -17,6 +18,7 @@ related_endpoints:
   - POST /api/v1/agenda/appointments/{appointment_id}/check-in-token
   - POST /api/v1/agenda/appointments/{appointment_id}/transitions
   - POST /api/v1/agenda/cabinets
+  - POST /api/v1/agenda/public/check-in/{token}
   - PUT /api/v1/agenda/appointments/{appointment_id}
   - PUT /api/v1/agenda/cabinets/{cabinet_id}
 related_permissions:
@@ -26,6 +28,7 @@ related_permissions:
   - agenda.cabinets.write
 related_paths:
   - backend/app/modules/agenda/frontend/pages/appointments/index.vue
+  - backend/app/modules/agenda/frontend/pages/p/check-in/[token].vue
   - backend/app/modules/agenda/router.py
 last_verified_commit: 0cce028b
 ---

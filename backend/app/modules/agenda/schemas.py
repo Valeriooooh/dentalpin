@@ -49,12 +49,6 @@ class CheckinTokenResponse(BaseModel):
     expires_at: datetime
 
 
-class CheckinRequest(BaseModel):
-    """Public check-in body — the scanned token, nothing else."""
-
-    token: str = Field(min_length=1, max_length=2000)
-
-
 class CheckinResultResponse(BaseModel):
     """Outcome of a public check-in (minimal PII by design)."""
 

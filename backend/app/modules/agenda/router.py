@@ -17,6 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.core.auth.dependencies import ClinicContext, get_clinic_context, require_permission
 from app.core.auth.router import limiter
 from app.core.schemas import ApiResponse, PaginatedApiResponse
@@ -43,7 +44,6 @@ from .schemas import (
     CabinetCreate,
     CabinetResponse,
     CabinetUpdate,
-    CheckinRequest,
     CheckinResultResponse,
     CheckinTokenResponse,
     KanbanDaySnapshot,
@@ -627,67 +627,78 @@ async def appointment_checkin_qr(
     ctx: Annotated[ClinicContext, Depends(get_clinic_context)],
     _: Annotated[None, Depends(require_permission("agenda.appointments.write"))],
     db: Annotated[AsyncSession, Depends(get_db)],
-    origin: str = Query(
-        ...,
-        min_length=10,
-        max_length=200,
-        description="Clinic frontend origin, e.g. https://clinic.example",
-    ),
 ) -> Response:
-    """Render the check-in QR as PNG. The origin is render-only input
-    (no redirect happens); only http(s) origins are accepted."""
+    """Render the check-in QR as PNG.
+
+    The URL is built server-side from the first configured
+    ``ALLOWED_ORIGINS`` entry with the token as a path segment (never a
+    query string — proxies and Referer headers must not see it). The
+    origin is render-only input (no redirect happens).
+    """
     appointment = await AppointmentService.get_appointment(db, ctx.clinic_id, appointment_id)
     if appointment is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Appointment not found",
         )
-    parsed = urlparse(origin)
+    origins = settings.allowed_origins_list
+    if not origins:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Set ALLOWED_ORIGINS to render check-in QR codes",
+        )
+    parsed = urlparse(origins[0])
     if parsed.scheme not in ("http", "https") or not parsed.netloc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="origin must be an http(s) URL",
+            detail="ALLOWED_ORIGINS must hold http(s) origins",
         )
     token, _ = mint_checkin_token(appointment.id, ctx.clinic_id)
-    png = render_checkin_qr(f"{parsed.scheme}://{parsed.netloc}/check-in?t={token}")
+    png = render_checkin_qr(f"{parsed.scheme}://{parsed.netloc}/p/check-in/{token}")
     return Response(content=png, media_type="image/png")
 
 
 @router.post(
-    "/public/check-in",
+    "/public/check-in/{token}",
     response_model=ApiResponse[CheckinResultResponse],
 )
 @limiter.limit("20/minute")
+@limiter.limit(
+    "5/15minute",
+    key_func=lambda request: str(request.path_params.get("token")),
+)
 async def public_appointment_checkin(
+    token: str,
     request: Request,
-    data: CheckinRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ApiResponse[CheckinResultResponse]:
     """Consume a QR check-in token (unauthenticated, rate-limited).
 
+    The token rides the path (never a query string) so proxies and
+    Referer headers cannot pick it up. Per-IP and per-token limits apply.
     Transitions scheduled/confirmed → checked_in through the canonical
     status machine so events fire. Re-scanning an already checked-in
-    appointment returns 200 with the current status (never an error);
-    wrong-state tokens answer 422, bad/expired tokens 401, unknown
-    appointments 404 (no oracle beyond what the token already encodes).
+    appointment returns 200 with the current status (never an error) —
+    the token stays replayable for its full fifteen minutes, which is
+    defensible for an idempotent ``checked_in`` write and stated here
+    rather than left implicit; wrong-state tokens answer 422, bad/expired
+    tokens 401, unknown appointments 404 (no oracle beyond what the
+    token already encodes).
     """
     try:
-        appointment_id, clinic_id = verify_checkin_token(data.token)
+        appointment_id, clinic_id = verify_checkin_token(token)
     except CheckinTokenError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=str(e),
         ) from e
-    appointment = await AppointmentService.get_appointment(db, clinic_id, appointment_id)
-    if appointment is None:
+    try:
+        appointment = await AppointmentService.public_checkin(db, appointment_id, clinic_id)
+    except KeyError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Appointment not found",
-        )
-    try:
-        await AppointmentService.transition(db, appointment, "checked_in")
-    except AlreadyInStateError:
-        pass
+        ) from None
     except (InvalidTransitionError, CabinetRequiredError) as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
