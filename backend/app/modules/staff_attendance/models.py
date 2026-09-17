@@ -30,3 +30,9 @@ class AttendanceEvent(Base, TimestampMixin):
     kind: Mapped[str] = mapped_column(String(8))
     at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     note: Mapped[str | None] = mapped_column(String(255), default=None)
+    # Acting user who recorded the punch (from auth, never the body:
+    # anyone with the grant could otherwise punch for a colleague).
+    # Nullable for rows written before this column existed.
+    created_by: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id"), default=None, index=True
+    )

@@ -228,3 +228,98 @@ async def test_isolation_between_clinics(
         "/api/v1/staff_attendance/report", params={"day": "2026-05-04"}, headers=auth_headers
     )
     assert report.json()["data"]["rows"] == []
+
+
+async def _utc_clinic(db_session):
+    clinic = Clinic(
+        id=uuid4(),
+        name="UTC Clinic",
+        tax_id="B00000001",
+        address={"street": "Tz St", "city": "Madrid"},
+        settings={},
+        timezone="UTC",
+    )
+    db_session.add(clinic)
+    await db_session.commit()
+    return clinic
+
+
+@pytest.mark.asyncio
+async def test_clock_stores_created_by(db_session: AsyncSession, test_clinic: Clinic):
+    user = await _member(db_session, test_clinic.id)
+    actor = await _member(db_session, test_clinic.id)
+    row = await AttendanceService.clock(
+        db_session, test_clinic.id, user.id, "in", created_by=actor.id
+    )
+    await db_session.commit()
+    assert row.created_by == actor.id
+
+
+@pytest.mark.asyncio
+async def test_backdated_insert_between_same_kind_is_409(
+    db_session: AsyncSession, test_clinic: Clinic
+):
+    user = await _member(db_session, test_clinic.id)
+    t0 = datetime(2026, 5, 4, 10, 0, tzinfo=UTC)
+    await AttendanceService.clock(db_session, test_clinic.id, user.id, "in", at=t0)
+    await AttendanceService.clock(
+        db_session, test_clinic.id, user.id, "out", at=t0 + timedelta(hours=1)
+    )
+    await db_session.commit()
+    with pytest.raises(HTTPException) as exc:
+        await AttendanceService.clock(
+            db_session, test_clinic.id, user.id, "in", at=t0 + timedelta(minutes=30)
+        )
+    assert exc.value.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_naive_datetime_is_clinic_local(db_session: AsyncSession, test_clinic: Clinic):
+    """Naive input is interpreted as clinic-local wall clock (Madrid, UTC+2 in May)."""
+    user = await _member(db_session, test_clinic.id)
+    row = await AttendanceService.clock(
+        db_session, test_clinic.id, user.id, "in", at=datetime(2026, 5, 4, 10, 0)
+    )
+    await db_session.commit()
+    assert row.at == datetime(2026, 5, 4, 8, 0, tzinfo=UTC)
+
+
+@pytest.mark.asyncio
+async def test_overnight_shift_counts_on_closing_day(db_session: AsyncSession):
+    clinic = await _utc_clinic(db_session)
+    user = await _member(db_session, clinic.id)
+    await AttendanceService.clock(
+        db_session, clinic.id, user.id, "in", at=datetime(2026, 5, 4, 22, 0, tzinfo=UTC)
+    )
+    await AttendanceService.clock(
+        db_session, clinic.id, user.id, "out", at=datetime(2026, 5, 5, 6, 0, tzinfo=UTC)
+    )
+    await db_session.commit()
+    rows = await AttendanceService.daily_report(
+        db_session, clinic.id, datetime(2026, 5, 5, tzinfo=UTC).date()
+    )
+    assert len(rows) == 1
+    assert rows[0]["seconds"] == 8 * 3600
+    assert rows[0]["open"] is False
+
+
+@pytest.mark.asyncio
+async def test_report_uses_clinic_timezone_not_utc(db_session: AsyncSession, test_clinic: Clinic):
+    """00:30 Madrid is 22:30 UTC the day before — UTC bucketing would drop it."""
+    user = await _member(db_session, test_clinic.id)
+    await AttendanceService.clock(
+        db_session, test_clinic.id, user.id, "in", at=datetime(2026, 5, 4, 0, 30)
+    )
+    await AttendanceService.clock(
+        db_session,
+        test_clinic.id,
+        user.id,
+        "out",
+        at=datetime(2026, 5, 4, 0, 30) + timedelta(hours=1),
+    )
+    await db_session.commit()
+    rows = await AttendanceService.daily_report(
+        db_session, test_clinic.id, datetime(2026, 5, 4).date()
+    )
+    assert len(rows) == 1
+    assert rows[0]["seconds"] == 3600

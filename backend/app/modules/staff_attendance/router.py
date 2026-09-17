@@ -49,7 +49,13 @@ async def clock_event(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ApiResponse[AttendanceEventResponse]:
     row = await AttendanceService.clock(
-        db, ctx.clinic_id, data.user_id, data.kind, at=data.at, note=data.note
+        db,
+        ctx.clinic_id,
+        data.user_id,
+        data.kind,
+        at=data.at,
+        note=data.note,
+        created_by=ctx.user_id,
     )
     await db.commit()
     await db.refresh(row)

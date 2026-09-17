@@ -9,20 +9,41 @@ import { PERMISSIONS } from '~~/app/config/permissions'
 
 definePageMeta({ middleware: ['auth'] })
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { can } = usePermissions()
 const { clock, listEvents, dailyReport, listStaff } = useAttendance()
+const { currentClinic } = useClinic()
+const toast = useToast()
 
 const canWrite = computed(() => can(PERMISSIONS.staffAttendance.write))
 
 if (!can(PERMISSIONS.staffAttendance.read)) await navigateTo('/')
 
 const staff = ref<StaffMember[]>([])
-const today = ref(new Date().toISOString().slice(0, 10))
+// Default day in the clinic's timezone (house rule: wall-clock, not UTC,
+// not the device timezone) — falls back to UTC when unknown.
+function clinicToday(): string {
+  const tz = currentClinic.value?.timezone
+  try {
+    if (tz) {
+      const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: tz,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).formatToParts(new Date())
+      const get = (type: string) => parts.find(p => p.type === type)?.value ?? ''
+      return `${get('year')}-${get('month')}-${get('day')}`
+    }
+  } catch { /* fall through to UTC */ }
+  return new Date().toISOString().slice(0, 10)
+}
+const today = ref(clinicToday())
 const events = ref<AttendanceEvent[]>([])
 const report = ref<AttendanceReportRow[]>([])
 const isLoading = ref(false)
-const clockTarget = ref('')
+const errorMessage = ref('')
+const clockTarget = ref<string | null>(null)
 const clockNote = ref('')
 
 const staffOptions = computed(() =>
@@ -37,7 +58,9 @@ function memberName(id: string): string {
 function formatHours(seconds: number): string {
   const h = Math.floor(seconds / 3600)
   const m = Math.floor((seconds % 3600) / 60)
-  return `${h}h ${String(m).padStart(2, '0')}m`
+  const hf = new Intl.NumberFormat(locale.value, { style: 'unit', unit: 'hour', maximumFractionDigits: 0 })
+  const mf = new Intl.NumberFormat(locale.value, { style: 'unit', unit: 'minute', maximumFractionDigits: 0 })
+  return `${hf.format(h)} ${mf.format(m)}`
 }
 
 async function refresh() {
@@ -53,9 +76,16 @@ async function refresh() {
 
 async function punch(kind: 'in' | 'out') {
   if (!clockTarget.value) return
-  await clock(clockTarget.value, kind, clockNote.value || undefined)
-  clockNote.value = ''
-  await refresh()
+  errorMessage.value = ''
+  try {
+    await clock(clockTarget.value, kind, clockNote.value || undefined)
+    clockNote.value = ''
+    await refresh()
+  } catch (e: unknown) {
+    const detail = (e as { data?: { detail?: unknown } })?.data?.detail
+    errorMessage.value = typeof detail === 'string' ? detail : String(detail ?? e)
+    toast.add({ title: t('staffAttendance.clockTitle'), description: errorMessage.value, color: 'error' })
+  }
 }
 
 onMounted(refresh)

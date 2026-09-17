@@ -22,6 +22,7 @@ class AttendanceEventResponse(BaseModel):
     kind: str
     at: datetime
     note: str | None
+    created_by: UUID | None = None
 
 
 class AttendanceStatusResponse(BaseModel):

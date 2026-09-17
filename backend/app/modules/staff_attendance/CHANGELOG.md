@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Clinic-local day windows (`Clinic.timezone`, naive input = wall clock),
+  positional duplicate guard (neighbours, not tail), overnight-shift
+  carry-over with day-boundary cap, `created_by` on every punch
+  (new nullable column, `satt_0002`), `staff_attendance.clocked` event.
+
 - Initial module: clock in/out events (`POST /events`, 409 on
   consecutive same-kind punches), current state (`GET /status/{id}`),
   daily pairing report (`GET /report`, open shifts flagged).
