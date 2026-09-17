@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- feat(#232): sidebar entry grouped under the Financials header (`nav.section` "financials").
 - fix(#441): `GET /budgets/{id}/pdf`, `/pdf/signed` and `/pdf/preview` accept every UI locale instead of `es|en` only — a de/hu/fr/pt/pl/it/ta/ar UI got a 422 on "Download PDF". Labels fall back to English; amounts and dates use the locale's separators. The locale list now lives in `app/core/pdf_locales.py`, shared with billing.
 
 - fix: the discount-type selects (item modal and global discount in the budget detail page) crashed on open — reka-ui rejects `''` as an item value (`A <ComboboxItem /> must have a value prop that is not an empty string`), which left the modal half-unmounted (`Cannot read properties of null (reading 'parentNode')`). The 'no discount' option now uses `null`.

@@ -1084,6 +1084,13 @@
         "description": "Il tuo profilo, la password e la lingua."
       }
     },
+    "supergroups": {
+      "clinicalSetup": { "label": "Configurazione clinica" },
+      "clinicalManagement": { "label": "Gestione clinica" },
+      "financialConfiguration": { "label": "Configurazione finanziaria" },
+      "systemAddons": { "label": "Sistema e componenti aggiuntivi" },
+      "myPreferences": { "label": "Le mie preferenze" }
+    },
     "search": {
       "placeholder": "Cerca nelle impostazioni…",
       "empty": "Nessun risultato per questa ricerca.",

@@ -115,7 +115,7 @@ test.describe('payments — new payment patient search', () => {
 
     // Deselect via the selected-patient card's own "x" button, then
     // search again for a second, different patient.
-    const clearBtn = loggedIn.locator('.bg-surface-muted button').first()
+    const clearBtn = loggedIn.getByRole('dialog').getByRole('button', { name: 'Clear' })
     await clearBtn.click()
     await createPatient(`B${suffix}`)
 

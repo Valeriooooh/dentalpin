@@ -90,6 +90,7 @@ class ActivityJournalModule(BaseModule):
             "navigation": [
                 {
                     "label": "nav.journal",
+                    "section": "practice",
                     "icon": "i-lucide-history",
                     "to": "/journal",
                     "permission": "activity_journal.read",

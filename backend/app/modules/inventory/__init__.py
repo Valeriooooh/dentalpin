@@ -57,6 +57,7 @@ class InventoryModule(BaseModule):
             "navigation": [
                 {
                     "label": "nav.inventory",
+                    "section": "inventory",
                     "icon": "i-lucide-package",
                     "to": "/inventory",
                     "permission": "inventory.read",

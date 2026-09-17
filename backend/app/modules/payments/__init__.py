@@ -61,6 +61,7 @@ class PaymentsModule(BaseModule):
             "navigation": [
                 {
                     "label": "payments.nav.payments",
+                    "section": "financials",
                     "icon": "i-lucide-wallet",
                     "to": "/payments",
                     "permission": "payments.record.read",

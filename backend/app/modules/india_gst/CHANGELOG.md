@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- feat(#232): sidebar entry grouped under the Financials header (`nav.section` "financials").
 - feat(i18n): Arabic (ar) locale for the module's frontend layer.
 - feat(i18n): the frontend layer's directional spacing, borders, text alignment and inset positioning now resolve against the document direction (physical→logical CSS utilities, Arabic RTL support).
 

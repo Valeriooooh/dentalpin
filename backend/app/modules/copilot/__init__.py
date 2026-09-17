@@ -40,15 +40,7 @@ class CopilotModule(BaseModule):
         },
         "frontend": {
             "layer_path": "frontend",
-            "navigation": [
-                {
-                    "label": "nav.copilot",
-                    "icon": "i-lucide-sparkles",
-                    "to": "/copilot",
-                    "permission": "copilot.chat",
-                    "order": 90,
-                },
-            ],
+            "navigation": [],  # launched via the floating button (app.overlays), not the sidebar
         },
     }
 
