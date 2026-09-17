@@ -1084,6 +1084,13 @@
         "description": "Profilja, jelszava és nyelve."
       }
     },
+    "supergroups": {
+      "clinicalSetup": { "label": "Rendelő beállításai" },
+      "clinicalManagement": { "label": "Rendelő kezelése" },
+      "financialConfiguration": { "label": "Pénzügyi beállítások" },
+      "systemAddons": { "label": "Rendszer és kiegészítők" },
+      "myPreferences": { "label": "Saját beállítások" }
+    },
     "search": {
       "placeholder": "Keresés a beállításokban…",
       "empty": "Nincs találat erre a keresésre.",

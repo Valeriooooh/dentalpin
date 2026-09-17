@@ -60,6 +60,7 @@ class BudgetModule(BaseModule):
             "navigation": [
                 {
                     "label": "nav.budgets",
+                    "section": "financials",
                     "icon": "i-lucide-file-text",
                     "to": "/budgets",
                     "permission": "budget.read",

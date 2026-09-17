@@ -31,6 +31,8 @@ services:
       # reach the app (no dp_csrf → no CSRF header, no session on reload).
       COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
       SISTEMA_TS_CA_BUNDLE: ${SISTEMA_TS_CA_BUNDLE:-}
+      # Optional Sentry/GlitchTip DSN (see .env.example). Empty = off.
+      SENTRY_DSN: ${SENTRY_DSN:-}
       STORAGE_BACKEND: local
       STORAGE_LOCAL_PATH: /app/storage
       # Demo deployments set SEED_ON_STARTUP=1 in Coolify env so a wiped

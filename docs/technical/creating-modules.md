@@ -655,6 +655,26 @@ The frontend fetches `/api/v1/modules/-/active` at login and renders
 the merged list. Permission filtering runs server-side; i18n resolves
 client-side.
 
+**Canonical section keys (issue #232).** The sidebar ships five stable
+headers — `clinical`, `lab`, `financials`, `inventory`, `practice`
+(translated via `nav.sections.<key>` in the host locales). A new module
+with a sidebar entry **must** self-place under one of them instead of
+staying flat:
+
+| New module surface | `section` |
+|---|---|
+| Patients, recalls, treatment plans, documents, medication/catalog, odontogram/clinical data | `clinical` |
+| Lab work orders | `lab` |
+| Quotes, invoices, payments, expenses, accounting/tax exports, payroll | `financials` |
+| Contacts/suppliers, inventory, purchase orders, reorder suggestions | `inventory` |
+| Reports, staff tasks, activity journal | `practice` |
+
+Modules outside those five clusters (e.g. community integrations such
+as telephony or treatment-consumable mappings) keep their entry flat
+(no `section` key). The top-level entries — dashboard and settings
+(host) and the agenda's Schedule entry — never carry one either: they
+stay flat above the sections.
+
 ### Canonical slots (v1)
 
 | Name | Context (`ctx`) |

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- feat(#232): sidebar entry grouped under the Clinical header (`nav.section` "clinical").
 - feat(i18n): Arabic (`ar`) locale for the module's frontend layer.
 - feat(#228): Initial documents module — prescriptions, medical
   certificates, referral letters and radiology requests as branded PDFs.

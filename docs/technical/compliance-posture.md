@@ -21,6 +21,7 @@
 | AI job inputs/outputs (frames, overlays, transcripts) | planned `imaging_ai` job records + sidecar hosts (branch, not yet merged) | Never auto-finalized into records (§4) |
 | Auth + access traces | core auth, `activity_journal` | Who touched what, when |
 | Copilot prompts + tool results (today) | `copilot` module: redaction-gated cloud LLM path | See below — redaction gate, not a ban |
+| Backend error reports (today, opt-in) | Sentry-protocol sink named by `SENTRY_DSN` (Sentry cloud or self-hosted GlitchTip) | Off unless set. See below — scrubbed, not a ban |
 
 > **Copilot today (shipped, not planned).** The assistant backend runs
 > through a redaction gate (`copilot/CLAUDE.md`, `copilot_settings.
@@ -30,6 +31,21 @@
 > caller's role permissions at the chokepoint; WRITE/DESTRUCTIVE tools
 > need inline user confirmation. The posture below (§4) governs
 > *planned imaging AI*; this paragraph governs the shipped copilot.
+
+> **Error tracking today (shipped, opt-in).** With `SENTRY_DSN` set the
+> backend ships unhandled exceptions and error-level log lines to that
+> sink (`setup_error_tracking` in `app/core/log_context.py`). By
+> construction the payload carries no request body, cookies or client
+> IP (`send_default_pii=False`), the query string is dropped and UUID /
+> token path segments are replaced by `[id]` before send. What can still
+> travel: stack traces with local variable names, log message text, and
+> breadcrumbs (SQL statement shapes, outbound HTTP hosts). Performance
+> tracing (`SENTRY_TRACES_SAMPLE_RATE`, default `0.0`) is a second
+> opt-in because spans carry SQL text. A cloud Sentry backend is a
+> processor: sign its DPA first, or point the DSN at a self-hosted
+> GlitchTip inside the clinic's own perimeter. Nothing reaches the
+> browser — there is deliberately no frontend half and no DSN is exposed
+> to clients.
 
 ## 2. Tenancy and access control (the primary safeguard)
 
@@ -95,7 +111,10 @@
 ## 6. Operator duties (what the software cannot do for you)
 
 1. Host hardening, encrypted backups, and access to the deployment itself.
-2. Signing DPAs with any cloud AI provider before enabling cloud backends.
+2. Signing DPAs with any cloud AI provider before enabling cloud backends,
+   and with the error-tracking provider before setting `SENTRY_DSN` to a
+   cloud sink (self-hosted GlitchTip needs none). Keep log messages free
+   of patient identifiers: error-level lines are forwarded verbatim.
 3. Training staff on the approval queue (RVG matching), consent capture, and
    breach reporting within 72 hours.
 4. Reviewing retention policies yearly; keeping `legal_hold_until` current.

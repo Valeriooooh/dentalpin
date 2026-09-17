@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- feat(#232): sidebar entry grouped under the Clinical header (`nav.section` "clinical").
 - fix(#431 review round 3): intra-file repeats report
   `matched_on: "same_file"` with a null `patient_id` (documented
   en+es).

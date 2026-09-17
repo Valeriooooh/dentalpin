@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- feat(#232): sidebar entry grouped under the Practice header (`nav.section` "practice").
 - feat(#230): patient-stats + operational families. `GET
   /patients/demographics` (age bands, gender, area with explicit
   unknowns), `/patients/visits` (new-vs-returning + frequency) and
