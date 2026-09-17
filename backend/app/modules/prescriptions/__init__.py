@@ -20,7 +20,7 @@ class PrescriptionsModule(BaseModule):
         "author": "DentalPin Core Team",
         "license": "BSL-1.1",
         "category": "official",
-        "depends": ["patients"],
+        "depends": ["patients", "patients_clinical", "medical_reference"],
         "installable": True,
         # Optional module: ships inactive, the admin activates it from the
         # module admin UI (repo policy for new non-core modules).

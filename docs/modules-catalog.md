@@ -11,7 +11,7 @@ Maintained by `backend/scripts/generate_catalogs.py`. CI fails if a manifest cha
 | Module | Version | Category | Depends | Install | Removable | Permissions | Emits | Consumes | FE layer |
 |--------|---------|----------|---------|---------|-----------|-------------|-------|----------|----------|
 | `accounting_export` | 0.1.0 | official | billing, payments | manual | yes | 2 | 0 | 0 | yes |
-| `activity_journal` | 0.1.0 | community | — | manual | yes | 1 | 0 | 26 | yes |
+| `activity_journal` | 0.1.0 | community | — | manual | yes | 1 | 0 | 28 | yes |
 | `agenda` | 0.4.0 | official | patients, catalog, odontogram | auto | no | 4 | 11 | 1 | yes |
 | `billing` | 0.1.0 | official | patients, catalog, budget, payments | auto | no | 3 | 3 | 3 | yes |
 | `budget` | 0.1.0 | official | patients, catalog, odontogram | auto | no | 5 | 9 | 3 | yes |
@@ -43,7 +43,7 @@ Maintained by `backend/scripts/generate_catalogs.py`. CI fails if a manifest cha
 | `payments` | 0.1.0 | official | patients, budget | auto | no | 4 | 3 | 2 | yes |
 | `payroll` | 0.1.0 | official | — | manual | yes | 3 | 2 | 0 | yes |
 | `periodontogram` | 0.1.0 | official | patients, odontogram | manual | yes | 2 | 1 | 2 | yes |
-| `prescriptions` | 0.1.0 | official | patients | manual | yes | 3 | 2 | 0 | yes |
+| `prescriptions` | 0.1.0 | official | patients, patients_clinical, medical_reference | manual | yes | 3 | 2 | 0 | yes |
 | `purchase_orders` | 0.1.0 | official | contacts, inventory, suppliers | manual | yes | 2 | 3 | 0 | yes |
 | `razorpay` | 0.1.0 | official | payment_gateways | manual | yes | 2 | 0 | 0 | yes |
 | `recall_reminders` | 0.1.0 | community | recalls, notifications, patients | manual | yes | 0 | 0 | 1 | yes |
@@ -118,6 +118,8 @@ Append-only staff activity log recorded from module events.
   - `patient.created`
   - `payment.allocated`
   - `payment.refunded`
+  - `prescription.cancelled`
+  - `prescription.issued`
   - `recall.created`
   - `treatment_plan.budget_sync_requested`
   - `treatment_plan.item_session_completed`
@@ -845,7 +847,7 @@ Clinical prescriptions with per-country compliance hooks.
 - **License:** BSL-1.1
 - **Category:** official
 - **Install policy:** installable=True · auto_install=False · removable=True
-- **Depends:** `patients`
+- **Depends:** `patients`, `patients_clinical`, `medical_reference`
 - **Frontend layer:** `frontend`
 - **Permissions:**
   - `prescriptions.issue`

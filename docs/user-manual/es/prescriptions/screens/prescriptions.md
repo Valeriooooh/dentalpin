@@ -25,9 +25,10 @@ borrador desde la ficha del paciente (acción "Nueva receta").
 
 ## Qué puedes hacer
 
-- **Borradores** con líneas de texto libre (o desde catálogo /
-  plantilla favorita). Los borradores se editan libremente.
-- **Emitir** congela la receta (firma del prescriptor incluida);
+- **Borradores** con líneas de texto libre (o desde una plantilla
+  favorita). Los borradores se editan libremente.
+- **Emitir** congela la receta (instantánea del prescriptor adjunta:
+  nombre y licencia, sin firma);
   las correcciones son cancelar + reemitir, nunca ediciones.
 - **Descargar** el PDF para imprimir. Sin envío por email en v1.
 - Atiende el aviso de alergias/interacciones — avisa, nunca bloquea.

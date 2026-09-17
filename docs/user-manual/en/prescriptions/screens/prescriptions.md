@@ -25,9 +25,10 @@ draft from the patient summary ("New prescription" action).
 
 ## What you can do
 
-- **Draft** with free-text medication lines (or fill from a catalog
-  entry / favorite template). Drafts edit freely.
-- **Issue** freezes the prescription (prescriber snapshot attached);
+- **Draft** with free-text medication lines (or from a favorite
+  template). Drafts edit freely.
+- **Issue** freezes the prescription (prescriber snapshot attached:
+  name and license, no signature);
   corrections are cancel + reissue, never edits.
 - **Download** the PDF for printing. No email delivery in v1.
 - Heed the allergy/interaction banner — it warns, never blocks.

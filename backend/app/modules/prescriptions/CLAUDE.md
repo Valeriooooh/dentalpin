@@ -22,9 +22,10 @@ Routes mounted at `/api/v1/prescriptions/`.
 
 ## Dependencies
 
-`manifest.depends = ["patients"]`. Soft integrations without depends:
-`patients_clinical` allergies (try-import), `medical_reference` flags
-(registry-gated), catalog autofill (free-text + soft `catalog_ref`).
+`manifest.depends = ["patients", "patients_clinical", "medical_reference"]`
+(declared honest per review; call sites additionally try-import /
+registry-gate defensively). Soft integration without depends:
+catalog autofill (free-text + soft `catalog_ref`).
 
 ## Permissions
 

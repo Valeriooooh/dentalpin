@@ -30,7 +30,8 @@ async def _list_prescriptions(ctx: AgentContext, params: ListPrescriptionsArgs) 
     try:
         rows = await PrescriptionService.list_for_patient(ctx.db, ctx.clinic_id, params.patient_id)
     except HTTPException:
-        await ctx.db.rollback()
+        # No rollback: a 404 does not poison the session (agenda/tools.py
+        # precedent — rollback only on IntegrityError).
         return {"error": "not_found"}
     return {
         "prescriptions": [{"id": r.id, "status": r.status, "issued_at": r.issued_at} for r in rows]
@@ -53,7 +54,8 @@ async def _create_prescription_draft(
             items=[],
         )
     except HTTPException:
-        await ctx.db.rollback()
+        # No rollback: a 404 does not poison the session (agenda/tools.py
+        # precedent — rollback only on IntegrityError).
         return {"error": "not_found"}
     return {"id": row.id, "status": row.status}
 
