@@ -25,8 +25,10 @@ them into a patient or discard the card.
 ## The list
 
 Each card shows the initials of the enquirer tinted by status, the name with a
-status badge, the phone and the motive, and — on wide screens — the
-availability they gave plus how long ago the enquiry arrived.
+status badge, the **motive** (what the call is about), the phone and the
+description trimmed to one line, and — on wide screens — a **week strip with the
+days they can be called** plus how long ago the enquiry arrived. Long text is
+trimmed on the card; the drawer shows it in full.
 
 | Status | Meaning |
 |---|---|
@@ -51,8 +53,9 @@ Clicking a card opens the drawer on the right. This is the whole point of the
 page: you fill in the patient record while still seeing what the person asked
 for.
 
-1. **Enquiry panel** (read only) — motive, description, availability, phone,
-   email and the date it was received.
+1. **Enquiry panel** (read only) — motive, description, the week strip with the
+   days and time of day they can be called, phone, email and the date it was
+   received.
 2. **Duplicate warning** — if a patient with the same phone already exists, an
    alert links to that record. It does not block the conversion: families share
    a phone number.
@@ -62,9 +65,10 @@ for.
      Fuente* becomes *Marta* + *de la Fuente*. A one-word name leaves the last name
      empty for you to complete. It is a guess, so both fields stay editable.
    - **Phone** and **email** — copied exactly as they came in.
-   - **Notes** — composed for you: the motive with its label, the description
-     as written, then the availability with its label. Edit it freely before
-     saving.
+   - **Notes** — **left empty on purpose.** The motive and the call
+     availability are logistics for this call, not patient data: they stay on
+     the lead card and in the panel above, and are never copied into the
+     patient's chart. Write there only what belongs in the record.
    - **National ID** and **date of birth** stay empty — the form does not ask
      for them.
 4. **Create patient** — enabled once first name and last name both have a
@@ -79,8 +83,10 @@ banner and an *Open patient* link. A lead cannot be converted twice.
 
 **Manual lead** (top of the queue, needs `leads.write`) opens a small form for
 an enquiry taken over the phone: full name, phone and motive are required;
-email, description and availability are optional. There is no status selector
-when creating — a brand-new enquiry is *New* by definition.
+email and description are optional. Availability is a **week picker** — tap the
+days they can be called and, if it matters, pick *mornings*, *afternoons* or
+*evenings* (leave it at *Any time* when they did not say). There is no status
+selector when creating — a brand-new enquiry is *New* by definition.
 
 The save has **two possible outcomes**, and the message you get tells you which
 one happened:

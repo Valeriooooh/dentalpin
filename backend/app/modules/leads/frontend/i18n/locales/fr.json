@@ -30,7 +30,8 @@
       "motive": "Motif",
       "description": "Description",
       "availability": "Disponibilité",
-      "status": "Statut"
+      "status": "Statut",
+      "availabilityHint": "Quels jours pouvons-nous l'appeler ?"
     },
     "actions": {
       "edit": "Modifier",
@@ -51,16 +52,18 @@
       "duplicateWarning": "Un patient avec ce téléphone existe déjà",
       "duplicateOpen": "Ouvrir ce patient"
     },
-    "notes": {
-      "motive": "Motif",
-      "availability": "Disponibilité"
-    },
     "validation": {
       "required": "Ce champ est obligatoire",
       "email": "Saisissez une adresse e-mail valide, par exemple nom{'@'}example.com",
       "phone": "Saisissez un numéro de téléphone valide (au moins 6 chiffres)",
       "dateOfBirth": "La date de naissance ne peut pas être dans le futur",
       "fixErrors": "Vérifiez les champs signalés"
+    },
+    "slots": {
+      "any": "N'importe quand",
+      "morning": "Matinées",
+      "afternoon": "Après-midis",
+      "evening": "Soirées"
     },
     "routing": {
       "explainer": "Les demandes dont le téléphone ou l'e-mail appartient déjà à un patient ne créent pas de nouvelle demande — elles sont ajoutées aux Rappels sous forme d'appel à effectuer.",

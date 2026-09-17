@@ -29,7 +29,8 @@ ENQUIRY = {
     "email": "marta@example.com",
     "motive": "Presupuesto de ortodoncia",
     "description": "Viene de Instagram.",
-    "availability": "Tardes",
+    "availability_days": ["mon", "wed"],
+    "availability_slot": "afternoon",
 }
 
 
@@ -89,6 +90,37 @@ async def test_phone_match_becomes_a_recall_not_a_lead(
     assert recall.due_date == date.today()
     assert "Presupuesto de ortodoncia" in (recall.reason_note or "")
     assert "Viene de Instagram." in (recall.reason_note or "")
+    # The availability travels to the call list as a language-free token, so
+    # the front desk knows when to ring (the recall path has no lead card).
+    assert "mon, wed · afternoon" in (recall.reason_note or "")
+
+
+@pytest.mark.asyncio
+async def test_availability_is_canonicalised_and_optional(
+    db_session: AsyncSession, test_clinic: Clinic
+):
+    """Days are deduped and ordered mon..sun; an enquiry may omit them."""
+    outcome = await _route(
+        db_session,
+        test_clinic.id,
+        availability_days=["fri", "mon", "fri", "sun"],
+        availability_slot="evening",
+    )
+    assert outcome.outcome == "lead_created"
+    assert outcome.lead is not None
+    assert outcome.lead.availability_days == ["mon", "fri", "sun"]
+    assert outcome.lead.availability_slot == "evening"
+
+    without = await _route(
+        db_session,
+        test_clinic.id,
+        phone="+34 699 888 777",
+        availability_days=None,
+        availability_slot=None,
+    )
+    assert without.lead is not None
+    assert without.lead.availability_days is None
+    assert without.lead.availability_slot is None
 
 
 @pytest.mark.asyncio
@@ -178,7 +210,7 @@ async def test_repeat_match_refreshes_one_recall_and_appends_once(
     recalls = await _recalls(db_session, patient.id)
     assert len(recalls) == 1
     note = recalls[0].reason_note or ""
-    assert note == "Presupuesto de ortodoncia\n\nViene de Instagram.\n\nTardes", note
+    assert note == "Presupuesto de ortodoncia\n\nViene de Instagram.\n\nmon, wed · afternoon", note
     assert "---" not in note
 
     # A genuinely different enquiry is appended as a second block, not

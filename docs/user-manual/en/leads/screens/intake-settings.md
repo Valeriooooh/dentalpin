@@ -101,7 +101,8 @@ curl -X POST https://your-clinic.example.com/api/v1/leads/public/intake \
         "email": "marta@example.com",
         "motive": "Presupuesto de ortodoncia",
         "description": "Viene de Instagram.",
-        "availability": "Tardes a partir de las 17:00"
+        "availability_days": ["tue", "thu"],
+        "availability_slot": "afternoon"
       }'
 ```
 
@@ -116,6 +117,12 @@ Notes for whoever builds the form:
 - The response never says whether the person was already a patient. It is the
   same answer for everyone, on purpose.
 - `description` is optional; the other fields are required.
+- Availability is optional and **structured**: send the days you offer in
+  `availability_days` using the codes `mon tue wed thu fri sat sun`, and
+  optionally `availability_slot` as `morning`, `afternoon` or `evening`. The
+  front desk sees them as a week strip. Any order is fine — the server stores
+  them Monday-first and drops duplicates — but this is the one field that is not
+  free text: a sentence typed here is rejected.
 - Keep the hidden `website` field in the form and leave it empty: it is a trap
   for bots, and a filled one is accepted silently and thrown away.
 - `captcha_token` only matters if your administrator has configured a captcha

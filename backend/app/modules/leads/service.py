@@ -32,7 +32,7 @@ from app.modules.patients.models import Patient
 from app.modules.patients.service import PatientService
 
 from .matching import find_matching_patients
-from .models import LEAD_STATUSES, Lead, LeadIntakeKey, LeadSettings
+from .models import LEAD_STATUSES, Lead, LeadIntakeKey, LeadSettings, canonical_days
 from .recall_routing import route_matched_enquiry
 
 logger = logging.getLogger(__name__)
@@ -131,6 +131,8 @@ class LeadService:
         payload = dict(data)
         payload.pop("website", None)
         payload.pop("captcha_token", None)
+        # Canonical mon..sun order, no duplicates, whatever the caller sent.
+        payload["availability_days"] = canonical_days(payload.get("availability_days"))
         row = Lead(
             clinic_id=clinic_id,
             status=payload.pop("status", None) or "new",
@@ -143,6 +145,8 @@ class LeadService:
     @staticmethod
     async def update_lead(db: AsyncSession, lead: Lead, data: dict) -> Lead:
         """Callers pass model_dump(exclude_unset=True) — PATCH semantics."""
+        if "availability_days" in data:
+            data["availability_days"] = canonical_days(data["availability_days"])
         for key, value in data.items():
             setattr(lead, key, value)
         await db.flush()

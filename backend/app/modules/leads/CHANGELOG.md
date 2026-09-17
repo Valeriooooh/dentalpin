@@ -44,6 +44,24 @@
   statuses) — the default is a *visible* chip selection and the API still answers
   "no status param = every status", so nothing is hidden server-side and the
   converted history stays reachable by clearing the chip.
+- **Availability is structured**: `availability_days` (mon..sun, canonicalised and
+  deduplicated) plus an optional `availability_slot`
+  (`morning`/`afternoon`/`evening`), replacing the free-text column. The public
+  intake contract takes day codes, so the clinic website must send them;
+  `leads_0002` drops the old text column (free text cannot be parsed into days,
+  and guessing a call window is worse than asking again).
+- Lead payloads now reject unknown fields (`extra="forbid"`): a website still
+  posting the retired `availability` free-text string receives a 422 naming the
+  field instead of having the value silently dropped.
+- The lead card was redesigned around the call: **motive** first, the description
+  trimmed to a line, and a **week strip** with the days (and time of day) the
+  person can be called. Weekday names come from `Intl.DateTimeFormat`, so they
+  are correct in all ten locales without per-day translation keys.
+- **The motive and the call availability are no longer copied into the patient
+  record.** The convert drawer starts with empty notes: they are logistics for
+  one call, not patient data. The recall note (the matched-patient path, where no
+  lead card exists) still carries them, the availability as a language-free token
+  like `mon, wed · afternoon`.
 - Form validation on both staff forms (`utils/leadValidation.ts`): an invalid email,
   a phone with too few digits, a missing required field or a future date of birth
   is refused **before** it is sent, with the reason shown on the field and a toast

@@ -105,7 +105,8 @@ curl -X POST https://tu-clinica.example.com/api/v1/leads/public/intake \
         "email": "marta@example.com",
         "motive": "Presupuesto de ortodoncia",
         "description": "Viene de Instagram.",
-        "availability": "Tardes a partir de las 17:00"
+        "availability_days": ["tue", "thu"],
+        "availability_slot": "afternoon"
       }'
 ```
 
@@ -120,6 +121,13 @@ Notas para quien construya el formulario:
 - La respuesta nunca dice si la persona ya era paciente. Es la misma respuesta
   para todos, a propósito.
 - `description` es opcional; el resto de campos son obligatorios.
+- La disponibilidad es opcional y va **estructurada**: envía en
+  `availability_days` los días que ofreces con los códigos
+  `mon tue wed thu fri sat sun` y, si quieres, `availability_slot` con
+  `morning`, `afternoon` o `evening`. Recepción los ve como una tira semanal.
+  Da igual el orden — el servidor los guarda empezando por el lunes y descarta
+  duplicados — pero este es el único campo que no es texto libre: una frase
+  escrita aquí se rechaza.
 - Mantén el campo oculto `website` en el formulario y déjalo vacío: es una
   trampa para bots, y si viene relleno se acepta en silencio y se descarta.
 - `captcha_token` solo importa si tu administrador ha configurado un proveedor

@@ -25,9 +25,11 @@ a la persona y convertirla en paciente o descartar la tarjeta.
 ## El listado
 
 Cada tarjeta muestra las iniciales de quien consulta, con el color del estado,
-el nombre con su etiqueta de estado, el teléfono y el motivo y — en pantallas
-anchas — la disponibilidad que indicó y cuánto tiempo hace que llegó la
-consulta.
+el nombre con su etiqueta de estado, el **motivo** (de qué va la llamada), el
+teléfono y la descripción recortada a una línea y — en pantallas anchas — una
+**tira semanal con los días en que se le puede llamar** y cuánto tiempo hace que
+llegó la consulta. Los textos largos se recortan en la tarjeta; el panel lateral
+los muestra completos.
 
 | Estado | Significado |
 |---|---|
@@ -52,8 +54,9 @@ Al pulsar una tarjeta se abre el panel lateral derecho. Es el sentido de toda
 la página: rellenas la ficha del paciente mientras sigues viendo qué pedía la
 persona.
 
-1. **Panel de la consulta** (solo lectura) — motivo, descripción,
-   disponibilidad, teléfono, email y la fecha de recepción.
+1. **Panel de la consulta** (solo lectura) — motivo, descripción, la tira
+   semanal con los días y la franja horaria en que se le puede llamar, teléfono,
+   email y la fecha de recepción.
 2. **Aviso de duplicado** — si ya existe un paciente con el mismo teléfono, un
    aviso enlaza a esa ficha. No bloquea la conversión: hay familias que
    comparten teléfono.
@@ -64,9 +67,10 @@ persona.
      queda vacío para que lo completes. Es una suposición, así que los dos
      campos siguen siendo editables.
    - **Teléfono** y **email** — copiados tal cual llegaron.
-   - **Notas** — se componen solas: el motivo con su etiqueta, la descripción
-     tal como la escribió la persona y, después, la disponibilidad con su
-     etiqueta. Edítalas antes de guardar si quieres.
+   - **Notas** — se quedan **vacías a propósito**. El motivo y la disponibilidad
+     son logística de esta llamada, no datos del paciente: se quedan en la
+     tarjeta y en el panel de arriba, y nunca se copian a la ficha. Escribe ahí
+     solo lo que pertenece a la historia clínica.
    - **DNI/NIF** y **fecha de nacimiento** se quedan vacíos: el formulario no
      los pide.
 4. **Crear paciente** — se habilita cuando hay nombre y apellido. Al guardar,
@@ -81,9 +85,11 @@ veces.
 
 **Nueva solicitud** (arriba del listado, requiere `leads.write`) abre un
 formulario pequeño para una consulta tomada por teléfono: nombre, teléfono y
-motivo son obligatorios; email, descripción y disponibilidad son opcionales. Al
-crear no hay selector de estado: una consulta recién llegada es *Nueva* por
-definición.
+motivo son obligatorios; email y descripción son opcionales. La disponibilidad
+es un **selector semanal**: marca los días en que se le puede llamar y, si
+importa, elige *Mañanas*, *Tardes* o *Noches* (déjalo en *Cualquier hora* si no
+te lo dijo). Al crear no hay selector de estado: una consulta recién llegada es
+*Nueva* por definición.
 
 Guardar tiene **dos resultados posibles**, y el mensaje te dice cuál ha sido:
 

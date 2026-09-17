@@ -2,6 +2,8 @@ import type { ApiResponse, PaginatedResponse } from '~~/app/types'
 
 export type LeadStatus = 'new' | 'contacted' | 'converted' | 'discarded'
 export type LeadSubmitOutcome = 'lead_created' | 'recall_queued'
+export type DayOfWeek = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'
+export type AvailabilitySlot = 'morning' | 'afternoon' | 'evening'
 
 export interface Lead {
   id: string
@@ -11,7 +13,8 @@ export interface Lead {
   email: string | null
   motive: string
   description: string | null
-  availability: string | null
+  availability_days: DayOfWeek[] | null
+  availability_slot: AvailabilitySlot | null
   status: LeadStatus
   patient_id: string | null
   converted_at: string | null
@@ -33,7 +36,8 @@ export interface LeadCreatePayload {
   email?: string | null
   motive: string
   description?: string | null
-  availability?: string | null
+  availability_days?: DayOfWeek[] | null
+  availability_slot?: AvailabilitySlot | null
 }
 
 export interface LeadUpdatePayload {
@@ -42,7 +46,8 @@ export interface LeadUpdatePayload {
   email?: string | null
   motive?: string
   description?: string | null
-  availability?: string | null
+  availability_days?: DayOfWeek[] | null
+  availability_slot?: AvailabilitySlot | null
   status?: LeadStatus
 }
 

@@ -2,6 +2,7 @@
 import { errorMessage } from '~~/app/utils/error'
 import {
   useLeads,
+  type AvailabilitySlot,
   type Lead,
   type LeadCreatePayload,
   type LeadStatus
@@ -48,7 +49,8 @@ const form = reactive({
   email: '',
   motive: '',
   description: '',
-  availability: '',
+  availability_days: [] as string[],
+  availability_slot: null as AvailabilitySlot | null,
   status: 'new' as LeadStatus
 })
 
@@ -96,7 +98,8 @@ watch(
     form.email = lead?.email ?? ''
     form.motive = lead?.motive ?? ''
     form.description = lead?.description ?? ''
-    form.availability = lead?.availability ?? ''
+    form.availability_days = lead?.availability_days ?? []
+    form.availability_slot = lead?.availability_slot ?? null
     form.status = lead?.status ?? 'new'
   },
   { immediate: true }
@@ -129,7 +132,8 @@ async function submit() {
         email: form.email.trim() || null,
         motive: form.motive.trim(),
         description: form.description.trim() || null,
-        availability: form.availability.trim() || null
+        availability_days: form.availability_days.length ? form.availability_days : null,
+        availability_slot: form.availability_slot
       }
       const response = await leadsApi.create(payload)
       const result = response.data
@@ -165,7 +169,8 @@ async function submit() {
       email: form.email.trim() || null,
       motive: form.motive.trim(),
       description: form.description.trim() || null,
-      availability: form.availability.trim() || null,
+      availability_days: form.availability_days.length ? form.availability_days : null,
+      availability_slot: form.availability_slot,
       status: form.status
     })
     close()
@@ -298,11 +303,13 @@ async function quickStatus(status: LeadStatus) {
             />
           </UFormField>
 
-          <UFormField :label="t('leads.fields.availability')">
-            <UInput
-              v-model="form.availability"
-              :placeholder="t('leads.fields.availability')"
-              maxlength="200"
+          <UFormField
+            :label="t('leads.fields.availability')"
+            :help="t('leads.fields.availabilityHint')"
+          >
+            <LeadAvailabilityPicker
+              v-model:days="form.availability_days"
+              v-model:time-slot="form.availability_slot"
             />
           </UFormField>
 

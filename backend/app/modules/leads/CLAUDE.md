@@ -128,8 +128,9 @@ Two surfaces, and the cap is not in the environment:
   `Recall(...)` would stack duplicate call-backs and drop the activity journal.
 - **Dedupe + note append.** A repeat enquiry refreshes the same active
   `(patient, "other")` recall instead of stacking a second one, and the
-  composed note (motive / description / availability, verbatim, blank-line
-  separated) is **appended** behind a `---` separator — never overwritten,
+  composed note (motive / description verbatim, plus the availability as a
+  language-free token like `mon, wed · afternoon`, blank-line separated) is
+  **appended** behind a `---` separator — never overwritten,
   because a staff member may have written their own `other` recall on that
   row. The block is skipped when it is already present and when appending
   would exceed the 4000-character cap.
@@ -174,6 +175,24 @@ Two surfaces, and the cap is not in the environment:
 - **Never reset `day_count` from rotation, the settings PATCH or the toggle.**
   Rotating the key stops a flood; wiping the counter would hand the attacker a
   fresh daily budget and hide the evidence. Only the date rolling over resets it.
+- **Availability is structured (days + slot) and never becomes patient data.**
+  `availability_days` is a canonical mon..sun list (the service dedupes and
+  orders it), `availability_slot` is `morning`/`afternoon`/`evening` or NULL. The
+  public intake contract therefore takes **codes, not a sentence** — a free-text
+  value is rejected — and `leads_0002` drops the old text column. Weekday
+  labels come from `Intl.DateTimeFormat` in the UI (the narrow forms are correct in
+  all ten locales — Spanish gives L, M, X, J, V, S, D), so there are no
+  per-day i18n keys; only `leads.slots.*` is translated.
+- **The lead payloads reject unknown fields (`extra="forbid"`).** `LeadIntakeCreate`, `LeadCreate` and `LeadUpdate`
+  all forbid extras, so a website still posting the retired `availability` string
+  gets a **422 naming the field** instead of having it silently dropped — a
+  contract change has to be loud. Guarded by
+  `test_intake.py::test_retired_free_text_availability_is_rejected`.
+- **Motive and availability are never copied into the patient record.** They are
+  logistics for one call: the convert drawer starts with **notes empty** and the
+  staff writes what belongs in the chart. The only place they are rendered
+  outside this module is the recall note, for the matched-patient path where no
+  lead card exists.
 - **The convert drawer name split is a heuristic.** One `full_name` is split at
   the **first** whitespace (`Marta de la Fuente` → `Marta` / `de la Fuente`); a
   single-token name leaves `last_name` empty for the user to complete. Both

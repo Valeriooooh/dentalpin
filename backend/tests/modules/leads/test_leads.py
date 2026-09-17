@@ -26,7 +26,8 @@ UNMATCHED = {
     "email": "marta@example.com",
     "motive": "Presupuesto de ortodoncia",
     "description": "Viene de Instagram.",
-    "availability": "Tardes a partir de las 17:00",
+    "availability_days": ["tue", "thu"],
+    "availability_slot": "afternoon",
 }
 
 PATIENT_BODY = {
@@ -57,9 +58,12 @@ async def test_create_list_patch_get_roundtrip(
     assert lead["status"] == "new"
     assert lead["patient_id"] is None
     assert lead["converted_at"] is None
-    # Stored as typed, trimmed — availability is free text (D3).
+    # Stored as typed, trimmed.
     assert lead["phone"] == "+34 699 888 777"
-    assert lead["availability"] == "Tardes a partir de las 17:00"
+    # Availability is structured and canonicalised (mon..sun, no duplicates),
+    # whatever order the caller sent.
+    assert lead["availability_days"] == ["tue", "thu"]
+    assert lead["availability_slot"] == "afternoon"
 
     listed = await client.get(BASE, headers=auth_headers)
     assert listed.status_code == 200

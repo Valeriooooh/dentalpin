@@ -30,7 +30,8 @@
       "motive": "Motive",
       "description": "Description",
       "availability": "Availability",
-      "status": "Status"
+      "status": "Status",
+      "availabilityHint": "Which days can we call them?"
     },
     "actions": {
       "edit": "Edit",
@@ -51,16 +52,18 @@
       "duplicateWarning": "A patient with this phone already exists",
       "duplicateOpen": "Open that patient"
     },
-    "notes": {
-      "motive": "Motive",
-      "availability": "Availability"
-    },
     "validation": {
       "required": "This field is required",
       "email": "Enter a valid email address, for example name{'@'}example.com",
       "phone": "Enter a valid phone number (at least 6 digits)",
       "dateOfBirth": "The date of birth cannot be in the future",
       "fixErrors": "Check the highlighted fields"
+    },
+    "slots": {
+      "any": "Any time",
+      "morning": "Mornings",
+      "afternoon": "Afternoons",
+      "evening": "Evenings"
     },
     "routing": {
       "explainer": "Enquiries whose phone or email already belongs to a patient do not create a lead — they are added to Recalls as a call-back.",

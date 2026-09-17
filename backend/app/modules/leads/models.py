@@ -36,7 +36,7 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base, TimestampMixin
@@ -49,6 +49,26 @@ from app.database import Base, TimestampMixin
 #   converted  — became a patient (``patient_id`` / ``converted_at`` set)
 #   discarded  — the only removal path; leads are never hard-deleted
 LEAD_STATUSES = ("new", "contacted", "converted", "discarded")
+
+#: Week days an enquiry can name, in display order (ISO-8601 starts Monday).
+#: Stored as these codes; the UI renders localized weekday names.
+AVAILABILITY_DAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+
+#: Optional preference inside the chosen days. Absent means "any time".
+AVAILABILITY_SLOTS = ("morning", "afternoon", "evening")
+
+
+def canonical_days(days: list[str] | None) -> list[str] | None:
+    """Deduplicate and order days mon..sun; unknown codes are dropped.
+
+    The API validates the codes, so dropping here is a belt-and-braces for
+    rows written before a code was retired — an unexpected value must never
+    end up in the week strip the front desk reads.
+    """
+    if not days:
+        return None
+    seen = {day for day in days if day in AVAILABILITY_DAYS}
+    return [day for day in AVAILABILITY_DAYS if day in seen] or None
 
 
 class Lead(Base, TimestampMixin):
@@ -67,9 +87,14 @@ class Lead(Base, TimestampMixin):
     email: Mapped[str | None] = mapped_column(String(255))
     motive: Mapped[str] = mapped_column(String(200), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
-    # Free text by decision: the external form owns its own wording
-    # ("mornings", "weekdays after 17:00").
-    availability: Mapped[str | None] = mapped_column(String(200))
+    # When the person can be reached. Structured on purpose: the front desk
+    # reads it as a week strip and the card shows at a glance which days are
+    # open, which free text ("weekday afternoons") cannot do. Days are
+    # canonicalised (mon..sun, no duplicates) by the service.
+    availability_days: Mapped[list[str] | None] = mapped_column(JSONB)
+    # Optional preference inside the day ("morning" | "afternoon" | "evening").
+    # NULL means "no preference", not "unknown".
+    availability_slot: Mapped[str | None] = mapped_column(String(20))
 
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="new")
 

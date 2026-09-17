@@ -2,6 +2,7 @@
 import type { SemanticRole } from '~~/app/config/severity'
 import { PERMISSIONS } from '~~/app/config/permissions'
 import { useLeads, type Lead, type LeadStatus } from '../../composables/useLeads'
+import { hasAvailability } from '../../utils/leadAvailability'
 
 /**
  * /leads — the enquiry queue.
@@ -312,17 +313,27 @@ function onLeadConverted(lead: Lead) {
                   size="xs"
                 />
               </template>
+              <!-- Motive first (it is what the call is about), then the
+                   description — both trimmed; the full text is in the
+                   drawer, which is one click away. -->
               <template #subtitle>
-                <span dir="ltr">{{ lead.phone }}</span>
-                <span v-if="lead.motive"> · {{ lead.motive }}</span>
+                <div class="min-w-0 w-full">
+                  <div class="text-ui text-default truncate">
+                    {{ lead.motive }}
+                  </div>
+                  <div class="text-caption text-subtle truncate">
+                    <span dir="ltr">{{ lead.phone }}</span>
+                    <span v-if="lead.description"> · {{ lead.description }}</span>
+                  </div>
+                </div>
               </template>
               <template #meta>
-                <span
-                  v-if="lead.availability"
-                  class="hidden md:inline text-caption text-subtle max-w-[16rem] truncate"
-                >
-                  {{ lead.availability }}
-                </span>
+                <LeadAvailabilityWeek
+                  v-if="hasAvailability(lead.availability_days, lead.availability_slot)"
+                  class="hidden md:flex"
+                  :days="lead.availability_days"
+                  :time-slot="lead.availability_slot"
+                />
                 <span class="text-caption text-subtle whitespace-nowrap">
                   {{ receivedLabel(lead.created_at) }}
                 </span>
@@ -371,8 +382,20 @@ function onLeadConverted(lead: Lead) {
                   class="shrink-0"
                 />
               </div>
+              <div class="text-ui text-default truncate">
+                {{ lead.motive }}
+              </div>
+              <div
+                v-if="lead.description"
+                class="text-caption text-subtle line-clamp-2"
+              >
+                {{ lead.description }}
+              </div>
               <div class="flex items-center justify-between gap-2">
-                <span class="text-caption text-subtle truncate">{{ lead.motive }}</span>
+                <LeadAvailabilityWeek
+                  :days="lead.availability_days"
+                  :time-slot="lead.availability_slot"
+                />
                 <span class="text-caption text-subtle whitespace-nowrap">
                   {{ receivedLabel(lead.created_at) }}
                 </span>

@@ -24,7 +24,8 @@ PAYLOAD = {
     "phone": "+34 699 888 777",
     "email": "marta@example.com",
     "motive": "Presupuesto",
-    "availability": "Tardes",
+    "availability_days": ["tue"],
+    "availability_slot": "morning",
 }
 
 

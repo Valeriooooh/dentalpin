@@ -30,7 +30,8 @@
       "motive": "Ok",
       "description": "Leírás",
       "availability": "Elérhetőség",
-      "status": "Állapot"
+      "status": "Állapot",
+      "availabilityHint": "Mely napokon hívhatjuk?"
     },
     "actions": {
       "edit": "Szerkesztés",
@@ -51,16 +52,18 @@
       "duplicateWarning": "Már létezik páciens ezzel a telefonszámmal",
       "duplicateOpen": "A páciens megnyitása"
     },
-    "notes": {
-      "motive": "Ok",
-      "availability": "Elérhetőség"
-    },
     "validation": {
       "required": "Ez a mező kötelező",
       "email": "Adjon meg érvényes e-mail-címet, például nev{'@'}example.com",
       "phone": "Adjon meg érvényes telefonszámot (legalább 6 számjegy)",
       "dateOfBirth": "A születési dátum nem lehet a jövőben",
       "fixErrors": "Ellenőrizze a megjelölt mezőket"
+    },
+    "slots": {
+      "any": "Bármikor",
+      "morning": "Délelőtt",
+      "afternoon": "Délután",
+      "evening": "Este"
     },
     "routing": {
       "explainer": "Ha egy érdeklődés telefonszáma vagy e-mail-címe már egy pácienshez tartozik, nem jön létre új érdeklődés — helyette visszahívás kerül a Visszahívások közé.",

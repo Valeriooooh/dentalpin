@@ -30,34 +30,6 @@ export function splitFullName(fullName: string | null | undefined): LeadNamePart
   }
 }
 
-export interface LeadNoteSource {
-  motive?: string | null
-  description?: string | null
-  availability?: string | null
-}
-
-export interface LeadNoteLabels {
-  motive: string
-  availability: string
-}
-
-/**
- * Compose the patient's initial notes from the enquiry.
- *
- * motive (labelled), blank line, description (verbatim), availability
- * (labelled) — the labels come from i18n, never hardcoded here.
- */
-export function composeLeadNotes(lead: LeadNoteSource, labels: LeadNoteLabels): string {
-  const blocks: string[] = []
-  const motive = (lead.motive ?? '').trim()
-  if (motive) blocks.push(`${labels.motive}: ${motive}`)
-  const description = (lead.description ?? '').trim()
-  if (description) blocks.push(description)
-  const availability = (lead.availability ?? '').trim()
-  if (availability) blocks.push(`${labels.availability}: ${availability}`)
-  return blocks.join('\n\n')
-}
-
 /**
  * Trailing-9-digits comparison key — the frontend twin of the backend's
  * `matching.phone_key`. Used only for the "a patient with this phone

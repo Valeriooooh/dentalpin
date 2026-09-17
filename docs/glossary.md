@@ -145,5 +145,7 @@ ADRs) for the full story.
 | Intake key | Clave del formulario web | The per-clinic secret (`lk_…`) sent in the `X-Lead-Key` header — one per clinic, stored hashed, shown once when rotated. It **is** the authentication of the intake endpoint. |
 | Matched enquiry → recall | Consulta de paciente conocido → Recordatorios | An enquiry whose phone **or** email already belongs to a non-archived patient: it never becomes a lead, it queues a call-back in Recalls. |
 | Convert (a lead) | Convertir (una solicitud) | Turning a lead into a patient record from the convert drawer; the lead is kept with `status="converted"` and linked to the patient it produced. |
+| Availability days | Días disponibles | The days an enquirer can be called, stored as `mon`..`sun` codes (`leads.availability_days`) and shown to staff as a week strip. Structured, not free text: the website form sends codes. |
+| Availability slot | Franja horaria | Optional preference inside those days — `morning`, `afternoon` or `evening` (`leads.availability_slot`). Absent means "any time". |
 | Daily intake cap | Límite diario de solicitudes | Per-clinic ceiling on enquiries accepted per day (`leads_settings.daily_cap`, `0` = unlimited), edited at Settings → Integrations → *Formulario web*. |
 | Honeypot | Campo trampa | The hidden `website` field of the intake form: filled in means a bot, and the submission is accepted silently and never stored. |

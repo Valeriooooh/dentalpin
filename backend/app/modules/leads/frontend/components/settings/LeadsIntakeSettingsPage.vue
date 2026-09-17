@@ -104,7 +104,7 @@ const curlExample = computed(() => {
     `curl -X POST ${intakeUrl.value} \\`,
     '  -H "Content-Type: application/json" \\',
     `  -H "X-Lead-Key: ${key}" \\`,
-    `  -d '{"full_name":"Marta Ruiz","phone":"+34 600 111 222","email":"marta@example.com","motive":"Ortodoncia","description":"Instagram","availability":"Tardes"}'`
+    `  -d '{"full_name":"Marta Ruiz","phone":"+34 600 111 222","email":"marta@example.com","motive":"Ortodoncia","description":"Instagram","availability_days":["tue","thu"],"availability_slot":"afternoon"}'`
   ].join('\n')
 })
 

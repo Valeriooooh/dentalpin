@@ -1,20 +1,17 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import {
-  composeLeadNotes,
   phoneKey,
   phonesMatch,
   splitFullName
 } from '#module-layers/leads/frontend/utils/leadAutofill'
 
 /**
- * The one piece of guessing in the convert flow: how a single enquiry
- * name becomes first_name / last_name, and how the patient notes are
- * composed from the enquiry. Pure functions, so they are tested here
- * instead of through a mounted USlideover.
+ * The one piece of guessing in the convert flow: how the enquiry's single
+ * name field becomes first_name / last_name, plus the trailing-9-digits
+ * phone rule the duplicate warning shares with the backend. Pure functions,
+ * tested here instead of through a mounted USlideover.
  */
-const LABELS = { motive: 'Motive', availability: 'Availability' }
-
 describe('splitFullName', () => {
   it('splits at the first whitespace', () => {
     expect(splitFullName('Marta Ruiz')).toEqual({ first_name: 'Marta', last_name: 'Ruiz' })
@@ -38,24 +35,6 @@ describe('splitFullName', () => {
     })
     expect(splitFullName('')).toEqual({ first_name: '', last_name: '' })
     expect(splitFullName(null)).toEqual({ first_name: '', last_name: '' })
-  })
-})
-
-describe('composeLeadNotes', () => {
-  it('labels the motive and the availability, description verbatim', () => {
-    expect(
-      composeLeadNotes(
-        { motive: 'Ortodoncia', description: 'Viene de Instagram.', availability: 'Tardes' },
-        LABELS
-      )
-    ).toBe('Motive: Ortodoncia\n\nViene de Instagram.\n\nAvailability: Tardes')
-  })
-
-  it('skips the fields the enquiry left empty', () => {
-    expect(composeLeadNotes({ motive: 'Ortodoncia', availability: null }, LABELS)).toBe(
-      'Motive: Ortodoncia'
-    )
-    expect(composeLeadNotes({}, LABELS)).toBe('')
   })
 })
 

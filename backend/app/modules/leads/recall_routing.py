@@ -20,6 +20,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.patients.models import Patient
 from app.modules.recalls.service import RecallService
 
+from .models import canonical_days
+
 logger = logging.getLogger(__name__)
 
 # The recall reason matched enquiries land on. "other" already exists in
@@ -36,15 +38,43 @@ NOTE_CAP = 4000
 _NOTE_SEPARATOR = "\n\n---\n\n"
 
 
-def _compose_enquiry_note(data: dict) -> str:
-    """motive / description / availability, verbatim.
+def _format_availability(days: list[str] | None, slot: str | None) -> str | None:
+    """Availability as a language-free token: "mon, wed · afternoon".
 
-    Blank-line separated, no invented labels: the note is data the staff
-    reads, in the enquirer's own words.
+    The recall note is stored text shared by every consumer, so it cannot be
+    rendered in the reader's language — day codes and the slot identifier
+    read the same to a Spanish and an English front desk, and they are the
+    only part of the enquiry that is not already free text written by the
+    person themselves. The lead card renders the same information with
+    localized weekday names; this is the fallback for the recall path, where
+    no lead row exists.
     """
-    fields = ("motive", "description", "availability")
-    parts = [str(data.get(field) or "").strip() for field in fields]
-    return "\n\n".join(part for part in parts if part)[:NOTE_CAP]
+    codes = canonical_days(days) or []
+    parts: list[str] = []
+    if codes:
+        parts.append(", ".join(codes))
+    if slot:
+        parts.append(str(slot))
+    return " · ".join(parts) or None
+
+
+def _compose_enquiry_note(data: dict) -> str:
+    """motive / description / availability, blank-line separated.
+
+    No invented labels: the note is data the staff reads, and the first two
+    parts are the enquirer's own words.
+    """
+    parts: list[str] = []
+    for field in ("motive", "description"):
+        value = str(data.get(field) or "").strip()
+        if value:
+            parts.append(value)
+    availability = _format_availability(
+        data.get("availability_days"), data.get("availability_slot")
+    )
+    if availability:
+        parts.append(availability)
+    return "\n\n".join(parts)[:NOTE_CAP]
 
 
 def _merged_note(existing_note: str | None, note: str) -> str | None:

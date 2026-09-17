@@ -32,7 +32,8 @@ PAYLOAD = {
     "email": "marta@example.com",
     "motive": "Presupuesto de ortodoncia",
     "description": "Viene de Instagram.",
-    "availability": "Tardes a partir de las 17:00",
+    "availability_days": ["tue", "thu"],
+    "availability_slot": "afternoon",
 }
 
 
@@ -163,6 +164,25 @@ async def test_validation_failure_is_422(
         INTAKE, json={**PAYLOAD, "motive": ""}, headers={"X-Lead-Key": key}
     )
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_retired_free_text_availability_is_rejected(
+    client: AsyncClient, db_session: AsyncSession, test_clinic: Clinic
+):
+    """Availability became structured (day codes + slot). A website still
+    posting the old free-text string must be told, not quietly ignored."""
+    key = await _mint_key(db_session, test_clinic.id)
+    response = await client.post(
+        INTAKE,
+        json={**PAYLOAD, "availability": "Tardes a partir de las 17:00"},
+        headers={"X-Lead-Key": key},
+    )
+    assert response.status_code == 422
+
+    # …and the same payload without the stale field still works.
+    accepted = await client.post(INTAKE, json=PAYLOAD, headers={"X-Lead-Key": key})
+    assert accepted.status_code == 201
 
 
 @pytest.mark.asyncio

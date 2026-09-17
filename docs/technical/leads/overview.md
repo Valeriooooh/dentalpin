@@ -92,8 +92,9 @@ The public path returns neither.
   `due_month`/`due_date` = today: that is what puts the call-back at the top of
   the call list. On the public path `recommended_by` is `None`; on the staff
   path it is `ctx.user_id`, so the recall records who took the enquiry.
-- The note is **composed** as motive / description / availability verbatim,
-  blank-line separated, no invented labels — and **appended** to any existing
+- The note is **composed** as motive / description verbatim, plus the
+  availability as a language-free token (`mon, wed · afternoon`), blank-line
+  separated, no invented labels — and **appended** to any existing
   note (skipped if already present, skipped if it would exceed the
   4000-character cap), because `create` overwrites `reason_note` on its dedupe
   path and a staff member may have written their own `other` recall there.
@@ -110,7 +111,7 @@ The public path returns neither.
 
 | Table | One row per | Holds |
 |---|---|---|
-| `leads` | enquiry that matched nobody | `full_name`, `phone`, `email`, `motive`, `description`, `availability` (free text), `status`, `patient_id`, `converted_at` |
+| `leads` | enquiry that matched nobody | `full_name`, `phone`, `email`, `motive`, `description`, `availability_days` (JSONB, mon..sun), `availability_slot` (`morning`/`afternoon`/`evening`), `status`, `patient_id`, `converted_at` |
 | `leads_intake_keys` | clinic (`uq_leads_intake_keys_clinic`) | SHA-256 `key_hash`, `key_prefix`, `is_active` (kill switch), `last_used_at` — never the plaintext |
 | `leads_settings` | clinic (`clinic_id` is the **primary key**) | `daily_cap` (default 200, `0` = unlimited), `day_count`, `day_count_date` |
 
@@ -134,6 +135,23 @@ handler raised, so an uncommitted increment would vanish and a flood would look
 like it never happened. The clinic then sees how big the flood is, not merely
 that intake stopped (`tests/modules/leads/test_intake.py` asserts it through a
 separate connection).
+
+### Availability is structured, and never becomes patient data
+
+Days live in `availability_days` (canonicalised mon..sun, deduplicated by the
+service) with an optional `availability_slot`. Free text was the first design
+and was replaced: the front desk needs "which days can we call this person" at a
+glance, and the lead card renders a week strip from the codes, localized through
+`Intl.DateTimeFormat` rather than 70 i18n keys. The public contract changed with
+it — the website now sends `["tue","thu"]`, not a sentence — and `leads_0002`
+drops the old text column (it cannot be parsed into days; guessing a call window
+is worse than asking again).
+
+Neither the motive nor the availability is copied into the patient record. They
+are logistics for one phone call; the chart is built by a human from what belongs
+in it. The convert drawer therefore leaves **notes empty**, and the recall note
+(the fallback for the matched-patient path, where no lead card exists) is the
+only place they are rendered outside the module.
 
 ### Why there is no `matched_patient_id` and no `status = "matched"`
 

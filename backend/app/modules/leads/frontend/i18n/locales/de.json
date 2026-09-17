@@ -30,7 +30,8 @@
       "motive": "Grund",
       "description": "Beschreibung",
       "availability": "Verfügbarkeit",
-      "status": "Status"
+      "status": "Status",
+      "availabilityHint": "An welchen Tagen können wir anrufen?"
     },
     "actions": {
       "edit": "Bearbeiten",
@@ -51,16 +52,18 @@
       "duplicateWarning": "Ein Patient mit dieser Telefonnummer existiert bereits",
       "duplicateOpen": "Diesen Patienten öffnen"
     },
-    "notes": {
-      "motive": "Grund",
-      "availability": "Verfügbarkeit"
-    },
     "validation": {
       "required": "Dieses Feld ist erforderlich",
       "email": "Geben Sie eine gültige E-Mail-Adresse ein, z. B. name{'@'}example.com",
       "phone": "Geben Sie eine gültige Telefonnummer ein (mindestens 6 Ziffern)",
       "dateOfBirth": "Das Geburtsdatum kann nicht in der Zukunft liegen",
       "fixErrors": "Prüfen Sie die markierten Felder"
+    },
+    "slots": {
+      "any": "Jederzeit",
+      "morning": "Vormittags",
+      "afternoon": "Nachmittags",
+      "evening": "Abends"
     },
     "routing": {
       "explainer": "Anfragen, deren Telefonnummer oder E-Mail bereits zu einem Patienten gehören, werden nicht als neue Anfrage angelegt — sie landen als Rückruf in Recalls.",

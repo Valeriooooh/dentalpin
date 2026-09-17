@@ -3,7 +3,8 @@ import type { PaginatedResponse } from '~~/app/types'
 import { errorMessage } from '~~/app/utils/error'
 import { PERMISSIONS } from '~~/app/config/permissions'
 import { useLeads, type Lead, type LeadConvertPayload } from '../../composables/useLeads'
-import { composeLeadNotes, phonesMatch, splitFullName } from '../../utils/leadAutofill'
+import { phonesMatch, splitFullName } from '../../utils/leadAutofill'
+import { hasAvailability } from '../../utils/leadAvailability'
 import {
   hasErrors,
   validatePatientForm,
@@ -122,10 +123,11 @@ function resetFrom(lead: Lead | null) {
     email: lead.email ?? '',
     date_of_birth: '',
     national_id: '',
-    notes: composeLeadNotes(lead, {
-      motive: t('leads.notes.motive'),
-      availability: t('leads.notes.availability')
-    })
+    // Notes start empty on purpose: the motive and the call availability are
+    // logistics for this call, not patient data. They stay on the lead and in
+    // the panel above; the chart gets what the clinician needs, written by a
+    // human.
+    notes: ''
   })
 }
 
@@ -262,12 +264,16 @@ async function convert() {
                     {{ lead.description }}
                   </dd>
                 </div>
-                <div v-if="lead.availability">
+                <div v-if="hasAvailability(lead.availability_days, lead.availability_slot)">
                   <dt class="text-caption text-subtle">
                     {{ t('leads.fields.availability') }}
                   </dt>
                   <dd class="text-default">
-                    {{ lead.availability }}
+                    <LeadAvailabilityWeek
+                      :days="lead.availability_days"
+                      :time-slot="lead.availability_slot"
+                      size="md"
+                    />
                   </dd>
                 </div>
                 <div class="flex flex-wrap gap-x-6 gap-y-1">

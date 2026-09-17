@@ -20,6 +20,12 @@ from app.modules.patients.schemas import PatientBrief
 LeadStatus = Literal["new", "contacted", "converted", "discarded"]
 LeadSubmitOutcome = Literal["lead_created", "recall_queued"]
 
+# Availability is structured rather than free text: the front desk reads a
+# week strip, and a card can show which days are open at a glance. The codes
+# mirror models.AVAILABILITY_DAYS / AVAILABILITY_SLOTS.
+DayOfWeek = Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+AvailabilitySlot = Literal["morning", "afternoon", "evening"]
+
 # The path the frontend prefixes with its own origin: the backend does not
 # guess hostnames.
 INTAKE_PATH = "/api/v1/leads/public/intake"
@@ -42,33 +48,45 @@ def _strip_optional(value: str | None) -> str | None:
 
 
 class LeadCreate(BaseModel):
-    """Manual creation by staff (front desk taking an enquiry by phone)."""
+    """Manual creation by staff (front desk taking an enquiry by phone).
+
+    Extra fields are rejected (`extra="forbid"`) so a caller still sending the
+    retired `availability` free-text field gets a loud 422 instead of a silently
+    dropped value.
+    """
+
+    model_config = ConfigDict(extra="forbid")
 
     full_name: str = Field(min_length=1, max_length=200)
     phone: str = Field(min_length=1, max_length=32)
     email: EmailStr | None = None
     motive: str = Field(min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=4000)
-    availability: str | None = Field(default=None, max_length=200)
+    # Optional: an enquiry with no stated availability is still a lead.
+    availability_days: list[DayOfWeek] | None = Field(default=None, max_length=7)
+    availability_slot: AvailabilitySlot | None = None
     status: LeadStatus = "new"
 
     _strip_name = field_validator("full_name", "phone", "motive")(_strip_required)
-    _strip_free = field_validator("description", "availability")(_strip_optional)
+    _strip_free = field_validator("description")(_strip_optional)
 
 
 class LeadUpdate(BaseModel):
     """All-optional: PATCH semantics with exclude_unset."""
+
+    model_config = ConfigDict(extra="forbid")
 
     full_name: str | None = Field(default=None, min_length=1, max_length=200)
     phone: str | None = Field(default=None, min_length=1, max_length=32)
     email: EmailStr | None = None
     motive: str | None = Field(default=None, min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=4000)
-    availability: str | None = Field(default=None, max_length=200)
+    availability_days: list[DayOfWeek] | None = Field(default=None, max_length=7)
+    availability_slot: AvailabilitySlot | None = None
     status: LeadStatus | None = None
 
     _strip_name = field_validator("full_name", "phone", "motive")(_strip_required)
-    _strip_free = field_validator("description", "availability")(_strip_optional)
+    _strip_free = field_validator("description")(_strip_optional)
 
 
 class LeadResponse(BaseModel):
@@ -81,7 +99,8 @@ class LeadResponse(BaseModel):
     email: str | None
     motive: str
     description: str | None
-    availability: str | None
+    availability_days: list[DayOfWeek] | None
+    availability_slot: AvailabilitySlot | None
     status: LeadStatus
     patient_id: UUID | None
     converted_at: datetime | None
@@ -94,20 +113,30 @@ class LeadIntakeCreate(BaseModel):
 
     Every string carries a max_length — that, plus the request body cap,
     is the storage-abuse floor for an unauthenticated endpoint.
+
+    `extra="forbid"`: an unknown field is a 422, not something quietly thrown
+    away. That is what makes a contract change loud — a website still posting the
+    retired `availability` string is told so instead of losing the value.
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     full_name: str = Field(min_length=1, max_length=200)
     phone: str = Field(min_length=1, max_length=32)
     email: EmailStr
     motive: str = Field(min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=4000)
-    availability: str = Field(min_length=1, max_length=200)
+    # Optional: the form may not ask, and a missing answer is not an error.
+    # (Superseded the free-text string of the first design; the website must
+    # now send day codes.)
+    availability_days: list[DayOfWeek] | None = Field(default=None, max_length=7)
+    availability_slot: AvailabilitySlot | None = None
     # Honeypot: a real person leaves it empty. Never stored, never echoed.
     website: str = Field(default="", max_length=200)
     # Only meaningful when LEADS_CAPTCHA_PROVIDER is configured.
     captcha_token: str | None = Field(default=None, max_length=4096)
 
-    _strip_name = field_validator("full_name", "phone", "motive", "availability")(_strip_required)
+    _strip_name = field_validator("full_name", "phone", "motive")(_strip_required)
     _strip_free = field_validator("description")(_strip_optional)
 
 

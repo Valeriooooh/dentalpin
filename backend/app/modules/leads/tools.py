@@ -21,7 +21,7 @@ from pydantic import BaseModel, Field
 
 from app.core.agents import AgentContext, Tool, ToolCategory
 
-from .schemas import LeadStatus
+from .schemas import AvailabilitySlot, DayOfWeek, LeadStatus
 from .service import LeadIntakeService, LeadService, LeadSettingsService
 
 
@@ -49,7 +49,12 @@ class CreateLeadArgs(BaseModel):
     email: str | None = Field(default=None, max_length=255)
     motive: str = Field(min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=4000)
-    availability: str | None = Field(default=None, max_length=200)
+    availability_days: list[DayOfWeek] | None = Field(
+        default=None, max_length=7, description="Días en que se le puede llamar (mon..sun)."
+    )
+    availability_slot: AvailabilitySlot | None = Field(
+        default=None, description="Franja preferida: morning | afternoon | evening."
+    )
 
 
 class UpdateLeadArgs(BaseModel):
@@ -59,7 +64,8 @@ class UpdateLeadArgs(BaseModel):
     email: str | None = Field(default=None, max_length=255)
     motive: str | None = Field(default=None, min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=4000)
-    availability: str | None = Field(default=None, max_length=200)
+    availability_days: list[DayOfWeek] | None = Field(default=None, max_length=7)
+    availability_slot: AvailabilitySlot | None = None
     status: LeadStatus | None = None
 
 
@@ -89,7 +95,9 @@ def _lead_summary(lead) -> dict:
         "phone": lead.phone,
         "email": lead.email,
         "motive": lead.motive,
-        "availability": lead.availability,
+        "description": lead.description,
+        "availability_days": lead.availability_days,
+        "availability_slot": lead.availability_slot,
         "status": lead.status,
         "patient_id": lead.patient_id,
         "converted_at": lead.converted_at,

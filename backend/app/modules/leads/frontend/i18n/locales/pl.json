@@ -30,7 +30,8 @@
       "motive": "Powód",
       "description": "Opis",
       "availability": "Dostępność",
-      "status": "Status"
+      "status": "Status",
+      "availabilityHint": "W których dniach możemy zadzwonić?"
     },
     "actions": {
       "edit": "Edytuj",
@@ -51,16 +52,18 @@
       "duplicateWarning": "Pacjent o tym numerze telefonu już istnieje",
       "duplicateOpen": "Otwórz tego pacjenta"
     },
-    "notes": {
-      "motive": "Powód",
-      "availability": "Dostępność"
-    },
     "validation": {
       "required": "To pole jest wymagane",
       "email": "Podaj prawidłowy adres e-mail, na przykład nazwa{'@'}example.com",
       "phone": "Podaj prawidłowy numer telefonu (co najmniej 6 cyfr)",
       "dateOfBirth": "Data urodzenia nie może być w przyszłości",
       "fixErrors": "Sprawdź zaznaczone pola"
+    },
+    "slots": {
+      "any": "Dowolna pora",
+      "morning": "Przedpołudnia",
+      "afternoon": "Popołudnia",
+      "evening": "Wieczory"
     },
     "routing": {
       "explainer": "Jeśli numer telefonu lub e-mail ze zgłoszenia należy już do pacjenta, nowe zgłoszenie nie powstaje — zamiast tego do Wizyt kontrolnych trafia telefon do wykonania.",
