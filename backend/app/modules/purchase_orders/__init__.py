@@ -48,6 +48,7 @@ class PurchaseOrdersModule(BaseModule):
             "navigation": [
                 {
                     "label": "nav.procurementSuppliers",
+                    "section": "inventory",
                     "to": "/procurement/suppliers",
                     "icon": "i-lucide-truck",
                     "permission": "suppliers.read",
@@ -55,6 +56,7 @@ class PurchaseOrdersModule(BaseModule):
                 },
                 {
                     "label": "nav.procurementItems",
+                    "section": "inventory",
                     "to": "/procurement/items",
                     "icon": "i-lucide-link",
                     "permission": "supplier_items.read",
@@ -62,6 +64,7 @@ class PurchaseOrdersModule(BaseModule):
                 },
                 {
                     "label": "nav.procurementOrders",
+                    "section": "inventory",
                     "to": "/procurement/orders",
                     "icon": "i-lucide-clipboard-list",
                     "permission": "purchase_orders.read",
@@ -69,6 +72,7 @@ class PurchaseOrdersModule(BaseModule):
                 },
                 {
                     "label": "nav.procurementReorder",
+                    "section": "inventory",
                     "to": "/procurement/reorder",
                     "icon": "i-lucide-rotate-ccw",
                     "permission": "inventory_reorder.read",
@@ -76,6 +80,7 @@ class PurchaseOrdersModule(BaseModule):
                 },
                 {
                     "label": "nav.procurementRatings",
+                    "section": "inventory",
                     "to": "/procurement/ratings",
                     "icon": "i-lucide-star",
                     "permission": "supplier_ratings.read",

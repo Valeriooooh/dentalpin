@@ -39,6 +39,7 @@ class ExpensesModule(BaseModule):
             "navigation": [
                 {
                     "label": "nav.expenses",
+                    "section": "financials",
                     "icon": "i-lucide-wallet",
                     "to": "/expenses",
                     "permission": "expenses.read",

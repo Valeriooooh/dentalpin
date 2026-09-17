@@ -40,6 +40,7 @@ class DocumentsModule(BaseModule):
             "navigation": [
                 {
                     "label": "nav.documents",
+                    "section": "clinical",
                     "to": "/documents",
                     "icon": "i-lucide-file-text",
                     "permission": "documents.read",

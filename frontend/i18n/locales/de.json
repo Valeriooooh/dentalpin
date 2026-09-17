@@ -1092,6 +1092,13 @@
         "description": "Ihr Profil, Passwort und Ihre Sprache."
       }
     },
+    "supergroups": {
+      "clinicalSetup": { "label": "Klinikeinrichtung" },
+      "clinicalManagement": { "label": "Klinikverwaltung" },
+      "financialConfiguration": { "label": "Finanzkonfiguration" },
+      "systemAddons": { "label": "System und Erweiterungen" },
+      "myPreferences": { "label": "Meine Einstellungen" }
+    },
     "search": {
       "placeholder": "Einstellungen durchsuchen…",
       "empty": "Keine Treffer für diese Suche.",

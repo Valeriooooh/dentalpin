@@ -44,6 +44,7 @@ class PayrollModule(BaseModule):
             "navigation": [
                 {
                     "label": "payroll.nav.profiles",
+                    "section": "financials",
                     "to": "/payroll/profiles",
                     "icon": "i-lucide-users",
                     "permission": "payroll.read",
@@ -51,6 +52,7 @@ class PayrollModule(BaseModule):
                 },
                 {
                     "label": "payroll.nav.periods",
+                    "section": "financials",
                     "to": "/payroll/periods",
                     "icon": "i-lucide-calendar-days",
                     "permission": "payroll.read",
@@ -58,6 +60,7 @@ class PayrollModule(BaseModule):
                 },
                 {
                     "label": "payroll.nav.reports",
+                    "section": "financials",
                     "to": "/payroll/reports",
                     "icon": "i-lucide-chart-column",
                     "permission": "payroll.reports.read",

@@ -1092,6 +1092,13 @@
         "description": "ملفك الشخصي وكلمة المرور واللغة."
       }
     },
+    "supergroups": {
+      "clinicalSetup": { "label": "إعدادات العيادة" },
+      "clinicalManagement": { "label": "إدارة العيادة" },
+      "financialConfiguration": { "label": "الإعدادات المالية" },
+      "systemAddons": { "label": "النظام والإضافات" },
+      "myPreferences": { "label": "تفضيلاتي" }
+    },
     "search": {
       "placeholder": "ابحث في الإعدادات…",
       "empty": "لا نتائج مطابقة لبحثك.",

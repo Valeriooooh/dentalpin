@@ -39,6 +39,7 @@ class PatientsModule(BaseModule):
             "navigation": [
                 {
                     "label": "nav.patients",
+                    "section": "clinical",
                     "icon": "i-lucide-users",
                     "to": "/patients",
                     "permission": "patients.read",

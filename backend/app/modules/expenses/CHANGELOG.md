@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- feat(#232): sidebar entry grouped under the Financials header (`nav.section` "financials").
 - fix(#431 review): CSV `amount` accepts the decimal comma (`1200,50`),
   matching the `;` sniffing for Spanish Excel exports.
 - fix(#431 review round 3): oversize-upload 422 test mirrored from

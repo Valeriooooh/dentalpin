@@ -39,6 +39,7 @@ class ContactsModule(BaseModule):
             "navigation": [
                 {
                     "label": "nav.contacts",
+                    "section": "inventory",
                     "icon": "i-lucide-building-2",
                     "to": "/contacts",
                     "permission": "contacts.read",

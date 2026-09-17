@@ -1092,6 +1092,13 @@
         "description": "O seu perfil, palavra-passe e idioma."
       }
     },
+    "supergroups": {
+      "clinicalSetup": { "label": "Configuração clínica" },
+      "clinicalManagement": { "label": "Gestão clínica" },
+      "financialConfiguration": { "label": "Configuração financeira" },
+      "systemAddons": { "label": "Sistema e complementos" },
+      "myPreferences": { "label": "As minhas preferências" }
+    },
     "search": {
       "placeholder": "Procurar nas definições…",
       "empty": "Sem resultados para essa pesquisa.",

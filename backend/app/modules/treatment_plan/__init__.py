@@ -70,6 +70,7 @@ class TreatmentPlanModule(BaseModule):
             "navigation": [
                 {
                     "label": "nav.treatmentPlans",
+                    "section": "clinical",
                     "icon": "i-lucide-clipboard-list",
                     "to": "/treatment-plans",
                     "permission": "treatment_plan.plans.read",

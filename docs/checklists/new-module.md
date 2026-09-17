@@ -66,6 +66,7 @@ Every module is agent-addressable. Expose the operations an AI agent should be a
 - [ ] `backend/app/modules/<name>/frontend/` exists with `nuxt.config.ts`, `pages/`, `components/`
 - [ ] `manifest["frontend"]["layer_path"] = "frontend"`
 - [ ] Navigation entries declared in `manifest["frontend"]["navigation"]` with namespaced `permission`
+- [ ] Each sidebar entry self-places under one of the canonical `section` keys (`clinical`, `lab`, `financials`, `inventory`, `practice`) per the mapping in `docs/technical/creating-modules.md` §Backend-driven navigation; integration modules that fit no cluster stay flat
 
 ## Tests
 

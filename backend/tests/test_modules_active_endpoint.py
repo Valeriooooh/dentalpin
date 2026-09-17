@@ -84,7 +84,8 @@ async def test_active_shape_for_admin(client: AsyncClient, db_session: AsyncSess
     assert billing["category"] == "official"
     assert billing["summary"] == "Invoices, payments, credit notes, PDF billing."
     # Admin sees every nav item the billing manifest declares.
-    assert any(item["to"] == "/invoices" for item in billing["navigation"])
+    invoices_item = next(item for item in billing["navigation"] if item["to"] == "/invoices")
+    assert invoices_item["section"] == "financials"
     assert "billing.read" in billing["permissions"]
 
 

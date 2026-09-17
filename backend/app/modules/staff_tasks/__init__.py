@@ -49,6 +49,7 @@ class StaffTasksModule(BaseModule):
             "navigation": [
                 {
                     "label": "nav.staffTasks",
+                    "section": "practice",
                     "icon": "i-lucide-clipboard-list",
                     "to": "/tasks",
                     "permission": "staff_tasks.read",

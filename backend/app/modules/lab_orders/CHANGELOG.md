@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- feat(#232): sidebar entries grouped under the Lab header (`nav.section` "lab").
 - feat(#334): Hungarian (hu) locale for the module's frontend layer.
 
 - feat(i18n): Arabic (ar) locale for the module's frontend layer.
