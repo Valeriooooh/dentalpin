@@ -15,9 +15,11 @@ from uuid import UUID, uuid4
 
 from fastapi import HTTPException
 from fastapi import status as http_status
-from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func, select
+from sqlalchemy.exc import DataError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.events import EventType, event_bus
 
 from .models import TreasuryAccount, TreasuryEntry
 
@@ -60,14 +62,27 @@ class TreasuryService:
             )
         ).all()
         signed = sum(
-            (_SIGN.get(kind, Decimal("0")) * amount for kind, amount in rows),
+            (TreasuryService._signed(kind, amount) for kind, amount in rows),
             Decimal("0"),
         )
         return (account.opening_balance or Decimal("0")) + signed
 
     @staticmethod
+    def _signed(kind: str, amount: Decimal) -> Decimal:
+        """Sign an entry amount — unknown kinds raise instead of vanishing."""
+        try:
+            return _SIGN[kind] * amount
+        except KeyError:
+            raise HTTPException(
+                status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Unknown entry kind: {kind}",
+            ) from None
+
+    @staticmethod
     async def create_account(db: AsyncSession, clinic_id: UUID, data: dict) -> TreasuryAccount:
         row = TreasuryAccount(clinic_id=clinic_id, **data)
+        if row.opening_balance is not None:
+            row.opening_balance = row.opening_balance.quantize(Decimal("0.01"))
         db.add(row)
         try:
             await db.flush()
@@ -76,6 +91,12 @@ class TreasuryService:
             raise HTTPException(
                 status_code=http_status.HTTP_409_CONFLICT,
                 detail="An account with this name already exists",
+            ) from exc
+        except DataError as exc:
+            await db.rollback()
+            raise HTTPException(
+                status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Opening balance is out of range",
             ) from exc
         return row
 
@@ -95,9 +116,21 @@ class TreasuryService:
 
     @staticmethod
     async def delete_account(db: AsyncSession, row: TreasuryAccount) -> None:
-        # Entries cascade; deleting an account with history drops its
-        # ledger rows with it — the audit trail lives in activity scope,
-        # not in dead accounts. Prefer is_active=False for history.
+        # Refuse when ledger history exists — deleting an account with
+        # entries would drop its audit trail (entries cascade). Deactivate
+        # via PATCH instead (AccountUpdate.is_active).
+        entries = (
+            await db.execute(
+                select(func.count())
+                .select_from(TreasuryEntry)
+                .where(TreasuryEntry.account_id == row.id)
+            )
+        ).scalar_one()
+        if entries:
+            raise HTTPException(
+                status_code=http_status.HTTP_409_CONFLICT,
+                detail="Account has ledger entries — deactivate it instead of deleting",
+            )
         await db.delete(row)
         await db.flush()
 
@@ -110,6 +143,7 @@ class TreasuryService:
         amount: Decimal,
         memo: str | None,
         at: datetime | None,
+        created_by: UUID | None = None,
     ) -> list[TreasuryEntry]:
         if from_account.id == to_account.id:
             raise HTTPException(
@@ -117,6 +151,7 @@ class TreasuryService:
                 detail="Source and destination must differ",
             )
         stamp = at or datetime.now(UTC)
+        amount = amount.quantize(Decimal("0.01"))
         group_id = uuid4()
         legs = [
             TreasuryEntry(
@@ -127,6 +162,7 @@ class TreasuryService:
                 amount=amount,
                 at=stamp,
                 memo=memo,
+                created_by=created_by,
             ),
             TreasuryEntry(
                 clinic_id=clinic_id,
@@ -136,10 +172,23 @@ class TreasuryService:
                 amount=amount,
                 at=stamp,
                 memo=memo,
+                created_by=created_by,
             ),
         ]
         db.add_all(legs)
         await db.flush()
+        await event_bus.publish(
+            EventType.TREASURY_TRANSFERRED,
+            {
+                "clinic_id": str(clinic_id),
+                "group_id": str(group_id),
+                "from_account_id": str(from_account.id),
+                "to_account_id": str(to_account.id),
+                "amount": str(amount),
+                "created_by": str(created_by) if created_by else None,
+            },
+            db=db,
+        )
         return legs
 
     @staticmethod
@@ -151,18 +200,33 @@ class TreasuryService:
         direction: str,
         memo: str,
         at: datetime | None,
+        created_by: UUID | None = None,
     ) -> TreasuryEntry:
         row = TreasuryEntry(
             clinic_id=clinic_id,
             account_id=account.id,
             group_id=uuid4(),
             kind=f"correction_{direction}",
-            amount=amount,
+            amount=amount.quantize(Decimal("0.01")),
             at=at or datetime.now(UTC),
             memo=memo,
+            created_by=created_by,
         )
         db.add(row)
         await db.flush()
+        await event_bus.publish(
+            EventType.TREASURY_CORRECTED,
+            {
+                "clinic_id": str(clinic_id),
+                "account_id": str(account.id),
+                "entry_id": str(row.id),
+                "amount": str(row.amount),
+                "direction": direction,
+                "memo": memo,
+                "created_by": str(created_by) if created_by else None,
+            },
+            db=db,
+        )
         return row
 
     @staticmethod

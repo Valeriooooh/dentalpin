@@ -4,6 +4,8 @@
     "title": "Tesouraria",
     "newAccount": "Nova conta",
     "transfer": "Transferir",
+    "correct": "Corrigir",
+    "correctionDirection": "Direção",
     "accounts": "Contas",
     "noAccounts": "Ainda sem contas.",
     "statement": "Movimentos",

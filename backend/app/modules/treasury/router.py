@@ -132,7 +132,14 @@ async def transfer(
     src = await _ensure_account(db, ctx.clinic_id, data.from_account_id)
     dst = await _ensure_account(db, ctx.clinic_id, data.to_account_id)
     legs = await TreasuryService.transfer(
-        db, ctx.clinic_id, src, dst, data.amount, data.memo, data.at
+        db,
+        ctx.clinic_id,
+        src,
+        dst,
+        data.amount,
+        data.memo,
+        data.at,
+        created_by=ctx.user_id,
     )
     await db.commit()
     for leg in legs:
@@ -154,7 +161,14 @@ async def correct(
 ) -> ApiResponse[EntryResponse]:
     row = await _ensure_account(db, ctx.clinic_id, account_id)
     entry = await TreasuryService.correct(
-        db, ctx.clinic_id, row, data.amount, data.direction, data.memo, data.at
+        db,
+        ctx.clinic_id,
+        row,
+        data.amount,
+        data.direction,
+        data.memo,
+        data.at,
+        created_by=ctx.user_id,
     )
     await db.commit()
     await db.refresh(entry)

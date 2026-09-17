@@ -4,6 +4,8 @@
     "title": "الخزينة",
     "newAccount": "حساب جديد",
     "transfer": "تحويل",
+    "correct": "تصحيح",
+    "correctionDirection": "الاتجاه",
     "accounts": "الحسابات",
     "noAccounts": "لا توجد حسابات بعد.",
     "statement": "الحركات",

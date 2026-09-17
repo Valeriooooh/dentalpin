@@ -12,7 +12,15 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, ForeignKey, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -60,3 +68,16 @@ class TreasuryEntry(Base, TimestampMixin):
     amount: Mapped[Decimal] = mapped_column(Numeric(12, 2))
     at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     memo: Mapped[str | None] = mapped_column(Text, default=None)
+    # Acting user who recorded the movement (from auth, never the body).
+    # Nullable for rows written before this column existed.
+    created_by: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id"), default=None, index=True
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "kind IN ('transfer_out', 'transfer_in', 'correction_in', 'correction_out', 'opening')",
+            name="ck_treasury_entries_kind",
+        ),
+        CheckConstraint("amount > 0", name="ck_treasury_entries_amount_positive"),
+    )

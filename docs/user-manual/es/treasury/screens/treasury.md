@@ -22,7 +22,9 @@ related_paths:
 
 En la entrada **Tesorería** de la barra lateral (solo admin). Cada
 cuenta muestra su saldo derivado (apertura + movimientos con signo,
-nunca almacenado).
+nunca almacenado), con formato en la moneda de la clínica. Las
+operaciones fallidas muestran su error en lugar de cerrar el modal
+en silencio.
 
 ## Qué puedes hacer
 

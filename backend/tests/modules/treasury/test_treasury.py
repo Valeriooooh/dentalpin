@@ -139,3 +139,210 @@ async def test_http_codes(client, auth_headers, test_clinic: Clinic):
 
     missing = await client.get(f"/api/v1/treasury/accounts/{uuid4()}/entries", headers=auth_headers)
     assert missing.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_account_with_entries_is_409(db_session: AsyncSession, test_clinic: Clinic):
+    cash = await TreasuryService.create_account(db_session, test_clinic.id, {"name": "Caja"})
+    bank = await TreasuryService.create_account(db_session, test_clinic.id, {"name": "Banco"})
+    await TreasuryService.transfer(
+        db_session, test_clinic.id, cash, bank, Decimal("10"), None, None
+    )
+    await db_session.commit()
+    with pytest.raises(HTTPException) as exc:
+        await TreasuryService.delete_account(db_session, cash)
+    assert exc.value.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_delete_empty_account(client, auth_headers, test_clinic: Clinic):
+    created = await client.post(
+        "/api/v1/treasury/accounts",
+        json={"name": "Vacía", "kind": "cash"},
+        headers=auth_headers,
+    )
+    assert created.status_code == 201
+    gone = await client.delete(
+        f"/api/v1/treasury/accounts/{created.json()['data']['id']}",
+        headers=auth_headers,
+    )
+    assert gone.status_code == 204
+
+
+@pytest.mark.asyncio
+async def test_delete_account_with_entries_http_is_409(client, auth_headers, test_clinic: Clinic):
+    cash = (
+        await client.post(
+            "/api/v1/treasury/accounts",
+            json={"name": "Caja409", "kind": "cash"},
+            headers=auth_headers,
+        )
+    ).json()["data"]
+    bank = (
+        await client.post(
+            "/api/v1/treasury/accounts",
+            json={"name": "Banco409", "kind": "bank"},
+            headers=auth_headers,
+        )
+    ).json()["data"]
+    moved = await client.post(
+        "/api/v1/treasury/transfers",
+        json={"from_account_id": cash["id"], "to_account_id": bank["id"], "amount": "5"},
+        headers=auth_headers,
+    )
+    assert moved.status_code == 200
+    gone = await client.delete(f"/api/v1/treasury/accounts/{cash['id']}", headers=auth_headers)
+    assert gone.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_decimal_edges_are_422_not_500(client, auth_headers, test_clinic: Clinic):
+    fuzzy = await client.post(
+        "/api/v1/treasury/accounts",
+        json={"name": "Fuzzy", "kind": "cash", "opening_balance": "10.005"},
+        headers=auth_headers,
+    )
+    assert fuzzy.status_code == 422
+    huge = await client.post(
+        "/api/v1/treasury/accounts",
+        json={"name": "Huge", "kind": "cash", "opening_balance": "9999999999999.99"},
+        headers=auth_headers,
+    )
+    assert huge.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_transfer_stores_created_by(db_session: AsyncSession, test_clinic: Clinic):
+    from app.core.auth.models import ClinicMembership, User
+    from app.core.auth.service import hash_password
+
+    actor = User(
+        id=uuid4(),
+        email=f"actor-{uuid4().hex[:6]}@t.c",
+        password_hash=hash_password("TestPass1234"),
+        first_name="A",
+        last_name="C",
+        is_active=True,
+    )
+    db_session.add(actor)
+    await db_session.flush()
+    db_session.add(
+        ClinicMembership(id=uuid4(), user_id=actor.id, clinic_id=test_clinic.id, role="admin")
+    )
+    cash = await TreasuryService.create_account(db_session, test_clinic.id, {"name": "Caja"})
+    bank = await TreasuryService.create_account(db_session, test_clinic.id, {"name": "Banco"})
+    legs = await TreasuryService.transfer(
+        db_session,
+        test_clinic.id,
+        cash,
+        bank,
+        Decimal("7"),
+        None,
+        None,
+        created_by=actor.id,
+    )
+    await db_session.commit()
+    assert all(leg.created_by == actor.id for leg in legs)
+
+
+@pytest.mark.asyncio
+async def test_denies_roles_without_treasury_grant(
+    client, db_session: AsyncSession, test_clinic: Clinic
+):
+    """A clinic member whose role lacks treasury gets 403 on every route."""
+    from app.core.auth.models import ClinicMembership, User
+    from app.core.auth.service import create_access_token, hash_password
+
+    user = User(
+        id=uuid4(),
+        email=f"no-grant-{uuid4().hex[:6]}@t.c",
+        password_hash=hash_password("TestPass1234"),
+        first_name="N",
+        last_name="G",
+        is_active=True,
+    )
+    db_session.add(user)
+    await db_session.flush()
+    db_session.add(
+        ClinicMembership(id=uuid4(), user_id=user.id, clinic_id=test_clinic.id, role="guest")
+    )
+    await db_session.commit()
+    headers = {"Authorization": f"Bearer {create_access_token(user.id, token_version=0)}"}
+
+    assert (await client.get("/api/v1/treasury/accounts", headers=headers)).status_code == 403
+    assert (
+        await client.post(
+            "/api/v1/treasury/accounts",
+            json={"name": "X"},
+            headers=headers,
+        )
+    ).status_code == 403
+    assert (
+        await client.post(
+            "/api/v1/treasury/transfers",
+            json={
+                "from_account_id": str(uuid4()),
+                "to_account_id": str(uuid4()),
+                "amount": "1",
+            },
+            headers=headers,
+        )
+    ).status_code == 403
+    assert (
+        await client.get(f"/api/v1/treasury/accounts/{uuid4()}/entries", headers=headers)
+    ).status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_cross_clinic_accounts_are_invisible(
+    client, db_session: AsyncSession, test_clinic: Clinic, auth_headers: dict
+):
+    """Accounts created in another clinic never surface here (HTTP level)."""
+    from app.core.auth.models import ClinicMembership, User
+    from app.core.auth.service import create_access_token, hash_password
+
+    other_clinic = Clinic(
+        id=uuid4(),
+        name="Other Clinic",
+        tax_id="B87654321",
+        address={"street": "Other St", "city": "Valencia"},
+        settings={"slot_duration_min": 15},
+    )
+    db_session.add(other_clinic)
+    await db_session.flush()
+    other_member = User(
+        id=uuid4(),
+        email=f"other-{uuid4().hex[:6]}@t.c",
+        password_hash=hash_password("TestPass1234"),
+        first_name="O",
+        last_name="M",
+        is_active=True,
+    )
+    db_session.add(other_member)
+    await db_session.flush()
+    db_session.add(
+        ClinicMembership(
+            id=uuid4(), user_id=other_member.id, clinic_id=other_clinic.id, role="admin"
+        )
+    )
+    await db_session.commit()
+    other_headers = {
+        "Authorization": f"Bearer {create_access_token(other_member.id, token_version=0)}"
+    }
+
+    created = await client.post(
+        "/api/v1/treasury/accounts",
+        json={"name": "Ajena", "kind": "cash"},
+        headers=other_headers,
+    )
+    assert created.status_code == 201
+
+    listed = await client.get("/api/v1/treasury/accounts", headers=auth_headers)
+    assert listed.status_code == 200
+    assert all(a["name"] != "Ajena" for a in listed.json()["data"])
+
+    peek = await client.get(
+        f"/api/v1/treasury/accounts/{created.json()['data']['id']}/entries",
+        headers=auth_headers,
+    )
+    assert peek.status_code == 404

@@ -21,7 +21,9 @@ related_paths:
 # Treasury
 
 Found under the **Treasury** sidebar entry (admin only). Each account
-shows its derived balance (opening + signed movements, never stored).
+shows its derived balance (opening + signed movements, never stored),
+formatted in the clinic's currency. Failed operations surface their
+error instead of closing the modal silently.
 
 ## What you can do
 

@@ -50,5 +50,15 @@ export function useTreasury() {
     return response.data
   }
 
-  return { listAccounts, createAccount, transfer, statement }
+  async function correct(
+    accountId: string, amount: string, direction: 'in' | 'out', memo: string
+  ): Promise<TreasuryEntry> {
+    const response = await api.post<ApiResponse<TreasuryEntry>>(
+      `/api/v1/treasury/accounts/${accountId}/corrections`,
+      { amount, direction, memo }
+    )
+    return response.data
+  }
+
+  return { listAccounts, createAccount, transfer, statement, correct }
 }

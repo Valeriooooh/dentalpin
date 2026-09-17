@@ -6,13 +6,23 @@
  * (see module CLAUDE.md).
  */
 import type { TreasuryAccount, TreasuryEntry } from '../../composables/useTreasury'
+import { PERMISSIONS } from '~~/app/config/permissions'
 
-const { t } = useI18n()
-const { listAccounts, createAccount, transfer, statement } = useTreasury()
+definePageMeta({ middleware: ['auth'] })
+
+const { t, locale } = useI18n()
+const { can } = usePermissions()
+const { listAccounts, createAccount, transfer, statement, correct } = useTreasury()
+const { currentClinic } = useClinic()
+const toast = useToast()
+
+const canWrite = computed(() => can(PERMISSIONS.treasury.write))
+
+if (!can(PERMISSIONS.treasury.read)) await navigateTo('/')
 
 const accounts = ref<TreasuryAccount[]>([])
 const entries = ref<TreasuryEntry[]>([])
-const selectedId = ref('')
+const selectedId = ref<string | null>(null)
 const isLoading = ref(false)
 
 const showAccountModal = ref(false)
@@ -20,12 +30,32 @@ const newName = ref('')
 const newKind = ref('cash')
 
 const showTransferModal = ref(false)
-const transferFrom = ref('')
-const transferTo = ref('')
+const transferFrom = ref<string | null>(null)
+const transferTo = ref<string | null>(null)
 const transferAmount = ref('')
 const transferMemo = ref('')
 
+const showCorrectModal = ref(false)
+const correctAmount = ref('')
+const correctDirection = ref<'in' | 'out'>('in')
+const correctMemo = ref('')
+
 const selected = computed(() => accounts.value.find(a => a.id === selectedId.value))
+
+function formatMoney(value: string | number): string {
+  const currency = currentClinic.value?.currency || 'EUR'
+  try {
+    return new Intl.NumberFormat(locale.value, { style: 'currency', currency }).format(Number(value))
+  } catch {
+    return String(value)
+  }
+}
+
+function fail(e: unknown) {
+  const detail = (e as { data?: { detail?: unknown } })?.data?.detail
+  const description = typeof detail === 'string' ? detail : String(detail ?? e)
+  toast.add({ title: t('treasury.title'), description, color: 'error' })
+}
 
 async function refresh() {
   isLoading.value = true
@@ -40,18 +70,33 @@ async function refresh() {
 
 async function create() {
   if (!newName.value.trim()) return
-  await createAccount(newName.value.trim(), newKind.value)
-  newName.value = ''
-  showAccountModal.value = false
-  await refresh()
+  try {
+    await createAccount(newName.value.trim(), newKind.value)
+    newName.value = ''
+    showAccountModal.value = false
+    await refresh()
+  } catch (e: unknown) { fail(e) }
 }
 
 async function doTransfer() {
   if (!transferFrom.value || !transferTo.value || !transferAmount.value) return
-  await transfer(transferFrom.value, transferTo.value, transferAmount.value, transferMemo.value || undefined)
-  showTransferModal.value = false
-  transferMemo.value = ''
-  await refresh()
+  try {
+    await transfer(transferFrom.value, transferTo.value, transferAmount.value, transferMemo.value || undefined)
+    showTransferModal.value = false
+    transferMemo.value = ''
+    await refresh()
+  } catch (e: unknown) { fail(e) }
+}
+
+async function doCorrect() {
+  if (!selectedId.value || !correctAmount.value || !correctMemo.value.trim()) return
+  try {
+    await correct(selectedId.value, correctAmount.value, correctDirection.value, correctMemo.value.trim())
+    showCorrectModal.value = false
+    correctAmount.value = ''
+    correctMemo.value = ''
+    await refresh()
+  } catch (e: unknown) { fail(e) }
 }
 
 onMounted(refresh)
@@ -61,12 +106,18 @@ watch(selectedId, async () => {
 </script>
 
 <template>
-  <div class="space-y-4 p-4">
+  <div
+    v-if="can(PERMISSIONS.treasury.read)"
+    class="space-y-4 p-4"
+  >
     <div class="flex items-center justify-between">
       <h1 class="text-h2">
         {{ t('treasury.title') }}
       </h1>
-      <div class="flex gap-2">
+      <div
+        v-if="canWrite"
+        class="flex gap-2"
+      >
         <UButton
           color="neutral"
           variant="outline"
@@ -81,6 +132,15 @@ watch(selectedId, async () => {
           @click="showTransferModal = true"
         >
           {{ t('treasury.transfer') }}
+        </UButton>
+        <UButton
+          color="neutral"
+          variant="outline"
+          icon="i-lucide-pencil"
+          :disabled="!selectedId"
+          @click="showCorrectModal = true"
+        >
+          {{ t('treasury.correct') }}
         </UButton>
       </div>
     </div>
@@ -115,7 +175,7 @@ watch(selectedId, async () => {
               @click="selectedId = account.id"
             >
               <span>{{ account.name }}</span>
-              <span class="font-mono">{{ account.balance }}</span>
+              <span class="font-mono">{{ formatMoney(account.balance) }}</span>
             </button>
           </li>
         </ul>
@@ -145,7 +205,7 @@ watch(selectedId, async () => {
             class="flex justify-between gap-2"
           >
             <span class="truncate">{{ t(`treasury.kind.${entry.kind}`) }}{{ entry.memo ? ' — ' + entry.memo : '' }}</span>
-            <span class="font-mono shrink-0">{{ entry.amount }}</span>
+            <span class="font-mono shrink-0">{{ formatMoney(entry.amount) }}</span>
           </li>
         </ul>
       </UCard>
@@ -230,6 +290,49 @@ watch(selectedId, async () => {
           </UButton>
           <UButton @click="doTransfer">
             {{ t('treasury.transfer') }}
+          </UButton>
+        </div>
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="showCorrectModal"
+      :title="t('treasury.correct')"
+    >
+      <template #body>
+        <div class="space-y-3 p-4">
+          <UFormField :label="t('treasury.correctionDirection')">
+            <USelectMenu
+              v-model="correctDirection"
+              value-key="value"
+              :items="[
+                { label: t('treasury.kind.correction_in'), value: 'in' },
+                { label: t('treasury.kind.correction_out'), value: 'out' }
+              ]"
+            />
+          </UFormField>
+          <UFormField :label="t('treasury.amount')">
+            <UInput
+              v-model="correctAmount"
+              inputmode="decimal"
+            />
+          </UFormField>
+          <UFormField :label="t('treasury.memo')">
+            <UInput v-model="correctMemo" />
+          </UFormField>
+        </div>
+      </template>
+      <template #footer>
+        <div class="flex justify-end gap-2 p-2">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            @click="showCorrectModal = false"
+          >
+            {{ t('common.close') }}
+          </UButton>
+          <UButton @click="doCorrect">
+            {{ t('treasury.correct') }}
           </UButton>
         </div>
       </template>

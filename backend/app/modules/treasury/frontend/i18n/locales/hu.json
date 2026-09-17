@@ -4,6 +4,8 @@
     "title": "Pénztár",
     "newAccount": "Új számla",
     "transfer": "Átvezetés",
+    "correct": "Helyesbít",
+    "correctionDirection": "Irány",
     "accounts": "Számlák",
     "noAccounts": "Még nincsenek számlák.",
     "statement": "Mozgások",

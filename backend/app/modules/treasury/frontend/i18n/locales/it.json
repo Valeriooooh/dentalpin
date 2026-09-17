@@ -4,6 +4,8 @@
     "title": "Cassa",
     "newAccount": "Nuovo conto",
     "transfer": "Trasferisci",
+    "correct": "Correggi",
+    "correctionDirection": "Direzione",
     "accounts": "Conti",
     "noAccounts": "Nessun conto.",
     "statement": "Movimenti",

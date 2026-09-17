@@ -4,6 +4,8 @@
     "title": "Kasa",
     "newAccount": "Nowe konto",
     "transfer": "Przelej",
+    "correct": "Koryguj",
+    "correctionDirection": "Kierunek",
     "accounts": "Konta",
     "noAccounts": "Brak kont.",
     "statement": "Operacje",

@@ -4,6 +4,8 @@
     "title": "Trésorerie",
     "newAccount": "Nouveau compte",
     "transfer": "Transférer",
+    "correct": "Corriger",
+    "correctionDirection": "Direction",
     "accounts": "Comptes",
     "noAccounts": "Aucun compte pour le moment.",
     "statement": "Relevé",

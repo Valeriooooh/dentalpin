@@ -4,6 +4,8 @@
     "title": "Kasse",
     "newAccount": "Neues Konto",
     "transfer": "Umbuchen",
+    "correct": "Korrigieren",
+    "correctionDirection": "Richtung",
     "accounts": "Konten",
     "noAccounts": "Noch keine Konten.",
     "statement": "Buchungen",
