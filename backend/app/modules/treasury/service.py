@@ -12,16 +12,20 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import HTTPException
 from fastapi import status as http_status
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.exc import DataError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.auth.models import Clinic
 from app.core.events import EventType, event_bus
 
 from .models import TreasuryAccount, TreasuryEntry
+
+DEFAULT_TIMEZONE = "Europe/Madrid"
 
 _SIGN = {
     "transfer_out": Decimal("-1"),
@@ -33,6 +37,26 @@ _SIGN = {
 
 
 class TreasuryService:
+    @staticmethod
+    async def _clinic_zone(db: AsyncSession, clinic_id: UUID):
+        """Clinic-local zone (house rule: naive datetimes are clinic wall-clock).
+
+        Same semantics as ``agenda/tz.py`` without taking an agenda
+        dependency — mirrors the staff_attendance precedent.
+        """
+        result = await db.execute(select(Clinic.timezone).where(Clinic.id == clinic_id))
+        try:
+            return ZoneInfo(result.scalar_one_or_none() or DEFAULT_TIMEZONE)
+        except ZoneInfoNotFoundError:
+            return ZoneInfo(DEFAULT_TIMEZONE)
+
+    @staticmethod
+    def _as_utc(at: datetime, tz) -> datetime:
+        """Naive → attach clinic tz; aware → keep instant. Always UTC."""
+        if at.tzinfo is None:
+            at = at.replace(tzinfo=tz)
+        return at.astimezone(UTC)
+
     @staticmethod
     async def list_accounts(db: AsyncSession, clinic_id: UUID) -> list[TreasuryAccount]:
         stmt = (
@@ -53,30 +77,36 @@ class TreasuryService:
 
     @staticmethod
     async def balance(db: AsyncSession, account: TreasuryAccount) -> Decimal:
-        rows = (
-            await db.execute(
-                select(TreasuryEntry.kind, TreasuryEntry.amount).where(
-                    TreasuryEntry.account_id == account.id,
-                    TreasuryEntry.clinic_id == account.clinic_id,
-                )
-            )
-        ).all()
-        signed = sum(
-            (TreasuryService._signed(kind, amount) for kind, amount in rows),
-            Decimal("0"),
+        return (await TreasuryService.balances(db, account.clinic_id)).get(
+            account.id, account.opening_balance or Decimal("0")
         )
-        return (account.opening_balance or Decimal("0")) + signed
 
     @staticmethod
-    def _signed(kind: str, amount: Decimal) -> Decimal:
-        """Sign an entry amount — unknown kinds raise instead of vanishing."""
-        try:
-            return _SIGN[kind] * amount
-        except KeyError:
-            raise HTTPException(
-                status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Unknown entry kind: {kind}",
-            ) from None
+    async def balances(db: AsyncSession, clinic_id: UUID) -> dict[UUID, Decimal]:
+        """All account balances in one aggregate query (no N+1).
+
+        The sign map is derived from ``_SIGN`` so SQL and Python can
+        never drift apart.
+        """
+        negative = [kind for kind, sign in _SIGN.items() if sign < 0]
+        sign = case((TreasuryEntry.kind.in_(negative), -1), else_=1)
+        rows = (
+            await db.execute(
+                select(
+                    TreasuryEntry.account_id,
+                    func.sum(TreasuryEntry.amount * sign),
+                )
+                .where(TreasuryEntry.clinic_id == clinic_id)
+                .group_by(TreasuryEntry.account_id)
+            )
+        ).all()
+        out = {account_id: total or Decimal("0") for account_id, total in rows}
+        accounts = await TreasuryService.list_accounts(db, clinic_id)
+        return {
+            account.id: (account.opening_balance or Decimal("0"))
+            + out.get(account.id, Decimal("0"))
+            for account in accounts
+        }
 
     @staticmethod
     async def create_account(db: AsyncSession, clinic_id: UUID, data: dict) -> TreasuryAccount:
@@ -150,7 +180,14 @@ class TreasuryService:
                 status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Source and destination must differ",
             )
-        stamp = at or datetime.now(UTC)
+        for account in (from_account, to_account):
+            if not account.is_active:
+                raise HTTPException(
+                    status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Account '{account.name}' is deactivated",
+                )
+        tz = await TreasuryService._clinic_zone(db, clinic_id)
+        stamp = TreasuryService._as_utc(at or datetime.now(UTC), tz)
         amount = amount.quantize(Decimal("0.01"))
         group_id = uuid4()
         legs = [
@@ -202,13 +239,19 @@ class TreasuryService:
         at: datetime | None,
         created_by: UUID | None = None,
     ) -> TreasuryEntry:
+        if not account.is_active:
+            raise HTTPException(
+                status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Account '{account.name}' is deactivated",
+            )
+        tz = await TreasuryService._clinic_zone(db, clinic_id)
         row = TreasuryEntry(
             clinic_id=clinic_id,
             account_id=account.id,
             group_id=uuid4(),
             kind=f"correction_{direction}",
             amount=amount.quantize(Decimal("0.01")),
-            at=at or datetime.now(UTC),
+            at=TreasuryService._as_utc(at or datetime.now(UTC), tz),
             memo=memo,
             created_by=created_by,
         )

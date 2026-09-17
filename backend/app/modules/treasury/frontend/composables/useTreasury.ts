@@ -30,7 +30,9 @@ export function useTreasury() {
   async function createAccount(name: string, kind: string): Promise<TreasuryAccount> {
     const response = await api.post<ApiResponse<TreasuryAccount>>(
       '/api/v1/treasury/accounts',
-      { name, kind }
+      { name, kind },
+      // The page surfaces failures itself — keep useApi's toast off.
+      { errorToast: false }
     )
     return response.data
   }
@@ -38,7 +40,8 @@ export function useTreasury() {
   async function transfer(fromId: string, toId: string, amount: string, memo?: string): Promise<TreasuryEntry[]> {
     const response = await api.post<ApiResponse<TreasuryEntry[]>>(
       '/api/v1/treasury/transfers',
-      { from_account_id: fromId, to_account_id: toId, amount, memo: memo || null }
+      { from_account_id: fromId, to_account_id: toId, amount, memo: memo || null },
+      { errorToast: false }
     )
     return response.data
   }
@@ -55,7 +58,8 @@ export function useTreasury() {
   ): Promise<TreasuryEntry> {
     const response = await api.post<ApiResponse<TreasuryEntry>>(
       `/api/v1/treasury/accounts/${accountId}/corrections`,
-      { amount, direction, memo }
+      { amount, direction, memo },
+      { errorToast: false }
     )
     return response.data
   }

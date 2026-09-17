@@ -4,6 +4,7 @@ Mounted under ``/api/v1/treasury/*``. Admin-only (money balances keep
 the payroll-grade blast radius until clinics widen grants via roles).
 """
 
+from decimal import Decimal
 from typing import Annotated
 from uuid import UUID
 
@@ -35,14 +36,20 @@ async def _ensure_account(db: AsyncSession, clinic_id: UUID, account_id: UUID):
     return row
 
 
-async def _with_balance(db: AsyncSession, row: TreasuryAccount) -> AccountResponse:
+async def _with_balance(
+    db: AsyncSession, row: TreasuryAccount, balances: dict | None = None
+) -> AccountResponse:
+    if balances is None:
+        balance = await TreasuryService.balance(db, row)
+    else:
+        balance = balances.get(row.id, row.opening_balance or Decimal("0"))
     return AccountResponse(
         id=row.id,
         name=row.name,
         kind=row.kind,
         opening_balance=row.opening_balance,
         is_active=row.is_active,
-        balance=await TreasuryService.balance(db, row),
+        balance=balance,
     )
 
 
@@ -56,7 +63,8 @@ async def list_accounts(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ApiResponse[list[AccountResponse]]:
     rows = await TreasuryService.list_accounts(db, ctx.clinic_id)
-    return ApiResponse(data=[await _with_balance(db, r) for r in rows])
+    balances = await TreasuryService.balances(db, ctx.clinic_id)
+    return ApiResponse(data=[await _with_balance(db, r, balances) for r in rows])
 
 
 @router.post(

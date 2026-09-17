@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import uuid4
 
@@ -346,3 +347,53 @@ async def test_cross_clinic_accounts_are_invisible(
         headers=auth_headers,
     )
     assert peek.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_transfer_into_deactivated_account_is_422(
+    db_session: AsyncSession, test_clinic: Clinic
+):
+    cash = await TreasuryService.create_account(db_session, test_clinic.id, {"name": "Caja"})
+    bank = await TreasuryService.create_account(db_session, test_clinic.id, {"name": "Banco"})
+    await TreasuryService.update_account(db_session, bank, {"is_active": False})
+    await db_session.commit()
+    with pytest.raises(HTTPException) as exc:
+        await TreasuryService.transfer(
+            db_session, test_clinic.id, cash, bank, Decimal("10"), None, None
+        )
+    assert exc.value.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_naive_datetime_is_clinic_local(db_session: AsyncSession, test_clinic: Clinic):
+    """Naive input is interpreted as clinic-local wall clock (Madrid, UTC+2 in May)."""
+    cash = await TreasuryService.create_account(db_session, test_clinic.id, {"name": "Caja"})
+    bank = await TreasuryService.create_account(db_session, test_clinic.id, {"name": "Banco"})
+    legs = await TreasuryService.transfer(
+        db_session,
+        test_clinic.id,
+        cash,
+        bank,
+        Decimal("10"),
+        None,
+        datetime(2026, 5, 4, 10, 0),
+    )
+    await db_session.commit()
+    assert legs[0].at == datetime(2026, 5, 4, 8, 0, tzinfo=UTC)
+
+
+@pytest.mark.asyncio
+async def test_list_balances_match_single_balance(db_session: AsyncSession, test_clinic: Clinic):
+    """The aggregate balances map agrees with per-account balances."""
+    cash = await TreasuryService.create_account(
+        db_session, test_clinic.id, {"name": "Caja", "opening_balance": Decimal("100")}
+    )
+    bank = await TreasuryService.create_account(db_session, test_clinic.id, {"name": "Banco"})
+    await TreasuryService.transfer(
+        db_session, test_clinic.id, cash, bank, Decimal("30"), None, None
+    )
+    await db_session.commit()
+    balances = await TreasuryService.balances(db_session, test_clinic.id)
+    assert balances[cash.id] == await TreasuryService.balance(db_session, cash)
+    assert balances[bank.id] == await TreasuryService.balance(db_session, bank)
+    assert balances == {cash.id: Decimal("70"), bank.id: Decimal("30")}
