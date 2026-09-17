@@ -7,7 +7,7 @@ punch answers 409 — the roster, not the log, is where corrections happen
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime, time
+from datetime import UTC, date, datetime, time, timedelta
 from uuid import UUID
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -49,10 +49,14 @@ class AttendanceService:
     async def _day_bounds_utc(
         db: AsyncSession, clinic_id: UUID, day: date
     ) -> tuple[datetime, datetime]:
-        """Day window in UTC computed from local midnight (not UTC midnight)."""
+        """Half-open day window in UTC: [local midnight, next local midnight).
+
+        Half-open (not ``time.max``/``<=``) so a punch at exactly midnight
+        belongs to the day it starts and no second is lost per segment.
+        """
         tz = await AttendanceService._clinic_zone(db, clinic_id)
         start = datetime.combine(day, time.min, tzinfo=tz).astimezone(UTC)
-        end = datetime.combine(day, time.max, tzinfo=tz).astimezone(UTC)
+        end = (datetime.combine(day, time.min, tzinfo=tz) + timedelta(days=1)).astimezone(UTC)
         return start, end
 
     @staticmethod
@@ -193,7 +197,7 @@ class AttendanceService:
             stmt = stmt.where(AttendanceEvent.user_id == user_id)
         if day is not None:
             start, end = await AttendanceService._day_bounds_utc(db, clinic_id, day)
-            stmt = stmt.where(AttendanceEvent.at >= start, AttendanceEvent.at <= end)
+            stmt = stmt.where(AttendanceEvent.at >= start, AttendanceEvent.at < end)
         stmt = stmt.order_by(desc(AttendanceEvent.at)).limit(min(limit, 500))
         return (await db.execute(stmt)).scalars().all()
 
@@ -213,9 +217,13 @@ class AttendanceService:
     ) -> list[dict]:
         """Pair in→out punches per member for one clinic-local day.
 
-        An ``in`` from before the window still opens the day (overnight
-        shifts); an unpaired trailing ``in`` counts up to query time but
-        never past the end of the reported day, and is flagged open.
+        Every in→out pair is clipped to the window on both ends —
+        ``max(in, start)`` → ``min(out, end)`` — so multi-day ranges sum
+        exactly and no shift is ever counted twice. ``open`` means no
+        closing punch exists at all (forward query), never an inference
+        from the window: a closed historical shift is never "still in".
+        An unpaired trailing ``in`` accrues up to query time but never
+        past the end of the reported day.
         """
         now = now or datetime.now(UTC)
         start, end = await AttendanceService._day_bounds_utc(db, clinic_id, day)
@@ -226,13 +234,14 @@ class AttendanceService:
             .where(
                 AttendanceEvent.clinic_id == clinic_id,
                 AttendanceEvent.at >= start,
-                AttendanceEvent.at <= end,
+                AttendanceEvent.at < end,
             )
             .order_by(AttendanceEvent.user_id, AttendanceEvent.at)
         )
         rows = (await db.execute(stmt)).all()
         # Seed each member seen in the window; then carry a pre-window
-        # trailing `in` so overnight shifts count on the day they end.
+        # trailing `in` (lookback bounded — a shift open longer than that
+        # without any punch is outside this module's model).
         by_user: dict[UUID, dict] = {}
         for event, first, last in rows:
             by_user.setdefault(
@@ -244,6 +253,7 @@ class AttendanceService:
                 .where(
                     AttendanceEvent.clinic_id == clinic_id,
                     AttendanceEvent.user_id.in_(list(by_user)),
+                    AttendanceEvent.at >= start - timedelta(days=7),
                     AttendanceEvent.at < start,
                 )
                 .order_by(AttendanceEvent.user_id, desc(AttendanceEvent.at))
@@ -260,19 +270,45 @@ class AttendanceService:
             if event.kind == "in":
                 slot["open_since"] = event.at
             elif slot["open_since"] is not None:
-                slot["seconds"] += int((event.at - slot["open_since"]).total_seconds())
+                slot["seconds"] += max(
+                    0,
+                    int((min(event.at, end) - max(slot["open_since"], start)).total_seconds()),
+                )
                 slot["open_since"] = None
-        return [
-            {
-                "user_id": uid,
-                "full_name": slot["name"],
-                "seconds": slot["seconds"]
-                + (
-                    int((cap - slot["open_since"]).total_seconds())
-                    if slot["open_since"] and cap > slot["open_since"]
-                    else 0
-                ),
-                "open": slot["open_since"] is not None,
-            }
-            for uid, slot in sorted(by_user.items(), key=lambda kv: kv[1]["name"])
-        ]
+        out: list[dict] = []
+        for uid, slot in sorted(by_user.items(), key=lambda kv: kv[1]["name"]):
+            is_open = False
+            extra = 0
+            if slot["open_since"] is not None:
+                # Forward query: does any closing punch exist at all?
+                later = (
+                    await db.execute(
+                        select(AttendanceEvent.at)
+                        .where(
+                            AttendanceEvent.clinic_id == clinic_id,
+                            AttendanceEvent.user_id == uid,
+                            AttendanceEvent.kind == "out",
+                            AttendanceEvent.at > slot["open_since"],
+                        )
+                        .order_by(AttendanceEvent.at)
+                        .limit(1)
+                    )
+                ).scalar_one_or_none()
+                if later is None:
+                    is_open = True
+                    if cap > max(slot["open_since"], start):
+                        extra = int((cap - max(slot["open_since"], start)).total_seconds())
+                else:
+                    slot["seconds"] += max(
+                        0,
+                        int((min(later, end) - max(slot["open_since"], start)).total_seconds()),
+                    )
+            out.append(
+                {
+                    "user_id": uid,
+                    "full_name": slot["name"],
+                    "seconds": slot["seconds"] + extra,
+                    "open": is_open,
+                }
+            )
+        return out

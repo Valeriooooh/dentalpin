@@ -34,7 +34,10 @@ export function useAttendance() {
   async function clock(userId: string, kind: 'in' | 'out', note?: string): Promise<AttendanceEvent> {
     const response = await api.post<ApiResponse<AttendanceEvent>>(
       '/api/v1/staff_attendance/events',
-      { user_id: userId, kind, note: note ?? null }
+      { user_id: userId, kind, note: note ?? null },
+      // The page surfaces failures itself with the right title — keep
+      // useApi's own toast off so a 409 does not pop twice.
+      { errorToast: false }
     )
     return response.data
   }

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Round 2: pairs clip to the window on both ends (multi-day sums are
+  exact), `open` means no closing punch exists at all (forward query),
+  half-open day windows, single toast on 409 (`errorToast: false`).
+
 - Clinic-local day windows (`Clinic.timezone`, naive input = wall clock),
   positional duplicate guard (neighbours, not tail), overnight-shift
   carry-over with day-boundary cap, `created_by` on every punch

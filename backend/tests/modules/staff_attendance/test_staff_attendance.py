@@ -286,6 +286,8 @@ async def test_naive_datetime_is_clinic_local(db_session: AsyncSession, test_cli
 
 @pytest.mark.asyncio
 async def test_overnight_shift_counts_on_closing_day(db_session: AsyncSession):
+    """The closing day counts its own clipped share (00:00→06:00 = 6h);
+    the opening day's 2h belong to the opening day (see the sum test)."""
     clinic = await _utc_clinic(db_session)
     user = await _member(db_session, clinic.id)
     await AttendanceService.clock(
@@ -299,8 +301,38 @@ async def test_overnight_shift_counts_on_closing_day(db_session: AsyncSession):
         db_session, clinic.id, datetime(2026, 5, 5, tzinfo=UTC).date()
     )
     assert len(rows) == 1
-    assert rows[0]["seconds"] == 8 * 3600
+    assert rows[0]["seconds"] == 6 * 3600
     assert rows[0]["open"] is False
+
+
+@pytest.mark.asyncio
+async def test_overnight_shift_sums_exactly_across_both_days(db_session: AsyncSession):
+    """One 22:00→06:00 shift must total 8h across its two days — no
+    double count, and the opening day is not left "still in"."""
+    clinic = await _utc_clinic(db_session)
+    user = await _member(db_session, clinic.id)
+    await AttendanceService.clock(
+        db_session, clinic.id, user.id, "in", at=datetime(2026, 5, 4, 22, 0, tzinfo=UTC)
+    )
+    await AttendanceService.clock(
+        db_session, clinic.id, user.id, "out", at=datetime(2026, 5, 5, 6, 0, tzinfo=UTC)
+    )
+    await db_session.commit()
+    # Queried five days later, so nothing is live.
+    now = datetime(2026, 5, 10, 12, 0, tzinfo=UTC)
+    day4 = await AttendanceService.daily_report(
+        db_session, clinic.id, datetime(2026, 5, 4, tzinfo=UTC).date(), now=now
+    )
+    day5 = await AttendanceService.daily_report(
+        db_session, clinic.id, datetime(2026, 5, 5, tzinfo=UTC).date(), now=now
+    )
+    assert len(day4) == 1
+    assert day4[0]["seconds"] == 2 * 3600
+    assert day4[0]["open"] is False
+    assert len(day5) == 1
+    assert day5[0]["seconds"] == 6 * 3600
+    assert day5[0]["open"] is False
+    assert day4[0]["seconds"] + day5[0]["seconds"] == 8 * 3600
 
 
 @pytest.mark.asyncio
