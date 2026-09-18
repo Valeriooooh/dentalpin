@@ -1,6 +1,6 @@
 # 0029 — Payment gateway adapter architecture (payment_gateways + razorpay)
 
-- **Status:** proposed
+- **Status:** accepted
 - **Date:** 2026-09-03
 - **Deciders:** martinezsalmeron
 - **Author:** tresundios

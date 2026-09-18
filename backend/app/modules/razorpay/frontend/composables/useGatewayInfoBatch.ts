@@ -5,10 +5,14 @@ import type { GatewayInfo } from './useRazorpay'
  * one HTTP call (#439/#445 review follow-up), instead of each
  * `RazorpayPaymentBadge` instance fetching for itself on mount. Module
  * state — not per-component — so every badge on the same page shares
- * one queue and one cache, the classic "dataloader" pattern.
+ * one queue, the classic "dataloader" pattern.
+ *
+ * Deliberately no result cache: a refund moves requested → processing →
+ * completed server-side (webhook), so each mount must see fresh data —
+ * one batched call per page visit, same freshness as the per-row fetch
+ * this replaced (PR #474 review).
  */
 
-const cache = new Map<string, GatewayInfo>()
 const pending = new Map<string, Array<{ resolve: (v: GatewayInfo) => void, reject: (e: unknown) => void }>>()
 let flushTimer: ReturnType<typeof setTimeout> | null = null
 // Captured from useRazorpay() while called from a component's setup()
@@ -20,7 +24,7 @@ let flushTimer: ReturnType<typeof setTimeout> | null = null
 let fetchBatch: ((ids: string[]) => Promise<Record<string, GatewayInfo>>) | null = null
 
 // ModuleSlot renders each row's badge via `defineAsyncComponent`, so on
-// a first (uncached) page load sibling rows can mount a few ticks apart
+// a first page load sibling rows can mount a few ticks apart
 // — long enough that a microtask-only queue could flush before later
 // rows have joined it. A short timeout is the standard dataloader
 // trade-off: wide enough to catch a full page of rows in one batch,
@@ -44,7 +48,6 @@ function scheduleFlush(): void {
 function resolveChunk(chunk: string[], results: Record<string, GatewayInfo>): void {
   for (const id of chunk) {
     const info: GatewayInfo = results[id] ?? { request: null, refund_requests: [] }
-    cache.set(id, info)
     pending.get(id)?.forEach(({ resolve }) => resolve(info))
     pending.delete(id)
   }
@@ -79,12 +82,12 @@ async function flush(): Promise<void> {
 }
 
 export function useGatewayInfoBatch() {
-  // The cache/pending queue below are module-scoped by design (the
+  // The pending queue below is module-scoped by design (the
   // dataloader pattern this composable implements needs one shared
   // queue per page) — but that only holds for the browser. On the
   // server a module singleton is shared across every concurrent SSR
   // request in the same Node process, so writing to it here would leak
-  // one request's fetcher/cache into another's response. The only
+  // one request's fetcher into another's response. The only
   // current caller (`RazorpayPaymentBadge`) already fetches from
   // `onMounted` (client-only), so this is defense-in-depth, not a fix
   // for an observed leak.
@@ -99,8 +102,6 @@ export function useGatewayInfoBatch() {
     if (!import.meta.client) {
       return Promise.resolve({ request: null, refund_requests: [] })
     }
-    const cached = cache.get(paymentId)
-    if (cached) return Promise.resolve(cached)
     return new Promise<GatewayInfo>((resolve, reject) => {
       const waiters = pending.get(paymentId)
       if (waiters) {
@@ -112,13 +113,5 @@ export function useGatewayInfoBatch() {
     })
   }
 
-  // A row updates the cache after e.g. issuing a refund through the
-  // transaction detail modal, so a later remount of the same badge (or
-  // another instance watching the same payment) doesn't show stale info.
-  function updateCache(paymentId: string, info: GatewayInfo): void {
-    if (!import.meta.client) return
-    cache.set(paymentId, info)
-  }
-
-  return { requestGatewayInfo, updateCache }
+  return { requestGatewayInfo }
 }

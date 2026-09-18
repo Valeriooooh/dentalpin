@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- fix(#474 review): `useGatewayInfoBatch` keeps the batching but drops
+  its session-lifetime result cache — it served stale gateway info
+  (e.g. a refund stuck on "processing") after in-app navigation. The
+  `checkout.razorpay.com` CSP entries added to the core middleware are
+  reverted: the list was incomplete (Checkout.js also frames
+  `api.razorpay.com` and loads `cdn.razorpay.com`), so the gap is
+  documented in `docs/technical/security-csp.md` instead.
 - feat(#439/#445): India follow-ups — `useGatewayInfoBatch` batches
   the payments list's per-row gateway-info lookups into one call
   (chunked at 100 ids to match the endpoint's cap), `RazorpayPaymentBadge`/

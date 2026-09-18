@@ -1,6 +1,6 @@
 ---
 module: payment_gateways
-last_verified_commit: 00c3aadc
+last_verified_commit: b4bd7a45
 ---
 
 # payment_gateways — permissions

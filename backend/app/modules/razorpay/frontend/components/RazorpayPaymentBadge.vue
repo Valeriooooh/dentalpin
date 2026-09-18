@@ -17,7 +17,7 @@ interface Ctx {
 const props = defineProps<{ ctx: Ctx }>()
 
 const { t } = useI18n()
-const { requestGatewayInfo, updateCache } = useGatewayInfoBatch()
+const { requestGatewayInfo } = useGatewayInfoBatch()
 
 const info = ref<GatewayInfo | null>(null)
 const isLoading = ref(true)
@@ -42,11 +42,6 @@ onMounted(async () => {
     isLoading.value = false
   }
 })
-
-function onUpdated(updated: GatewayInfo) {
-  info.value = updated
-  updateCache(props.ctx.payment.id, updated)
-}
 
 const label = computed(() => {
   const method = info.value?.request?.requested_method
@@ -74,6 +69,6 @@ const label = computed(() => {
     v-model:open="showDetail"
     :payment="ctx.payment"
     :info="info"
-    @updated="onUpdated"
+    @updated="info = $event"
   />
 </template>
