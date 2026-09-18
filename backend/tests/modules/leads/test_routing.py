@@ -314,7 +314,7 @@ async def test_http_intake_bodies_are_identical_in_both_end_states(
     _, plaintext = await LeadIntakeKeyService.rotate(db_session, test_clinic.id)
     await db_session.commit()
 
-    payload = {**ENQUIRY, "website": "", "captcha_token": None}
+    payload = {**ENQUIRY, "website": ""}
     unmatched = await client.post(
         "/api/v1/leads/public/intake", json=payload, headers={"X-Lead-Key": plaintext}
     )

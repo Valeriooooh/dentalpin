@@ -18,7 +18,7 @@ import {
  * order the API stores, which keeps the saved value and the strip identical.
  */
 interface Props {
-  days: string[]
+  days: DayOfWeek[]
   timeSlot: string | null
   disabled?: boolean
 }
@@ -26,7 +26,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), { disabled: false })
 
 const emit = defineEmits<{
-  'update:days': [value: string[]]
+  'update:days': [value: DayOfWeek[]]
   'update:timeSlot': [value: AvailabilitySlot | null]
 }>()
 

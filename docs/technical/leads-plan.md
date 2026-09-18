@@ -1,6 +1,7 @@
 # Leads module — implementation plan
 
-> **Status:** approved for implementation (plan only — no code written yet).
+> **Status:** implemented — kept as the design record (see "Shipped in
+> `85e5bffa`" below for where reality diverged).
 > **Audience:** the agent/model implementing the `leads` module.
 > **Scope of this document:** everything needed to ship the module green
 > against CI, in the order it should be built.
@@ -10,6 +11,28 @@
 > **Revision 3:** the daily cap is a **per-clinic setting edited on a module
 > settings page** (§5.6), not an env var — and the intake key moves there
 > with it.
+>
+> **Shipped in `85e5bffa`.** This document is the *pre-implementation design*;
+> the line of record for behaviour is `backend/app/modules/leads/CLAUDE.md`
+> and `docs/technical/leads/`. Three points changed during implementation and
+> the text below still describes the original:
+>
+> 1. **Availability is structured** — `availability_days` (canonical mon..sun
+>    codes) + `availability_slot` (`morning`/`afternoon`/`evening`), not the
+>    free-text string of D3. `leads_0002` drops the old text column, and the
+>    payloads use `extra="forbid"`, so a website still posting the retired
+>    `availability` string gets a **422 naming the field** rather than a
+>    silent drop.
+> 2. **Captcha was not shipped** (the optional layer in §3.4). The abuse
+>    budget is the key + IP limits, the per-clinic daily cap, the body cap,
+>    the honeypot and the recall/lead dedupe. There is no captcha env var and
+>    no `captcha_token` field.
+> 3. **The convert drawer opens with `notes` empty** — motive and
+>    availability are logistics for one call, not chart data, so they are not
+>    copied into the patient record.
+>
+> Everything else (§3.1 routing, §3.2 recall reuse, §4.x file layout, §5.6
+> settings page, §10 gotchas) landed as written.
 
 `leads` captures inbound enquiries from an external website/form, then
 routes each one two ways: an enquiry that matches a patient the clinic

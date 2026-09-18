@@ -1,9 +1,13 @@
 import type { ApiResponse, PaginatedResponse } from '~~/app/types'
+// DayOfWeek / AvailabilitySlot are derived from the DAY_ORDER / SLOT_ORDER
+// constants in ../utils/leadAvailability. Declaring them here as well made Nuxt
+// auto-import the same two type names from two modules — `nuxt typecheck`
+// reported "Duplicated imports … has been ignored" and which definition won was
+// an accident of resolution order.
+import type { AvailabilitySlot, DayOfWeek } from '../utils/leadAvailability'
 
 export type LeadStatus = 'new' | 'contacted' | 'converted' | 'discarded'
 export type LeadSubmitOutcome = 'lead_created' | 'recall_queued'
-export type DayOfWeek = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'
-export type AvailabilitySlot = 'morning' | 'afternoon' | 'evening'
 
 export interface Lead {
   id: string

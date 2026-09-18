@@ -2,11 +2,15 @@
 import { errorMessage } from '~~/app/utils/error'
 import {
   useLeads,
-  type AvailabilitySlot,
   type Lead,
   type LeadCreatePayload,
   type LeadStatus
 } from '../../composables/useLeads'
+// The availability types come from the util that owns DAY_ORDER / SLOT_ORDER.
+// Importing them from the composable too is what produced the duplicated
+// auto-import of the same type name, and the loose `string[]` form field below
+// let the modal hold values the API contract (`DayOfWeek[]`) rejects.
+import type { AvailabilitySlot, DayOfWeek } from '../../utils/leadAvailability'
 import {
   hasErrors,
   validateLeadForm,
@@ -49,7 +53,7 @@ const form = reactive({
   email: '',
   motive: '',
   description: '',
-  availability_days: [] as string[],
+  availability_days: [] as DayOfWeek[],
   availability_slot: null as AvailabilitySlot | null,
   status: 'new' as LeadStatus
 })
