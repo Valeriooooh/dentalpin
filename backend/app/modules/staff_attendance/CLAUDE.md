@@ -16,6 +16,12 @@ Routes mounted at `/api/v1/staff_attendance/`.
 Events are append-only; corrections happen via a later opposite punch,
 never rewrite.
 
+## Events published
+
+- `staff_attendance.clocked` on every punch — payload: `event_id`,
+  `clinic_id`, `user_id`, `kind`, `created_by` (nullable). Consumed by
+  `activity_journal`.
+
 ## Dependencies
 
 None (core auth reads only — users are global rows, gated by

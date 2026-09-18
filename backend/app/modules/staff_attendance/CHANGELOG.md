@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Maintainer round 3: reject future-dated punches (422 past now + 5 min
+  skew), cross-day open shifts appear on later days (pre-window
+  unclosed `in` seeds the report), `punch()` reads the API `message`
+  envelope via `errorDetail()`; day feed shows punch times; events.md +
+  CLAUDE.md document the `staff_attendance.clocked` payload.
 - Round 2: pairs clip to the window on both ends (multi-day sums are
   exact), `open` means no closing punch exists at all (forward query),
   half-open day windows, single toast on 409 (`errorToast: false`).

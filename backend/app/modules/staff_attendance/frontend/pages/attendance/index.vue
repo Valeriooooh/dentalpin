@@ -6,6 +6,7 @@
  */
 import type { AttendanceEvent, AttendanceReportRow, StaffMember } from '../../composables/useAttendance'
 import { PERMISSIONS } from '~~/app/config/permissions'
+import { errorDetail } from '~~/app/utils/error'
 
 definePageMeta({ middleware: ['auth'] })
 
@@ -63,6 +64,19 @@ function formatHours(seconds: number): string {
   return `${hf.format(h)} ${mf.format(m)}`
 }
 
+function formatTime(iso: string): string {
+  const tz = currentClinic.value?.timezone
+  try {
+    return new Intl.DateTimeFormat(locale.value, {
+      hour: '2-digit',
+      minute: '2-digit',
+      ...(tz ? { timeZone: tz } : {})
+    }).format(new Date(iso))
+  } catch {
+    return new Date(iso).toLocaleTimeString()
+  }
+}
+
 async function refresh() {
   isLoading.value = true
   try {
@@ -82,8 +96,7 @@ async function punch(kind: 'in' | 'out') {
     clockNote.value = ''
     await refresh()
   } catch (e: unknown) {
-    const detail = (e as { data?: { detail?: unknown } })?.data?.detail
-    errorMessage.value = typeof detail === 'string' ? detail : String(detail ?? e)
+    errorMessage.value = errorDetail(e) ?? String(e)
     toast.add({ title: t('staffAttendance.clockTitle'), description: errorMessage.value, color: 'error' })
   }
 }
@@ -167,6 +180,7 @@ watch(today, refresh)
               {{ t(`staffAttendance.${event.kind}`) }}
             </UBadge>
             {{ memberName(event.user_id) }}
+            <span class="text-muted">{{ formatTime(event.at) }}</span>
           </li>
         </ul>
       </UCard>

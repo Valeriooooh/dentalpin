@@ -23,6 +23,11 @@ from .models import AttendanceEvent
 
 DEFAULT_TIMEZONE = "Europe/Madrid"
 
+# Tolerance for device clock skew on manual punches. Anything further
+# ahead of now is a typo (e.g. an `out` dated 2030 that would answer 409
+# on every later punch, with no void route to undo it).
+CLOCK_SKEW = timedelta(minutes=5)
+
 
 class AttendanceService:
     @staticmethod
@@ -126,6 +131,11 @@ class AttendanceService:
         await AttendanceService._assert_member(db, clinic_id, user_id)
         tz = await AttendanceService._clinic_zone(db, clinic_id)
         at = AttendanceService._as_utc(at or datetime.now(UTC), tz)
+        if at > datetime.now(UTC) + CLOCK_SKEW:
+            raise HTTPException(
+                status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Punch time is in the future",
+            )
         # Alternation is positional, not tail-based: the new punch must
         # differ from both neighbours, so backdated inserts cannot slip
         # past the duplicate guard.
@@ -223,7 +233,9 @@ class AttendanceService:
         closing punch exists at all (forward query), never an inference
         from the window: a closed historical shift is never "still in".
         An unpaired trailing ``in`` accrues up to query time but never
-        past the end of the reported day.
+        past the end of the reported day. A shift opened on an earlier day
+        and still open is seeded from its last pre-window punch, so it
+        appears on every later day until it closes.
         """
         now = now or datetime.now(UTC)
         start, end = await AttendanceService._day_bounds_utc(db, clinic_id, day)
@@ -241,30 +253,36 @@ class AttendanceService:
         rows = (await db.execute(stmt)).all()
         # Seed each member seen in the window; then carry a pre-window
         # trailing `in` (lookback bounded — a shift open longer than that
-        # without any punch is outside this module's model).
+        # without any punch is outside this module's model). Members with
+        # no in-window events whose last pre-window punch is an unclosed
+        # `in` are seeded too, so a shift opened yesterday and still open
+        # appears on today's report instead of vanishing.
         by_user: dict[UUID, dict] = {}
         for event, first, last in rows:
             by_user.setdefault(
                 event.user_id, {"name": f"{first} {last}", "seconds": 0, "open_since": None}
             )
-        if by_user:
-            pre_stmt = (
-                select(AttendanceEvent)
-                .where(
-                    AttendanceEvent.clinic_id == clinic_id,
-                    AttendanceEvent.user_id.in_(list(by_user)),
-                    AttendanceEvent.at >= start - timedelta(days=7),
-                    AttendanceEvent.at < start,
-                )
-                .order_by(AttendanceEvent.user_id, desc(AttendanceEvent.at))
+        pre_stmt = (
+            select(AttendanceEvent, User.first_name, User.last_name)
+            .join(User, User.id == AttendanceEvent.user_id)
+            .where(
+                AttendanceEvent.clinic_id == clinic_id,
+                AttendanceEvent.at >= start - timedelta(days=7),
+                AttendanceEvent.at < start,
             )
-            seen: set[UUID] = set()
-            for pre in (await db.execute(pre_stmt)).scalars().all():
-                if pre.user_id in seen:
-                    continue
-                seen.add(pre.user_id)
-                if pre.kind == "in":
-                    by_user[pre.user_id]["open_since"] = pre.at
+            .order_by(AttendanceEvent.user_id, desc(AttendanceEvent.at))
+        )
+        seen: set[UUID] = set()
+        for pre, first, last in (await db.execute(pre_stmt)).all():
+            if pre.user_id in seen:
+                continue
+            seen.add(pre.user_id)
+            if pre.kind == "in":
+                slot = by_user.setdefault(
+                    pre.user_id,
+                    {"name": f"{first} {last}", "seconds": 0, "open_since": None},
+                )
+                slot["open_since"] = pre.at
         for event, first, last in rows:
             slot = by_user[event.user_id]
             if event.kind == "in":

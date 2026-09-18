@@ -355,3 +355,39 @@ async def test_report_uses_clinic_timezone_not_utc(db_session: AsyncSession, tes
     )
     assert len(rows) == 1
     assert rows[0]["seconds"] == 3600
+
+
+@pytest.mark.asyncio
+async def test_future_punch_is_422(db_session: AsyncSession, test_clinic: Clinic):
+    """A punch dated past now + skew is a typo, not data: 422, so a stray
+    2030 `out` can never wedge later punches into permanent 409s."""
+    user = await _member(db_session, test_clinic.id)
+    with pytest.raises(HTTPException) as exc:
+        await AttendanceService.clock(
+            db_session,
+            test_clinic.id,
+            user.id,
+            "out",
+            at=datetime.now(UTC) + timedelta(days=1),
+        )
+    assert exc.value.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_open_shift_from_yesterday_appears_today(db_session: AsyncSession):
+    """A shift opened yesterday and still open shows on today's report."""
+    clinic = await _utc_clinic(db_session)
+    user = await _member(db_session, clinic.id)
+    await AttendanceService.clock(
+        db_session, clinic.id, user.id, "in", at=datetime(2026, 5, 4, 22, 0, tzinfo=UTC)
+    )
+    await db_session.commit()
+    rows = await AttendanceService.daily_report(
+        db_session,
+        clinic.id,
+        datetime(2026, 5, 5, tzinfo=UTC).date(),
+        now=datetime(2026, 5, 5, 12, 0, tzinfo=UTC),
+    )
+    assert len(rows) == 1
+    assert rows[0]["open"] is True
+    assert rows[0]["seconds"] == 12 * 3600
