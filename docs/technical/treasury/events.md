@@ -1,6 +1,6 @@
 ---
 module: treasury
-last_verified_commit: bd8ff754
+last_verified_commit: 7f721882
 ---
 
 # treasury - events

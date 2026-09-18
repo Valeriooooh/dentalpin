@@ -2,7 +2,7 @@
 module: treasury
 screen: treasury
 route: /treasury
-last_verified_commit: 26a617a89245d3b94ef0e4837e1b2e821214f54d
+last_verified_commit: 7f721882604ba9c8ae4f21229f816787e46bf7bc
 related_endpoints:
   - GET /api/v1/treasury/accounts
   - POST /api/v1/treasury/accounts
