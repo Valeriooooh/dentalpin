@@ -2,19 +2,17 @@
 
 ## Unreleased
 
-- fix(review): public check-in page lives in the agenda layer
-  (`/p/check-in/<token>`, `layout: public`); token rides the API path
-  (`POST /public/check-in/{token}`, per-IP + per-token limits);
-  dedicated `AGENDA_PUBLIC_SECRET_KEY` (falls back to `SECRET_KEY`
-  outside production); QR origin from server-side `ALLOWED_ORIGINS`;
-  `note="qr-checkin"` attribution; lean resolve in
-  `AppointmentService.public_checkin`.
-
-- feat: QR check-in — signed 15-minute tokens mint a QR (or link) that
+- feat: QR check-in - signed 15-minute tokens mint a QR (or link) that
   lets patients check themselves in with no account (`POST
   /appointments/{id}/check-in-token`, `GET .../check-in-qr`,
   unauthenticated rate-limited `POST /public/check-in/{token}`, public
-  `/p/check-in/<token>` page). Consumes through the canonical status machine.
+  `/p/check-in/<token>` page with `layout: public`). The mint endpoint
+  returns the patient-facing URL built server-side from
+  `ALLOWED_ORIGINS`, so the copied link and the QR can never diverge.
+  Dedicated `AGENDA_PUBLIC_SECRET_KEY` (falls back to `SECRET_KEY`
+  outside production); `note="qr-checkin"` attribution; lean resolve
+  in `AppointmentService.public_checkin`; per-IP + per-token limits.
+  Consumes through the canonical status machine.
 
 - refactor(#337): `AppointmentTreatment` moved to treatment_plan — agenda no longer declares the model or constructs link rows; booking, eager loading and the visit-note lookup go through the planned-work provider, and the last cross-module FK allowlist entry is drained.
 

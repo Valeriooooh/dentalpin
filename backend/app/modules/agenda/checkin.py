@@ -9,7 +9,6 @@ limited) at a smaller scale: single action, 15-minute TTL.
 
 from __future__ import annotations
 
-import base64
 from datetime import UTC, datetime, timedelta
 from io import BytesIO
 from uuid import UUID
@@ -91,8 +90,3 @@ def render_checkin_qr(url: str) -> bytes:
     buf = BytesIO()
     img.save(buf, format="PNG")
     return buf.getvalue()
-
-
-def render_checkin_qr_base64(url: str) -> str:
-    """PNG as base64 for embedding in an `<img>` tag."""
-    return base64.b64encode(render_checkin_qr(url)).decode("ascii")

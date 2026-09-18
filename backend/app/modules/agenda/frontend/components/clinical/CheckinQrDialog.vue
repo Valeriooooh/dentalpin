@@ -27,8 +27,10 @@ watch(() => props.open, async (isOpen) => {
   }
   isLoading.value = true
   try {
-    const { token } = await mintCheckinToken(props.appointmentId)
-    checkinUrl.value = `${window.location.origin}/check-in?t=${token}`
+    // The copyable link comes from the mint endpoint, built server-side
+    // with the same origin logic as the QR — never window.location.
+    const { url } = await mintCheckinToken(props.appointmentId)
+    checkinUrl.value = url
     qrUrl.value = await fetchCheckinQr(props.appointmentId)
   } catch {
     loadFailed.value = true

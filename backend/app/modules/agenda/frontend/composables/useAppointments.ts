@@ -190,8 +190,8 @@ export function useAppointments() {
   }
 
   /** Mint a short-lived QR check-in token for an appointment. */
-  async function mintCheckinToken(id: string): Promise<{ token: string, expires_at: string }> {
-    const response = await api.post<ApiResponse<{ token: string, expires_at: string }>>(
+  async function mintCheckinToken(id: string): Promise<{ token: string, expires_at: string, url: string }> {
+    const response = await api.post<ApiResponse<{ token: string, expires_at: string, url: string }>>(
       `/api/v1/agenda/appointments/${id}/check-in-token`
     )
     return response.data
@@ -201,11 +201,12 @@ export function useAppointments() {
    * Fetch the check-in QR PNG as an object URL. Uses `useApi.raw`
    * (session-cookie auth + refresh/retry + CSRF) because `<img>` needs
    * bytes and the download should authenticate like every other call.
+   * The encoded URL is built server-side from ALLOWED_ORIGINS — no
+   * origin parameter is sent (it was always ignored).
    */
   async function fetchCheckinQr(id: string): Promise<string> {
-    const origin = import.meta.client ? window.location.origin : ''
     const response = await api.raw(
-      `/api/v1/agenda/appointments/${id}/check-in-qr?origin=${encodeURIComponent(origin)}`
+      `/api/v1/agenda/appointments/${id}/check-in-qr`
     )
     if (!response.ok) throw new Error(`check-in QR: ${response.status}`)
     return URL.createObjectURL(await response.blob())

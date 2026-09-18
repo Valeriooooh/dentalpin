@@ -600,6 +600,28 @@ async def update_appointment_treatment_note(
 # (rate-limited, minimal-PII response).
 
 
+def _checkin_base_url() -> str:
+    """Public origin check-in links and QR codes are built from.
+
+    Single source: the first configured ``ALLOWED_ORIGINS`` entry, so a
+    copied link and its QR can never point at different hosts. 422 when
+    unset or not an http(s) origin.
+    """
+    origins = settings.allowed_origins_list
+    if not origins:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Set ALLOWED_ORIGINS to render check-in QR codes",
+        )
+    parsed = urlparse(origins[0])
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="ALLOWED_ORIGINS must hold http(s) origins",
+        )
+    return f"{parsed.scheme}://{parsed.netloc}"
+
+
 @router.post(
     "/appointments/{appointment_id}/check-in-token",
     response_model=ApiResponse[CheckinTokenResponse],
@@ -610,7 +632,12 @@ async def mint_appointment_checkin_token(
     _: Annotated[None, Depends(require_permission("agenda.appointments.write"))],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ApiResponse[CheckinTokenResponse]:
-    """Mint a 15-minute QR check-in token for an appointment."""
+    """Mint a 15-minute QR check-in token for an appointment.
+
+    Returns the token plus the patient-facing URL, built server-side
+    with the same origin logic as the QR — the frontend builds no
+    check-in URLs at all, so link and QR cannot diverge.
+    """
     appointment = await AppointmentService.get_appointment(db, ctx.clinic_id, appointment_id)
     if appointment is None:
         raise HTTPException(
@@ -618,7 +645,8 @@ async def mint_appointment_checkin_token(
             detail="Appointment not found",
         )
     token, expires_at = mint_checkin_token(appointment.id, ctx.clinic_id)
-    return ApiResponse(data=CheckinTokenResponse(token=token, expires_at=expires_at))
+    url = f"{_checkin_base_url()}/p/check-in/{token}"
+    return ApiResponse(data=CheckinTokenResponse(token=token, expires_at=expires_at, url=url))
 
 
 @router.get("/appointments/{appointment_id}/check-in-qr")
@@ -633,7 +661,8 @@ async def appointment_checkin_qr(
     The URL is built server-side from the first configured
     ``ALLOWED_ORIGINS`` entry with the token as a path segment (never a
     query string — proxies and Referer headers must not see it). The
-    origin is render-only input (no redirect happens).
+    mint endpoint returns the identical URL, so QR and copied link
+    always match.
     """
     appointment = await AppointmentService.get_appointment(db, ctx.clinic_id, appointment_id)
     if appointment is None:
@@ -641,20 +670,8 @@ async def appointment_checkin_qr(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Appointment not found",
         )
-    origins = settings.allowed_origins_list
-    if not origins:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Set ALLOWED_ORIGINS to render check-in QR codes",
-        )
-    parsed = urlparse(origins[0])
-    if parsed.scheme not in ("http", "https") or not parsed.netloc:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="ALLOWED_ORIGINS must hold http(s) origins",
-        )
     token, _ = mint_checkin_token(appointment.id, ctx.clinic_id)
-    png = render_checkin_qr(f"{parsed.scheme}://{parsed.netloc}/p/check-in/{token}")
+    png = render_checkin_qr(f"{_checkin_base_url()}/p/check-in/{token}")
     return Response(content=png, media_type="image/png")
 
 

@@ -93,6 +93,9 @@ async def test_checkin_happy_path(
     )
     assert minted.status_code == 200
     token = minted.json()["data"]["token"]
+    # The copyable link is built server-side — same origin as the QR.
+    url = minted.json()["data"]["url"]
+    assert url == f"https://clinic.example/p/check-in/{token}"
 
     # QR renders as PNG (origin comes from server-side allowlist now).
     qr = await client.get(
@@ -206,3 +209,18 @@ async def test_public_checkin_is_rate_limited(client, monkeypatch) -> None:
         r = await client.post("/api/v1/agenda/public/check-in/x")
         statuses.add(r.status_code)
     assert 429 in statuses
+
+
+@pytest.mark.asyncio
+async def test_mint_rejects_unconfigured_allowlist(
+    client, auth_headers, test_clinic, db_session: AsyncSession, monkeypatch
+) -> None:
+    # No origin to build the link/QR from — mint answers 422 like the QR
+    # endpoint, so the two can never diverge.
+    monkeypatch.setattr(settings, "ALLOWED_ORIGINS", "")
+    world = await _world(db_session, test_clinic, await _admin_id(client, auth_headers))
+    r = await client.post(
+        f"/api/v1/agenda/appointments/{world['appointment_id']}/check-in-token",
+        headers=auth_headers,
+    )
+    assert r.status_code == 422
