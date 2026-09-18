@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Maintainer round 4: `fail()` reads the API `message` envelope via
+  `errorDetail()`; nav self-places under `financials`; events.md +
+  CLAUDE.md document `treasury.transferred` / `treasury.corrected`
+  (DELETE is 409, not cascade); POST /transfers answers 201;
+  future-dated movements are 422; transfer selects list active
+  accounts only; amounts accept `25,50`; statement rows show date +
+  signed out-legs; negative balances render red (warning, never block).
 - `created_by` on every entry (new nullable column, `tre_0002`) +
   `treasury.transferred` / `treasury.corrected` events; accounts with
   ledger entries refuse DELETE with 409 (deactivate instead);

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from uuid import uuid4
 
@@ -110,7 +110,7 @@ async def test_http_codes(client, auth_headers, test_clinic: Clinic):
         json={"from_account_id": cash_id, "to_account_id": bank_id, "amount": "25.50"},
         headers=auth_headers,
     )
-    assert moved.status_code == 200
+    assert moved.status_code == 201
     assert len(moved.json()["data"]) == 2
 
     same = await client.post(
@@ -191,7 +191,7 @@ async def test_delete_account_with_entries_http_is_409(client, auth_headers, tes
         json={"from_account_id": cash["id"], "to_account_id": bank["id"], "amount": "5"},
         headers=auth_headers,
     )
-    assert moved.status_code == 200
+    assert moved.status_code == 201
     gone = await client.delete(f"/api/v1/treasury/accounts/{cash['id']}", headers=auth_headers)
     assert gone.status_code == 409
 
@@ -397,3 +397,22 @@ async def test_list_balances_match_single_balance(db_session: AsyncSession, test
     assert balances[cash.id] == await TreasuryService.balance(db_session, cash)
     assert balances[bank.id] == await TreasuryService.balance(db_session, bank)
     assert balances == {cash.id: Decimal("70"), bank.id: Decimal("30")}
+
+
+@pytest.mark.asyncio
+async def test_future_movement_is_422(db_session: AsyncSession, test_clinic: Clinic):
+    """Future-dated transfers/corrections are typos, not data (staff_attendance rule)."""
+    cash = await TreasuryService.create_account(db_session, test_clinic.id, {"name": "Caja"})
+    bank = await TreasuryService.create_account(db_session, test_clinic.id, {"name": "Banco"})
+    await db_session.commit()
+    future = datetime.now(UTC) + timedelta(days=1)
+    with pytest.raises(HTTPException) as exc:
+        await TreasuryService.transfer(
+            db_session, test_clinic.id, cash, bank, Decimal("10"), None, future
+        )
+    assert exc.value.status_code == 422
+    with pytest.raises(HTTPException) as exc:
+        await TreasuryService.correct(
+            db_session, test_clinic.id, cash, Decimal("10"), "in", "late", future
+        )
+    assert exc.value.status_code == 422

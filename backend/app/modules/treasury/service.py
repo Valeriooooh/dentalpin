@@ -9,7 +9,7 @@ is explicitly Later.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from uuid import UUID, uuid4
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -26,6 +26,10 @@ from app.core.events import EventType, event_bus
 from .models import TreasuryAccount, TreasuryEntry
 
 DEFAULT_TIMEZONE = "Europe/Madrid"
+
+# Tolerance for device clock skew on manual timestamps. Anything further
+# ahead of now is a typo — same house rule as staff_attendance.
+CLOCK_SKEW = timedelta(minutes=5)
 
 _SIGN = {
     "transfer_out": Decimal("-1"),
@@ -188,6 +192,11 @@ class TreasuryService:
                 )
         tz = await TreasuryService._clinic_zone(db, clinic_id)
         stamp = TreasuryService._as_utc(at or datetime.now(UTC), tz)
+        if stamp > datetime.now(UTC) + CLOCK_SKEW:
+            raise HTTPException(
+                status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Movement timestamp is in the future",
+            )
         amount = amount.quantize(Decimal("0.01"))
         group_id = uuid4()
         legs = [
@@ -245,13 +254,19 @@ class TreasuryService:
                 detail=f"Account '{account.name}' is deactivated",
             )
         tz = await TreasuryService._clinic_zone(db, clinic_id)
+        stamp = TreasuryService._as_utc(at or datetime.now(UTC), tz)
+        if stamp > datetime.now(UTC) + CLOCK_SKEW:
+            raise HTTPException(
+                status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Movement timestamp is in the future",
+            )
         row = TreasuryEntry(
             clinic_id=clinic_id,
             account_id=account.id,
             group_id=uuid4(),
             kind=f"correction_{direction}",
             amount=amount.quantize(Decimal("0.01")),
-            at=TreasuryService._as_utc(at or datetime.now(UTC), tz),
+            at=stamp,
             memo=memo,
             created_by=created_by,
         )

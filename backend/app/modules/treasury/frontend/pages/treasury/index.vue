@@ -7,6 +7,7 @@
  */
 import type { TreasuryAccount, TreasuryEntry } from '../../composables/useTreasury'
 import { PERMISSIONS } from '~~/app/config/permissions'
+import { errorDetail } from '~~/app/utils/error'
 
 definePageMeta({ middleware: ['auth'] })
 
@@ -41,6 +42,7 @@ const correctDirection = ref<'in' | 'out'>('in')
 const correctMemo = ref('')
 
 const selected = computed(() => accounts.value.find(a => a.id === selectedId.value))
+const activeAccounts = computed(() => accounts.value.filter(a => a.is_active))
 
 function formatMoney(value: string | number): string {
   const currency = currentClinic.value?.currency || 'EUR'
@@ -52,9 +54,32 @@ function formatMoney(value: string | number): string {
 }
 
 function fail(e: unknown) {
-  const detail = (e as { data?: { detail?: unknown } })?.data?.detail
-  const description = typeof detail === 'string' ? detail : String(detail ?? e)
+  const description = errorDetail(e) ?? String(e)
   toast.add({ title: t('treasury.title'), description, color: 'error' })
+}
+
+// Spanish keyboards type 25,50 — the API only accepts 25.50.
+function normAmount(raw: string): string {
+  return raw.replace(',', '.')
+}
+
+function formatDate(iso: string): string {
+  const tz = currentClinic.value?.timezone
+  try {
+    return new Intl.DateTimeFormat(locale.value, {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      ...(tz ? { timeZone: tz } : {})
+    }).format(new Date(iso))
+  } catch {
+    return new Date(iso).toLocaleString()
+  }
+}
+
+function isOut(kind: string): boolean {
+  return kind.endsWith('_out')
 }
 
 async function refresh() {
@@ -81,7 +106,7 @@ async function create() {
 async function doTransfer() {
   if (!transferFrom.value || !transferTo.value || !transferAmount.value) return
   try {
-    await transfer(transferFrom.value, transferTo.value, transferAmount.value, transferMemo.value || undefined)
+    await transfer(transferFrom.value, transferTo.value, normAmount(transferAmount.value), transferMemo.value || undefined)
     showTransferModal.value = false
     transferMemo.value = ''
     await refresh()
@@ -91,7 +116,7 @@ async function doTransfer() {
 async function doCorrect() {
   if (!selectedId.value || !correctAmount.value || !correctMemo.value.trim()) return
   try {
-    await correct(selectedId.value, correctAmount.value, correctDirection.value, correctMemo.value.trim())
+    await correct(selectedId.value, normAmount(correctAmount.value), correctDirection.value, correctMemo.value.trim())
     showCorrectModal.value = false
     correctAmount.value = ''
     correctMemo.value = ''
@@ -175,7 +200,10 @@ watch(selectedId, async () => {
               @click="selectedId = account.id"
             >
               <span>{{ account.name }}</span>
-              <span class="font-mono">{{ formatMoney(account.balance) }}</span>
+              <span
+                class="font-mono"
+                :class="{ 'text-error': Number(account.balance) < 0 }"
+              >{{ formatMoney(account.balance) }}</span>
             </button>
           </li>
         </ul>
@@ -204,8 +232,11 @@ watch(selectedId, async () => {
             :key="entry.id"
             class="flex justify-between gap-2"
           >
-            <span class="truncate">{{ t(`treasury.kind.${entry.kind}`) }}{{ entry.memo ? ' — ' + entry.memo : '' }}</span>
-            <span class="font-mono shrink-0">{{ formatMoney(entry.amount) }}</span>
+            <span class="truncate">{{ formatDate(entry.at) }} · {{ t(`treasury.kind.${entry.kind}`) }}{{ entry.memo ? ' — ' + entry.memo : '' }}</span>
+            <span
+              class="font-mono shrink-0"
+              :class="{ 'text-error': isOut(entry.kind) }"
+            >{{ isOut(entry.kind) ? '−' : '' }}{{ formatMoney(entry.amount) }}</span>
           </li>
         </ul>
       </UCard>
@@ -258,14 +289,14 @@ watch(selectedId, async () => {
             <USelectMenu
               v-model="transferFrom"
               value-key="value"
-              :items="accounts.map(a => ({ label: a.name, value: a.id }))"
+              :items="activeAccounts.map(a => ({ label: a.name, value: a.id }))"
             />
           </UFormField>
           <UFormField :label="t('treasury.toAccount')">
             <USelectMenu
               v-model="transferTo"
               value-key="value"
-              :items="accounts.map(a => ({ label: a.name, value: a.id }))"
+              :items="activeAccounts.map(a => ({ label: a.name, value: a.id }))"
             />
           </UFormField>
           <UFormField :label="t('treasury.amount')">

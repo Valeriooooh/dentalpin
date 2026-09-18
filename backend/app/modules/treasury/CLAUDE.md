@@ -11,12 +11,23 @@ radius until clinics widen grants via roles).
 - `GET    /accounts` — list with derived balances; `treasury.read`
 - `POST   /accounts` — create (409 on duplicate name); `treasury.write`
 - `PATCH  /accounts/{id}` — rename/deactivate (all-optional + `exclude_unset`); `treasury.write`
-- `DELETE /accounts/{id}` — delete, entries cascade; `treasury.write`
+- `DELETE /accounts/{id}` — delete only when the account has no entries (409 otherwise, deactivate instead); `treasury.write`
 - `GET    /accounts/{id}/entries` — statement; `treasury.read`
 - `POST   /transfers` — paired legs, same group; `treasury.write`
 - `POST   /accounts/{id}/corrections` — manual adjustment, memo required; `treasury.write`
 
 409s come from UNIQUE constraints, never select-then-insert (L6).
+
+## Events published
+
+- `treasury.transferred` on every transfer — payload: `clinic_id`,
+  `group_id` (shared by both legs), `from_account_id`,
+  `to_account_id`, `amount`, `created_by` (nullable). Consumed by
+  `activity_journal`.
+- `treasury.corrected` on every manual correction — payload:
+  `clinic_id`, `account_id`, `entry_id`, `amount`, `direction`
+  (`in`/`out`), `memo`, `created_by` (nullable). Consumed by
+  `activity_journal`.
 
 ## Data model
 
@@ -40,7 +51,7 @@ None (core only). Payment/expense auto-posting explicitly Later.
 ## Later (out of scope, needs its own design)
 
 - Payment/expense auto-posting (touches money write paths).
-- Overdraft guards (negative balances allowed in v1).
+- Overdraft guard (negative balances show a red warning in v1, never block).
 - Multi-currency accounts.
 - Recurring transfers.
 

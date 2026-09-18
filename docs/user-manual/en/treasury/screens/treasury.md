@@ -32,3 +32,7 @@ error instead of closing the modal silently.
   appear in both statements.
 - **Correct** an account with a mandatory memo (audit trail, never
   silent edits).
+- The statement shows dates and signed amounts on outgoing legs;
+  negative balances render red (warning, never a block). Amounts
+  accept a decimal comma (`25,50`), and the transfer pickers list
+  active accounts only.

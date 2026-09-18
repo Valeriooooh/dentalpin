@@ -130,7 +130,11 @@ async def account_statement(
 # --- Movements -------------------------------------------------------------
 
 
-@router.post("/transfers", response_model=ApiResponse[list[EntryResponse]])
+@router.post(
+    "/transfers",
+    response_model=ApiResponse[list[EntryResponse]],
+    status_code=status.HTTP_201_CREATED,
+)
 async def transfer(
     data: TransferRequest,
     ctx: Annotated[ClinicContext, Depends(get_clinic_context)],

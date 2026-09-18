@@ -37,6 +37,7 @@ class TreasuryModule(BaseModule):
                     "to": "/treasury",
                     "icon": "i-lucide-wallet",
                     "permission": "treasury.read",
+                    "section": "financials",
                     "order": 94,
                 }
             ],
