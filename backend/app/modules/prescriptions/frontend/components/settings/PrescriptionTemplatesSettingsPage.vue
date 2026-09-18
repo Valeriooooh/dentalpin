@@ -4,12 +4,13 @@
  * Rename + delete; creation happens inline on the prescriptions page.
  */
 import type { PrescriptionTemplate } from '../../composables/usePrescriptions'
+import { PERMISSIONS } from '~~/app/config/permissions'
 
 const { t } = useI18n()
 const { can } = usePermissions()
 const { listTemplates, updateTemplate, deleteTemplate } = usePrescriptions()
 
-const canWrite = computed(() => can('prescriptions.write'))
+const canWrite = computed(() => can(PERMISSIONS.prescriptions.write))
 const templates = ref<PrescriptionTemplate[]>([])
 const isLoading = ref(false)
 const editingId = ref<string | null>(null)

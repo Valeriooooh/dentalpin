@@ -31,4 +31,9 @@ borrador desde la ficha del paciente (acción "Nueva receta").
   nombre y licencia, sin firma);
   las correcciones son cancelar + reemitir, nunca ediciones.
 - **Descargar** el PDF para imprimir. Sin envío por email en v1.
+  El PDF sale en el idioma de la receta y marca BORRADOR/CANCELADA
+  cuando corresponde.
+- **Emitir** y **Anular** piden confirmación (son irreversibles).
+- Tu **cédula profesional** se configura en Ajustes (sección
+  clínica, identidad prescriptora) y queda impresa en el PDF.
 - Atiende el aviso de alergias/interacciones — avisa, nunca bloquea.

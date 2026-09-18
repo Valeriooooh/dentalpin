@@ -34,6 +34,11 @@
       "draft": "Szkic",
       "issued": "Wystawiona",
       "cancelled": "Anulowana"
-    }
+    },
+    "profileLabel": "Dane lekarza",
+    "profileDescription": "Numer licencji i podpis do recept.",
+    "licenseLabel": "Numer licencji",
+    "issueConfirm": "Wystawić tę receptę? Tego nie można cofnąć.",
+    "cancelConfirm": "Anulować tę receptę? Tego nie można cofnąć."
   }
 }

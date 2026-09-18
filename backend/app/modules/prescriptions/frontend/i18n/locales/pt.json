@@ -34,6 +34,11 @@
       "draft": "Rascunho",
       "issued": "Emitida",
       "cancelled": "Cancelada"
-    }
+    },
+    "profileLabel": "Identidade do prescritor",
+    "profileDescription": "Licença profissional e assinatura para as suas receitas.",
+    "licenseLabel": "Licença profissional",
+    "issueConfirm": "Emitir esta receita? Não é possível anular.",
+    "cancelConfirm": "Anular esta receita? Não é possível anular."
   }
 }

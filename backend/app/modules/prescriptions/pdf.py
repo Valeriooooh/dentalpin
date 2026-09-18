@@ -18,6 +18,61 @@ def _e(value: Any) -> str:
     return html.escape("" if value is None else str(value))
 
 
+def _format_address(address: Any) -> str:
+    """Full address line for the letterhead (billing _format_address mirror:
+    street + postal/city + country)."""
+    if not isinstance(address, dict):
+        return _e(address) if address else ""
+    parts = []
+    if address.get("street"):
+        parts.append(address["street"])
+    city_line = " ".join(filter(None, [address.get("postal_code"), address.get("city")]))
+    if city_line:
+        parts.append(city_line)
+    if address.get("country"):
+        parts.append(address["country"])
+    return _e(", ".join(parts))
+
+
+def _get_labels(locale: str) -> dict[str, str]:
+    """Localized captions for the PDF (billing _get_labels approach:
+    es + en sets, English fallback until translated)."""
+    labels_es = {
+        "date": "Fecha",
+        "patient": "Paciente",
+        "prescriber": "Prescriptor",
+        "license": "Licencia n.º",
+        "medication": "Medicamento",
+        "dose": "Dosis",
+        "route": "Vía",
+        "frequency": "Frecuencia",
+        "duration": "Duración",
+        "instructions": "Instrucciones",
+        "notes": "Notas",
+        "draft": "BORRADOR",
+        "cancelled": "CANCELADA",
+    }
+    labels_en = {
+        "date": "Date",
+        "patient": "Patient",
+        "prescriber": "Prescriber",
+        "license": "License no.",
+        "medication": "Medication",
+        "dose": "Dose",
+        "route": "Route",
+        "frequency": "Frequency",
+        "duration": "Duration",
+        "instructions": "Instructions",
+        "notes": "Notes",
+        "draft": "DRAFT",
+        "cancelled": "CANCELLED",
+    }
+    if locale == "es":
+        return labels_es
+    # fr/pt/de/hu/pl/it/ar/ta: English labels until translated.
+    return labels_en
+
+
 def build_pdf_data(
     prescription: Any,
     items: list[Any],
@@ -25,12 +80,24 @@ def build_pdf_data(
     clinic: dict[str, Any],
     hook_data: dict[str, Any] | None = None,
     label_overrides: dict[str, str] | None = None,
+    locale: str = "es",
 ) -> dict[str, Any]:
-    """Structured, already-escaped PDF payload for the renderer."""
-    labels = {"license": "License no.", **(label_overrides or {})}
+    """Structured, already-escaped PDF payload for the renderer.
+
+    Captions follow ``prescription.locale`` (hook ``label_overrides``
+    win over the built-in sets). Non-issued rows carry a visible
+    status mark instead of being refused — a cancelled copy stays
+    printable for the record.
+    """
+    labels = _get_labels(locale)
+    labels = {**labels, **(label_overrides or {})}
+    status = getattr(prescription, "status", "issued")
     return {
         "clinic_name": _e(clinic.get("name")),
-        "clinic_address": _e(clinic.get("address")),
+        "clinic_address": _format_address(clinic.get("address")),
+        "labels": {key: _e(value) for key, value in labels.items()},
+        "status": status,
+        "status_mark": _e(labels.get("draft" if status == "draft" else "cancelled", "")),
         "date": _e(
             prescription.issued_at.strftime("%Y-%m-%d")
             if prescription.issued_at
@@ -63,6 +130,7 @@ def build_pdf_data(
 
 def render_html(data: dict[str, Any]) -> str:
     """Render the escaped payload to HTML (WeasyPrint input)."""
+    labels = data["labels"]
     rows = "".join(
         "<tr><td>{name}</td><td>{dosage} {unit}</td><td>{route}</td>"
         "<td>{frequency}</td><td>{duration}</td><td>{instructions}</td></tr>".format(**item)
@@ -73,6 +141,7 @@ def render_html(data: dict[str, Any]) -> str:
         for row in data["compliance_section"]
     )
     notices = "".join(f"<p class='notice'>{notice}</p>" for notice in data["legal_notices"])
+    mark = f"<p class='mark'>{data['status_mark']}</p>" if data["status"] != "issued" else ""
     return f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <style>
@@ -81,15 +150,17 @@ h1 {{ font-size: 20px; }}
 table {{ width: 100%; border-collapse: collapse; margin-top: 1em; }}
 td, th {{ border: 1px solid #999; padding: 6px; font-size: 12px; }}
 .notice {{ font-size: 11px; color: #444; }}
+.mark {{ font-size: 18px; font-weight: bold; border: 2px solid #000; padding: 6px; text-align: center; }}
 .signature {{ margin-top: 3em; }}
 </style></head><body>
 <h1>{data["clinic_name"]}</h1>
 <p>{data["clinic_address"]}</p>
-<p>Date: {data["date"]} — Patient: {data["patient_name"]}</p>
-<p>Prescriber: {data["prescriber_name"]} ({data["license_label"]}: {data["license_number"]})</p>
-<table><tr><th>Medication</th><th>Dose</th><th>Route</th>
-<th>Frequency</th><th>Duration</th><th>Instructions</th></tr>{rows}</table>
-<p>{data["notes"]}</p>
+{mark}
+<p>{labels["date"]}: {data["date"]} — {labels["patient"]}: {data["patient_name"]}</p>
+<p>{labels["prescriber"]}: {data["prescriber_name"]} ({data["license_label"]}: {data["license_number"]})</p>
+<table><tr><th>{labels["medication"]}</th><th>{labels["dose"]}</th><th>{labels["route"]}</th>
+<th>{labels["frequency"]}</th><th>{labels["duration"]}</th><th>{labels["instructions"]}</th></tr>{rows}</table>
+<p>{labels["notes"]}: {data["notes"]}</p>
 {compliance}{notices}
 </body></html>"""
 

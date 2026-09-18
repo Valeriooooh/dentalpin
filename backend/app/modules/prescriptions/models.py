@@ -96,7 +96,7 @@ class PrescriptionTemplate(Base, TimestampMixin):
 class PrescriberProfile(Base, TimestampMixin):
     """Per-user defaults for the prescription pad: license number and an
     optional signature image (stored as a media document id, opaque —
-    no FK so this module keeps ``depends == ["patients"]``).
+    no FK so this module declares no media dependency).
 
     Module-owned table (not core): keeps professional identity out of
     the core user row while country modules override labels via hooks.

@@ -31,4 +31,9 @@ draft from the patient summary ("New prescription" action).
   name and license, no signature);
   corrections are cancel + reissue, never edits.
 - **Download** the PDF for printing. No email delivery in v1.
+  The PDF renders in the prescription's language and carries a
+  DRAFT/CANCELLED mark when applicable.
+- **Issue** and **Cancel** ask for confirmation (both are irreversible).
+- Your **license number** lives in Settings (clinical section,
+  prescriber identity) and prints on the PDF.
 - Heed the allergy/interaction banner — it warns, never blocks.

@@ -34,6 +34,11 @@
       "draft": "Borrador",
       "issued": "Emitida",
       "cancelled": "Cancelada"
-    }
+    },
+    "profileLabel": "Identidad prescriptora",
+    "profileDescription": "Cédula profesional y firma para tus recetas.",
+    "licenseLabel": "Cédula profesional",
+    "issueConfirm": "Emitir esta receta? No se puede deshacer.",
+    "cancelConfirm": "Anular esta receta? No se puede deshacer."
   }
 }

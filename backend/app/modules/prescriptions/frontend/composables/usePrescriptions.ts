@@ -33,8 +33,17 @@ export interface PrescriptionTemplate {
   items: PrescriptionItem[]
 }
 
+export interface PrescriberProfile {
+  user_id: string
+  license_number: string | null
+  signature_document_id: string | null
+}
+
 export function usePrescriptions() {
   const api = useApi()
+
+  // Mutations surface their own errors (fail() in the page) — keep
+  // useApi's toast off so failures do not pop twice.
 
   async function listForPatient(patientId: string): Promise<Prescription[]> {
     const response = await api.get<ApiResponse<Prescription[]>>(
@@ -46,7 +55,8 @@ export function usePrescriptions() {
   async function createDraft(patientId: string, items: PrescriptionItem[] = [], notes?: string): Promise<Prescription> {
     const response = await api.post<ApiResponse<Prescription>>(
       `/api/v1/prescriptions/patients/${patientId}/prescriptions`,
-      { patient_id: patientId, notes: notes ?? null, items }
+      { patient_id: patientId, notes: notes ?? null, items },
+      { errorToast: false }
     )
     return response.data
   }
@@ -54,21 +64,47 @@ export function usePrescriptions() {
   async function updateDraft(id: string, payload: { notes?: string | null, items?: PrescriptionItem[] }): Promise<Prescription> {
     const response = await api.patch<ApiResponse<Prescription>>(
       `/api/v1/prescriptions/prescriptions/${id}`,
-      payload
+      payload,
+      { errorToast: false }
     )
     return response.data
   }
 
   async function issue(id: string): Promise<Prescription> {
     const response = await api.post<ApiResponse<Prescription>>(
-      `/api/v1/prescriptions/prescriptions/${id}/issue`
+      `/api/v1/prescriptions/prescriptions/${id}/issue`,
+      {},
+      { errorToast: false }
     )
     return response.data
   }
 
   async function cancel(id: string): Promise<Prescription> {
     const response = await api.post<ApiResponse<Prescription>>(
-      `/api/v1/prescriptions/prescriptions/${id}/cancel`
+      `/api/v1/prescriptions/prescriptions/${id}/cancel`,
+      {},
+      { errorToast: false }
+    )
+    return response.data
+  }
+
+  async function downloadPdf(id: string): Promise<Blob> {
+    const response = await api.raw(`/api/v1/prescriptions/prescriptions/${id}/pdf`)
+    if (!response.ok) throw new Error(`prescription PDF: ${response.status}`)
+    return response.blob()
+  }
+
+  async function getPrescriberProfile(): Promise<PrescriberProfile | null> {
+    const response = await api.get<ApiResponse<PrescriberProfile | null>>(
+      '/api/v1/prescriptions/prescriber-profile'
+    )
+    return response.data
+  }
+
+  async function upsertPrescriberProfile(licenseNumber: string | null): Promise<PrescriberProfile> {
+    const response = await api.put<ApiResponse<PrescriberProfile>>(
+      '/api/v1/prescriptions/prescriber-profile',
+      { license_number: licenseNumber }
     )
     return response.data
   }
@@ -108,7 +144,8 @@ export function usePrescriptions() {
   }
 
   return {
-    listForPatient, createDraft, updateDraft, issue, cancel,
+    listForPatient, createDraft, updateDraft, issue, cancel, downloadPdf,
+    getPrescriberProfile, upsertPrescriberProfile,
     warnings, listTemplates, createTemplate, updateTemplate, deleteTemplate
   }
 }

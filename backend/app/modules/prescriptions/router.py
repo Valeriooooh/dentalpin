@@ -189,13 +189,17 @@ async def download_prescription_pdf(
     patient = await PatientService.get_patient(db, ctx.clinic_id, row.patient_id)
     hook_data: dict = {}
     label_overrides: dict = {}
+    hook = None
     try:
         from .hooks import resolve_hook_for_clinic
 
         hook = await resolve_hook_for_clinic(db, ctx.clinic_id)
         if hook is not None:
             label_overrides = hook.label_overrides()
-            hook_data = await hook.on_prescription_issued(row, db)
+            # Issue-time side effects must NOT re-run per download: read
+            # the stored snapshot and let the hook enhance the payload.
+            stored = (row.compliance_data or {}).get(hook.country_code)
+            hook_data = stored if isinstance(stored, dict) else {}
     except ImportError:
         pass
     data = build_pdf_data(
@@ -204,13 +208,14 @@ async def download_prescription_pdf(
         patient.full_name if patient else "?",
         {
             "name": ctx.clinic.name,
-            "address": (ctx.clinic.address or {}).get("city", "")
-            if isinstance(ctx.clinic.address, dict)
-            else "",
+            "address": ctx.clinic.address if isinstance(ctx.clinic.address, dict) else {},
         },
         hook_data=hook_data,
         label_overrides=label_overrides,
+        locale=row.locale or "es",
     )
+    if hook is not None:
+        data = hook.enhance_pdf_data(data, row) or data
     try:
         pdf = await asyncio.to_thread(render_pdf_bytes, data)
     except ImportError:

@@ -241,3 +241,80 @@ async def test_http_codes(client, auth_headers, test_clinic: Clinic, test_patien
     tpl_id = tpl.json()["data"]["id"]
     dropped = await client.delete(f"/api/v1/prescriptions/templates/{tpl_id}", headers=auth_headers)
     assert dropped.status_code == 204
+
+
+@pytest.mark.asyncio
+async def test_archived_allergies_excluded_from_warnings(
+    db_session: AsyncSession, test_clinic: Clinic
+):
+    from app.modules.patients_clinical.models import Allergy
+
+    patient = await _patient(db_session, test_clinic.id)
+    db_session.add(Allergy(clinic_id=test_clinic.id, patient_id=patient.id, name="Penicilina"))
+    db_session.add(
+        Allergy(
+            clinic_id=test_clinic.id,
+            patient_id=patient.id,
+            name="Aspirina",
+            status="archived",
+        )
+    )
+    await db_session.commit()
+    warnings = await PrescriptionService.prescribe_warnings(db_session, test_clinic.id, patient.id)
+    assert "Penicilina" in warnings["allergies"]
+    assert "Aspirina" not in warnings["allergies"]
+
+
+def test_flag_format_is_readable():
+    from types import SimpleNamespace
+
+    flag = SimpleNamespace(
+        type="interaction",
+        risk_note="Riesgo de sangrado",
+        involved=["Warfarina", "Ibuprofeno"],
+    )
+    assert PrescriptionService._format_flag(flag) == "Warfarina + Ibuprofeno: Riesgo de sangrado"
+
+
+def test_pdf_labels_follow_locale_and_marks_non_issued():
+    from types import SimpleNamespace
+
+    from app.modules.prescriptions.pdf import build_pdf_data, render_html
+
+    clinic = {
+        "name": "Clinica",
+        "address": {
+            "street": "Calle Mayor 1",
+            "postal_code": "28001",
+            "city": "Madrid",
+            "country": "ES",
+        },
+    }
+    draft = SimpleNamespace(
+        status="draft",
+        issued_at=None,
+        prescriber_name="Doc",
+        license_number=None,
+        notes=None,
+    )
+    data = build_pdf_data(draft, [], "Pac", clinic, locale="es")
+    assert data["labels"]["date"] == "Fecha"
+    assert data["labels"]["patient"] == "Paciente"
+    assert data["status_mark"] == "BORRADOR"
+    assert "Calle Mayor 1" in data["clinic_address"]
+    assert "Madrid" in data["clinic_address"]
+    html = render_html(data)
+    assert "BORRADOR" in html
+    assert "Fecha:" in html
+
+    issued = SimpleNamespace(
+        status="issued",
+        issued_at=None,
+        prescriber_name="Doc",
+        license_number="123",
+        notes=None,
+    )
+    data_en = build_pdf_data(issued, [], "Pat", clinic, locale="en")
+    assert data_en["labels"]["date"] == "Date"
+    assert "DRAFT" not in render_html(data_en)
+    assert "CANCELLED" not in render_html(data_en)

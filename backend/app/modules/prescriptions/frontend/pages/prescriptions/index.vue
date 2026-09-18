@@ -5,21 +5,20 @@
  * Deep-linkable via ?patient_id= (&new=1 starts a draft).
  */
 import type { Prescription, PrescriptionItem, PrescriptionTemplate } from '../../composables/usePrescriptions'
+import { PERMISSIONS } from '~~/app/config/permissions'
+import { errorDetail } from '~~/app/utils/error'
 
 const { t, locale } = useI18n()
 const { can } = usePermissions()
 const route = useRoute()
-const config = useRuntimeConfig()
-const apiBaseUrl = computed(() =>
-  import.meta.server ? config.apiBaseUrlServer : config.public.apiBaseUrl
-)
+const toast = useToast()
 const {
-  listForPatient, createDraft, updateDraft, issue, cancel,
+  listForPatient, createDraft, updateDraft, issue, cancel, downloadPdf,
   warnings, listTemplates, createTemplate
 } = usePrescriptions()
 
-const canWrite = computed(() => can('prescriptions.write'))
-const canIssue = computed(() => can('prescriptions.issue'))
+const canWrite = computed(() => can(PERMISSIONS.prescriptions.write))
+const canIssue = computed(() => can(PERMISSIONS.prescriptions.issue))
 
 const patientId = ref((route.query.patient_id as string) || '')
 const items = ref<Prescription[]>([])
@@ -34,6 +33,13 @@ const showEditor = ref(false)
 
 const templates = ref<PrescriptionTemplate[]>([])
 const newTemplateName = ref('')
+const errorMessage = ref('')
+const pendingConfirm = ref<{ kind: 'issue' | 'cancel', rx: Prescription } | null>(null)
+
+function fail(e: unknown) {
+  errorMessage.value = errorDetail(e) ?? String(e)
+  toast.add({ title: t('prescriptions.title'), description: errorMessage.value, color: 'error' })
+}
 
 function formatDate(iso: string | null): string {
   if (!iso) return '—'
@@ -82,27 +88,42 @@ function applyTemplate(tpl: PrescriptionTemplate) {
 
 async function save() {
   const clean = editItems.value.filter(i => i.medication_name.trim() !== '')
-  if (editing.value) {
-    await updateDraft(editing.value.id, { notes: editNotes.value || null, items: clean })
-  } else {
-    await createDraft(patientId.value, clean, editNotes.value || undefined)
-  }
-  showEditor.value = false
-  await refresh()
+  errorMessage.value = ''
+  try {
+    if (editing.value) {
+      await updateDraft(editing.value.id, { notes: editNotes.value || null, items: clean })
+    } else {
+      await createDraft(patientId.value, clean, editNotes.value || undefined)
+    }
+    showEditor.value = false
+    await refresh()
+  } catch (e: unknown) { fail(e) }
 }
 
-async function issueRx(rx: Prescription) {
-  await issue(rx.id)
-  await refresh()
+function askConfirm(kind: 'issue' | 'cancel', rx: Prescription) {
+  pendingConfirm.value = { kind, rx }
 }
 
-async function cancelRx(rx: Prescription) {
-  await cancel(rx.id)
-  await refresh()
+async function doConfirmed() {
+  const pending = pendingConfirm.value
+  if (!pending) return
+  pendingConfirm.value = null
+  errorMessage.value = ''
+  try {
+    if (pending.kind === 'issue') await issue(pending.rx.id)
+    else await cancel(pending.rx.id)
+    await refresh()
+  } catch (e: unknown) { fail(e) }
 }
 
-function pdfUrl(id: string): string {
-  return `${apiBaseUrl.value}/api/v1/prescriptions/prescriptions/${id}/pdf`
+async function downloadPdfFile(rx: Prescription) {
+  errorMessage.value = ''
+  try {
+    const blob = await downloadPdf(rx.id)
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank', 'noopener')
+    setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  } catch (e: unknown) { fail(e) }
 }
 
 async function saveAsTemplate() {
@@ -199,7 +220,7 @@ watch(patientId, () => void refresh())
           <UButton
             v-if="canIssue"
             size="xs"
-            @click="issueRx(rx)"
+            @click="askConfirm('issue', rx)"
           >
             {{ t('prescriptions.issue') }}
           </UButton>
@@ -208,7 +229,7 @@ watch(patientId, () => void refresh())
             size="xs"
             color="neutral"
             variant="ghost"
-            @click="cancelRx(rx)"
+            @click="askConfirm('cancel', rx)"
           >
             {{ t('prescriptions.cancel') }}
           </UButton>
@@ -217,26 +238,21 @@ watch(patientId, () => void refresh())
           v-else-if="rx.status === 'issued'"
           class="mt-2 flex flex-wrap gap-2"
         >
-          <a
-            :href="pdfUrl(rx.id)"
-            target="_blank"
-            rel="noopener"
+          <UButton
+            size="xs"
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-download"
+            @click="downloadPdfFile(rx)"
           >
-            <UButton
-              size="xs"
-              color="neutral"
-              variant="outline"
-              icon="i-lucide-download"
-            >
-              {{ t('prescriptions.downloadPdf') }}
-            </UButton>
-          </a>
+            {{ t('prescriptions.downloadPdf') }}
+          </UButton>
           <UButton
             v-if="canIssue"
             size="xs"
             color="neutral"
             variant="ghost"
-            @click="cancelRx(rx)"
+            @click="askConfirm('cancel', rx)"
           >
             {{ t('prescriptions.cancel') }}
           </UButton>
@@ -350,6 +366,32 @@ watch(patientId, () => void refresh())
           </UButton>
           <UButton @click="save">
             {{ t('prescriptions.save') }}
+          </UButton>
+        </div>
+      </template>
+    </UModal>
+
+    <UModal
+      :open="pendingConfirm !== null"
+      :title="t(pendingConfirm?.kind === 'issue' ? 'prescriptions.issue' : 'prescriptions.cancel')"
+      @update:open="(v: boolean) => { if (!v) pendingConfirm = null }"
+    >
+      <template #body>
+        <p class="p-4 text-sm">
+          {{ t(pendingConfirm?.kind === 'issue' ? 'prescriptions.issueConfirm' : 'prescriptions.cancelConfirm') }}
+        </p>
+      </template>
+      <template #footer>
+        <div class="flex justify-end gap-2 p-2">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            @click="pendingConfirm = null"
+          >
+            {{ t('common.close') }}
+          </UButton>
+          <UButton @click="doConfirmed">
+            {{ t('common.confirm') }}
           </UButton>
         </div>
       </template>

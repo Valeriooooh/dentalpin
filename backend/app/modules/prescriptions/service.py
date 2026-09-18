@@ -164,13 +164,6 @@ class PrescriptionService:
                 "Cannot issue an empty prescription",
             )
         hook = await resolve_hook_for_clinic(db, clinic_id)
-        if hook is not None:
-            ok, error = await hook.validate_before_issue(row, db)
-            if not ok:
-                raise HTTPException(
-                    http_status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail=error or "Country compliance check failed",
-                )
         prescriber = await db.get(User, prescriber_id)
         profile = (
             await db.execute(
@@ -180,6 +173,21 @@ class PrescriptionService:
                 )
             )
         ).scalar_one_or_none()
+        if hook is not None:
+            ok, error = await hook.validate_before_issue(row, db)
+            if not ok:
+                raise HTTPException(
+                    http_status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=error or "Country compliance check failed",
+                )
+            missing = [
+                field for field in hook.get_required_fields() if not getattr(profile, field, None)
+            ]
+            if missing:
+                raise HTTPException(
+                    http_status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Missing prescriber fields: {', '.join(missing)}",
+                )
         row.prescriber_id = prescriber_id
         row.prescriber_name = (
             f"{prescriber.first_name} {prescriber.last_name}" if prescriber else None
@@ -330,6 +338,7 @@ class PrescriptionService:
                         select(Allergy.name).where(
                             Allergy.patient_id == patient_id,
                             Allergy.clinic_id == clinic_id,
+                            Allergy.status == "active",
                         )
                     )
                 )
@@ -351,7 +360,12 @@ class PrescriptionService:
                 service_flags = await MedicalReferenceService.get_patient_flags(
                     db, clinic_id, patient_id
                 )
-                flags = [str(flag) for flag in (service_flags or [])]
+                flags = [PrescriptionService._format_flag(f) for f in (service_flags or [])]
         except (ImportError, AttributeError):
             pass
         return {"allergies": allergies, "interaction_flags": flags}
+
+    @staticmethod
+    def _format_flag(flag) -> str:
+        """Interaction flags read as text, never as a Pydantic repr."""
+        return f"{' + '.join(flag.involved)}: {flag.risk_note}"

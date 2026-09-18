@@ -34,6 +34,11 @@
       "draft": "Piszkozat",
       "issued": "Kiállítva",
       "cancelled": "Visszavonva"
-    }
+    },
+    "profileLabel": "Felíró adatai",
+    "profileDescription": "Szakmai engedélyszám és aláírás a receptekhez.",
+    "licenseLabel": "Engedélyszám",
+    "issueConfirm": "Kiadja ezt a receptet? Ez nem vonható vissza.",
+    "cancelConfirm": "Törli ezt a receptet? Ez nem vonható vissza."
   }
 }

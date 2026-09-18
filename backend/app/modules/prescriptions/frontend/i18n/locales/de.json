@@ -34,6 +34,11 @@
       "draft": "Entwurf",
       "issued": "Ausgestellt",
       "cancelled": "Storniert"
-    }
+    },
+    "profileLabel": "Verschreiberdaten",
+    "profileDescription": "Berufsnummer und Unterschrift für Ihre Rezepte.",
+    "licenseLabel": "Berufsnummer",
+    "issueConfirm": "Dieses Rezept ausstellen? Das kann nicht rückgängig gemacht werden.",
+    "cancelConfirm": "Dieses Rezept stornieren? Das kann nicht rückgängig gemacht werden."
   }
 }

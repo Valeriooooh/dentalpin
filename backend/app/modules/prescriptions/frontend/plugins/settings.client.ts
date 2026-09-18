@@ -17,4 +17,15 @@ export default defineNuxtPlugin(() => {
     searchKeywords: ['prescription', 'template', 'receta', 'plantilla'],
     order: 46
   })
+  registerSettingsPage({
+    path: 'prescriber-identity',
+    category: 'clinical',
+    labelKey: 'prescriptions.profileLabel',
+    descriptionKey: 'prescriptions.profileDescription',
+    icon: 'i-lucide-badge-check',
+    permission: 'prescriptions.read',
+    component: () => import('../components/settings/PrescriberProfileSettingsPage.vue'),
+    searchKeywords: ['prescription', 'license', 'receta', 'cedula', 'prescriptor'],
+    order: 47
+  })
 })

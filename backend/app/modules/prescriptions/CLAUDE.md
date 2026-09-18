@@ -37,7 +37,7 @@ Admin/dentist `*`; others read-only (issuing stays prescriber-only).
 | Tool | Category | Wraps | Permission |
 |---|---|---|---|
 | `list_prescriptions` | READ | `list_for_patient` | `prescriptions.read` |
-| `create_prescription_draft` | WRITE | `create_draft` (empty) | `prescriptions.write` |
+| `create_prescription_draft` | WRITE | `create_draft` (items) | `prescriptions.write` |
 
 Draft-only for the agent; issuing stays human.
 

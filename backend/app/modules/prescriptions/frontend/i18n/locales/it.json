@@ -34,6 +34,11 @@
       "draft": "Bozza",
       "issued": "Emessa",
       "cancelled": "Annullata"
-    }
+    },
+    "profileLabel": "Identità del prescrittore",
+    "profileDescription": "Numero professionale e firma per le tue ricette.",
+    "licenseLabel": "Numero professionale",
+    "issueConfirm": "Emettere questa ricetta? L'azione è irreversibile.",
+    "cancelConfirm": "Annullare questa ricetta? L'azione è irreversibile."
   }
 }

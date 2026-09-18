@@ -34,16 +34,10 @@ class PrescriptionsModule(BaseModule):
             "receptionist": ["read"],
         },
         "frontend": {
+            # No navigation entry: the page deep-links from the patient
+            # summary card + action (a bare /prescriptions with no patient
+            # picker is a dead end).
             "layer_path": "frontend",
-            "navigation": [
-                {
-                    "label": "prescriptions.nav.title",
-                    "to": "/prescriptions",
-                    "icon": "i-lucide-pill",
-                    "permission": "prescriptions.read",
-                    "order": 96,
-                }
-            ],
         },
     }
 
@@ -67,7 +61,7 @@ class PrescriptionsModule(BaseModule):
         from .models import Prescription
 
         result = await ctx.db.execute(
-            select(Prescription.id).where(Prescription.status == "issued").limit(1)
+            select(Prescription.id).where(Prescription.issued_at.is_not(None)).limit(1)
         )
         if result.first() is not None:
             raise RuntimeError(

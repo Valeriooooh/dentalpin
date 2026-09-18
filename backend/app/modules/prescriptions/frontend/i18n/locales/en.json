@@ -34,6 +34,11 @@
       "draft": "Draft",
       "issued": "Issued",
       "cancelled": "Cancelled"
-    }
+    },
+    "profileLabel": "Prescriber identity",
+    "profileDescription": "Professional license and signature for your prescriptions.",
+    "licenseLabel": "License number",
+    "issueConfirm": "Issue this prescription? This cannot be undone.",
+    "cancelConfirm": "Cancel this prescription? This cannot be undone."
   }
 }
