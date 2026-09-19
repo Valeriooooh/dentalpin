@@ -143,3 +143,21 @@ def test_arabic_pdf_is_rtl() -> None:
     assert 'dir="rtl"' in html
     html = _html(_invoice(), _clinic(), locale="es")
     assert 'dir="rtl"' not in html
+
+
+def test_each_locale_renders_own_grand_total() -> None:
+    """The biggest label on the page must be native too, not just the heading (#484)."""
+    totals = {
+        "es": "TOTAL",
+        "en": "TOTAL",
+        "ta": "மொத்தம்",
+        "fr": "TOTAL",
+        "pt": "TOTAL",
+        "de": "GESAMTBETRAG",
+        "hu": "VÉGÖSSZEG",
+        "pl": "RAZEM DO ZAPŁATY",
+        "it": "TOTALE",
+        "ar": "المجموع الإجمالي",
+    }
+    for locale, total in totals.items():
+        assert total in _html(_invoice(), _clinic(), locale=locale)

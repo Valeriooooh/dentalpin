@@ -297,7 +297,7 @@ class InvoicePDFService:
                     box-sizing: border-box;
                 }}
                 body {{
-                    font-family: 'Helvetica Neue', Arial, 'Noto Sans Tamil', sans-serif;
+                    font-family: 'Helvetica Neue', Arial, 'Noto Sans Tamil', 'Noto Sans Arabic', sans-serif;
                     font-size: 11pt;
                     line-height: 1.4;
                     color: #333;
@@ -957,8 +957,8 @@ class InvoicePDFService:
 
         labels_de = {
             "invoice": "Rechnung",
-            "credit_note": "Stornorechnung",
-            "credit_note_for": "Stornorechnung zu",
+            "credit_note": "Rechnungskorrektur",
+            "credit_note_for": "Rechnungskorrektur zu",
             "draft": "Entwurf",
             "issue_date": "Ausstellungsdatum",
             "due_date": "Fälligkeitsdatum",
@@ -977,7 +977,7 @@ class InvoicePDFService:
             "subtotal": "Zwischensumme",
             "total_discount": "Gesamtrabatt",
             "tax": "Steuer",
-            "grand_total": "TOTAL",
+            "grand_total": "GESAMTBETRAG",
             "total_paid": "Gesamt bezahlt",
             "balance_due": "Offener Betrag",
             "notes": "Notizen",
@@ -996,8 +996,8 @@ class InvoicePDFService:
 
         labels_hu = {
             "invoice": "Számla",
-            "credit_note": "Jóváíró számla",
-            "credit_note_for": "Jóváíró számla ehhez",
+            "credit_note": "Helyesbítő számla",
+            "credit_note_for": "Az eredeti számla",
             "draft": "Piszkozat",
             "issue_date": "Kiállítás dátuma",
             "due_date": "Fizetési határidő",
@@ -1016,9 +1016,9 @@ class InvoicePDFService:
             "subtotal": "Részösszeg",
             "total_discount": "Összes kedvezmény",
             "tax": "Adó",
-            "grand_total": "TOTAL",
-            "total_paid": "Összesen befizetve",
-            "balance_due": "Fizetendő egyenleg",
+            "grand_total": "VÉGÖSSZEG",
+            "total_paid": "Befizetett összeg",
+            "balance_due": "Fizetendő összeg",
             "notes": "Megjegyzések",
             "payment_terms": "Fizetési feltételek",
             "days": "nap",
@@ -1055,7 +1055,7 @@ class InvoicePDFService:
             "subtotal": "Suma częściowa",
             "total_discount": "Suma rabatów",
             "tax": "Podatek",
-            "grand_total": "TOTAL",
+            "grand_total": "RAZEM DO ZAPŁATY",
             "total_paid": "Zapłacono łącznie",
             "balance_due": "Do zapłaty",
             "notes": "Notatki",
