@@ -133,7 +133,13 @@ Notas para quien construya el formulario:
 - La integración recomendada es un POST **desde el servidor** de tu web o de tu
   plataforma. Un `fetch()` de navegador lanzado directamente desde la web de la
   clínica necesita además que el origen de ese sitio esté permitido en la
-  configuración CORS del servidor.
+  configuración CORS del servidor. Ten en cuenta lo que implica un formulario
+  desde el navegador: la clave viaja en el código de la página, así que
+  cualquiera puede leerla y enviar consultas como si fuera tu formulario. No se
+  rompe nada — las consultas siguen llegando — pero la clave deja de ser un
+  secreto y los límites de peticiones y el límite diario pasan a ser tu única
+  protección. Mejor desde el servidor, y pon el límite diario en una cifra que
+  te parezca razonable ver llegar en un día.
 - Recuerda la regla de enrutado al escribir el mensaje de confirmación de tu
   web: una consulta cuyo teléfono o email ya pertenece a un paciente no crea una
   solicitud, añade una llamada en **Recordatorios**. No prometas «hemos creado

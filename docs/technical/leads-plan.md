@@ -30,6 +30,13 @@
 > 3. **The convert drawer opens with `notes` empty** — motive and
 >    availability are logistics for one call, not chart data, so they are not
 >    copied into the patient record.
+> 4. **The recall note changed twice after review** (both landed before
+>    release): it now opens with an identity header —
+>    `Web form — submitted as: Name · phone · email`, the label localized from
+>    `clinics.settings["communication_language"]` — and it **no longer carries
+>    the availability**. §3.2's "no invented labels, availability as day codes"
+>    therefore describes the original design only; the module `CLAUDE.md` is
+>    the record of what the note contains today.
 >
 > Everything else (§3.1 routing, §3.2 recall reuse, §4.x file layout, §5.6
 > settings page, §10 gotchas) landed as written.

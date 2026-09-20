@@ -89,13 +89,25 @@ class UpdateIntakeSettingsArgs(BaseModel):
 
 
 def _lead_summary(lead) -> dict:
+    """Row summary — deliberately **without enquirer prose**.
+
+    ``motive`` and ``description`` are free text typed by anyone on the
+    internet through the public form, so they must not ride along in a tool
+    result: an unflagged tool result is sent to the cloud LLM, and this text
+    is both PHI-ish and a prompt-injection surface ("ignore previous
+    instructions…" in a description would reach the assistant the next time
+    someone asks it to summarise the lead queue).
+
+    Only ``get_lead`` returns it, and only because it declares
+    ``exposes_free_text=True``, which keeps that tool off the cloud path under
+    redaction. Adding a prose field here re-opens the leak in *five* tools at
+    once — `test_tools.py` guards the shape.
+    """
     return {
         "id": lead.id,
         "full_name": lead.full_name,
         "phone": lead.phone,
         "email": lead.email,
-        "motive": lead.motive,
-        "description": lead.description,
         "availability_days": lead.availability_days,
         "availability_slot": lead.availability_slot,
         "status": lead.status,
@@ -119,10 +131,16 @@ async def _list_leads(ctx: AgentContext, params: ListLeadsArgs) -> dict:
 
 
 async def _get_lead(ctx: AgentContext, params: GetLeadArgs) -> dict:
+    """The one tool that returns the enquirer's own words.
+
+    It is flagged ``exposes_free_text=True`` below, which is what keeps it off
+    the cloud LLM path — the flag and this function have to stay in step.
+    """
     lead = await LeadService.get_lead(ctx.db, ctx.clinic_id, params.lead_id)
     if lead is None:
         return {"error": "not_found"}
     data = _lead_summary(lead)
+    data["motive"] = lead.motive
     data["description"] = lead.description
     return data
 

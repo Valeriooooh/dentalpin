@@ -60,8 +60,8 @@
 - **The motive and the call availability are no longer copied into the patient
   record.** The convert drawer starts with empty notes: they are logistics for
   one call, not patient data. The recall note (the matched-patient path, where no
-  lead card exists) still carries them, the availability as a language-free token
-  like `mon, wed · afternoon`.
+  lead card exists) carries the motive and description — but not the availability;
+  see the Fixed entry below.
 - Form validation on both staff forms (`utils/leadValidation.ts`): an invalid email,
   a phone with too few digits, a missing required field or a future date of birth
   is refused **before** it is sent, with the reason shown on the field and a toast
@@ -71,3 +71,39 @@
 - Copy buttons on the website-form settings page for the intake URL, the intake
   key and the `curl` example (with an explicit error toast when the browser
   denies clipboard access).
+
+### Fixed
+
+- **A matched enquiry's recall note now opens with the identity as submitted**
+  (`Web form — submitted as: Name · phone · email`). The matched path drops the
+  submitted name/phone/email — the recall hangs off the patient — so a stranger's
+  words (or a relative's, or a one-digit typo, or a phone two patients share)
+  read as the patient's own and the front desk acted on them. The header is first
+  in the note, so the 4000-character cap can never truncate it; the response to
+  the submitter is unchanged (D12 still holds).
+- **That label is written in the clinic's communication language**, not a fixed
+  English string: `clinics.settings["communication_language"]` (the same source
+  the budget PDFs and the notifications gateway use; fallback `es`), with labels
+  for all ten UI locales in `_IDENTITY_LABELS`. Stored notes have no reader
+  locale — the UI language is a browser-local preference that never reaches the
+  API and intake has no user session — so the wording is frozen with the note: a
+  clinic that switches language keeps earlier blocks in the earlier language.
+  `test_routing.py` covers es/en/unknown-language and guards the label key set
+  against the host locale list.
+- **"Call today" is now the clinic's today, not the server's calendar day.** The
+  recall's `due_month`/`due_date` are computed from `Clinic.timezone`, so a server
+  in another timezone no longer stamps yesterday's or tomorrow's date on a
+  call-back near midnight.
+- **`list_leads` no longer returns `motive`/`description`.** They are free text
+  typed by anyone on the internet, and an unflagged tool result is sent to the
+  cloud LLM — a PHI and prompt-injection surface. `get_lead` still returns them
+  (it is flagged `exposes_free_text=True`, which keeps it off the cloud path);
+  `tests/modules/leads/test_tools.py` pins the shape so a re-added prose field
+  cannot leak through five tools silently.
+- **The recall note no longer carries the enquiry's availability** (days / slot).
+  Those are a booking window for a first appointment, not part of what the
+  patient wanted to say, and the call-back records the second thing. Consequence
+  worth stating plainly: a matched enquiry writes no lead row, so its availability
+  is now stored nowhere. `test_routing.py` pins the absence so it cannot creep
+  back; `recall_routing._format_availability` and its day-code token are gone with
+  it.

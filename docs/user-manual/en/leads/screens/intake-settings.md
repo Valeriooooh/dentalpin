@@ -127,7 +127,13 @@ Notes for whoever builds the form:
   for bots, and a filled one is accepted silently and thrown away.
 - The recommended integration is a **server-side** POST from your website or
   hosting platform. A browser `fetch()` straight from the clinic site also
-  needs that site origin allowed in the server CORS configuration.
+  needs that site origin allowed in the server CORS configuration. Be aware of
+  what a browser-side form means for the key: it sits in the page source, so
+  anyone can read it and post to your intake as if they were your form. Nothing
+  breaks — requests still arrive — but the key is no longer a secret, and the
+  rate limits plus the daily limit become your only protection. Prefer
+  server-side, and set the daily limit to a number you would be happy to see
+  arrive in a day.
 - Remember the routing rule when you write the confirmation message on your
   site: an enquiry whose phone or email already belongs to a patient does not
   create a lead, it adds a call-back in **Recalls**. Do not promise "we created

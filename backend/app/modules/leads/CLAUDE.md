@@ -89,6 +89,16 @@ name contains `key` or `rotate`.
 "they are already a patient, a call-back was queued" (`outcome=recall_queued`)
 instead of "created".
 
+**Enquirer prose leaves by exactly one door.** `motive` and `description` are
+typed by anyone on the internet, so `_lead_summary` must never carry them: a
+tool result whose tool is not flagged is sent to the cloud LLM, and this text is
+both PHI-ish and a prompt-injection surface ("ignore previous instructions…" in
+a description would land in the assistant's context the next time someone asks
+it to summarise the lead queue). Only `get_lead` returns them — it sets
+`exposes_free_text=True`, which is what keeps it off the cloud path. Re-adding a
+prose field to the summary would leak it through five tools at once, silently;
+`tests/modules/leads/test_tools.py` pins the shape.
+
 ## Events
 
 This module publishes and consumes **no events of its own** (D7). The recall it
@@ -128,12 +138,45 @@ Two surfaces, and the cap is not in the environment:
   `Recall(...)` would stack duplicate call-backs and drop the activity journal.
 - **Dedupe + note append.** A repeat enquiry refreshes the same active
   `(patient, "other")` recall instead of stacking a second one, and the
-  composed note (motive / description verbatim, plus the availability as a
-  language-free token like `mon, wed · afternoon`, blank-line separated) is
-  **appended** behind a `---` separator — never overwritten,
+  composed note (identity header + motive / description verbatim, blank-line
+  separated) is **appended** behind a `---` separator — never overwritten,
   because a staff member may have written their own `other` recall on that
   row. The block is skipped when it is already present and when appending
   would exceed the 4000-character cap.
+- **The recall note does not carry the submitted availability.** Days/slot are
+  a booking window for a first appointment, not something the patient wanted to
+  say, and the call-back records the second thing. Consequence to keep in mind:
+  a matched enquiry writes **no lead row**, so its availability is not stored
+  anywhere at all. If a clinic ever needs it there, the additive route is a
+  dedicated column on the recall (or accepting a lead-style audit row) rather
+  than smuggling it back into the note.
+- **The recall note opens with the identity as submitted**
+  (`Web form — submitted as: Name · phone · email`) and that line is not
+  decoration. The matched path drops the submitted name/phone/email — the recall
+  hangs off the patient, so the note is all that is left of the person who
+  actually wrote in — and without the header a stranger's words (a relative's, a
+  one-digit typo, a phone two patients share) read as the patient's own and the
+  front desk acts on them: cancelling surgery, recording an allergy. It comes
+  **first** so the 4000-character cap can never truncate the identity away.
+- **That header is localized to the *clinic's* language, not the reader's.**
+  The label map is `_IDENTITY_LABELS` in `recall_routing.py`, keyed by
+  `clinics.settings["communication_language"]` (the same source the budget PDFs
+  and the notifications gateway read; fallback `es`, the platform default for
+  clinic-authored text). It cannot follow each reader: the app's UI language is
+  a browser-local preference (`frontend/app/composables/useLocale.ts`) that
+  never reaches the API, and intake has no user session at all, so the label is
+  frozen into the note when the enquiry arrives — a clinic that changes
+  language later keeps old blocks in the old language, which is fine because
+  notes are append-only text. Adding a locale = one dict entry; a test asserts
+  the key set matches the host locale list (`core/pdf_locales.PDF_LOCALES`).
+- **"Call today" is the clinic's today.** `_clinic_context` resolves
+  `Clinic.timezone` first and `_local_day` turns an instant into a clinic-local
+  date; `date.today()` is the *server's* calendar day and near midnight writes
+  yesterday's or tomorrow's date onto the recall. `_clinic_context` reads the
+  timezone and the communication language in one query; both helpers are
+  deliberately local rather than imports of `agenda.tz` or
+  `notifications.service` — neither module is in `manifest.depends` and
+  `tests/test_module_isolation.py` fails a stealth cross-module import.
 - **`do_not_contact` → `needs_review`.** The default call list filters
   opted-out patients out, so a `pending` recall for one would be invisible and
   the enquiry would vanish. Outbound contact stays blocked independently by the
@@ -190,9 +233,9 @@ Two surfaces, and the cap is not in the environment:
   `test_intake.py::test_retired_free_text_availability_is_rejected`.
 - **Motive and availability are never copied into the patient record.** They are
   logistics for one call: the convert drawer starts with **notes empty** and the
-  staff writes what belongs in the chart. The only place they are rendered
-  outside this module is the recall note, for the matched-patient path where no
-  lead card exists.
+  staff writes what belongs in the chart. The motive still travels to the recall
+  note on the matched-patient path (where no lead card exists); the availability
+  does not travel anywhere on that path — see the note gotcha above.
 - **The convert drawer name split is a heuristic.** One `full_name` is split at
   the **first** whitespace (`Marta de la Fuente` → `Marta` / `de la Fuente`); a
   single-token name leaves `last_name` empty for the user to complete. Both
@@ -204,7 +247,9 @@ Two surfaces, and the cap is not in the environment:
   website or its host (WordPress handler, Webflow form action, Zapier/n8n). A
   browser `fetch()` straight from the clinic site additionally needs that
   origin in `ALLOWED_ORIGINS` (`app/config.py`, comma-separated) — mention it,
-  do not change CORS code.
+  do not change CORS code. Say the quiet part in the docs too: a browser-side
+  form puts the key in the page source, so it is effectively public, and the
+  rate limits plus the daily cap become the only protection left.
 - **Rotate returns the plaintext exactly once.** Never store it, never return
   it from `GET /settings`, never log it (`key_prefix` + `clinic_id` at most).
 - **A literal `@` in an i18n message must be written `{'@'}`.** vue-i18n reads

@@ -102,6 +102,18 @@ Guardar tiene **dos resultados posibles**, y el mensaje te dice cuál ha sido:
 Un teléfono compartido por una familia puede coincidir con varios pacientes;
 cada uno recibe su llamada y el mensaje nombra la coincidencia más probable.
 
+**Lee la primera línea de la nota de esa llamada antes de actuar.** Dice
+`Formulario web — enviado como: …` con el nombre, el teléfono y el email que
+traía el formulario. La etiqueta se escribe en el idioma de tu clínica (el de las
+comunicaciones de la clínica), así que en una clínica inglesa leerás *Web form —
+submitted as*; esa redacción queda fijada cuando llega la consulta, y las notas
+antiguas conservan el idioma en el que se escribieron. Quien rellenó el
+formulario no tiene por qué ser el paciente al que ha ido a parar — un familiar,
+un dígito mal escrito o un teléfono compartido por dos pacientes producen la
+misma coincidencia — así que si esa primera línea no es el paciente que estás
+viendo, trata el texto de debajo como palabras de otra persona y comprueba antes
+de cancelar, cambiar o anotar nada clínico.
+
 ## Editar, marcar y descartar
 
 El lápiz de una tarjeta abre el formulario de edición: corregir un teléfono mal

@@ -100,6 +100,17 @@ one happened:
 A phone shared by a family can match several patients; each of them gets a
 call-back, and the message names the closest match.
 
+**Read the first line of that call-back's note before you act on it.** It says
+`Web form — submitted as: …` with the name, phone and email the form actually
+carried. The label is written in your clinic's own language (the one set for
+clinic communications), so a Spanish clinic reads *Formulario web — enviado
+como*; the enquiry's arrival fixed that wording, and older notes keep the
+language they were written in. The person who filled in the form is not
+necessarily the patient it landed on — a relative, a mistyped digit, or a phone
+two patients share all produce a match — so if that first line is not the
+patient you are looking at, treat the text below it as someone else's words and
+check before cancelling, changing or recording anything clinical.
+
 ## Editing, marking and discarding
 
 The pencil on a card opens the edit form: correct a mistyped phone, change the

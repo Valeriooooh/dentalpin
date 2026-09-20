@@ -7,7 +7,8 @@ case per branch, because the staff outcome union is part of the contract.
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import UTC, date, datetime
+from zoneinfo import ZoneInfo
 
 import pytest
 from httpx import AsyncClient
@@ -16,7 +17,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth.models import Clinic
 from app.modules.leads.models import Lead
-from app.modules.leads.recall_routing import NOTE_CAP
+from app.modules.leads.recall_routing import (
+    _IDENTITY_LABELS,
+    NOTE_CAP,
+    _clinic_context,
+    _local_day,
+)
 from app.modules.leads.service import LeadIntakeService, LeadService
 from app.modules.recalls.models import Recall
 from app.modules.recalls.service import RecallFilters, RecallService
@@ -32,6 +38,32 @@ ENQUIRY = {
     "availability_days": ["mon", "wed"],
     "availability_slot": "afternoon",
 }
+
+# The label the note opens with, per clinic language (the recall note is stored
+# text written in the clinic's communication language, not the reader's UI one).
+LABEL_EN = "Web form — submitted as"
+LABEL_ES = "Formulario web — enviado como"
+
+
+async def _use_clinic_language(db: AsyncSession, clinic: Clinic, code: str | None) -> None:
+    """Set ``clinics.settings.communication_language`` (``None`` removes it)."""
+    settings = dict(clinic.settings or {})
+    if code is None:
+        settings.pop("communication_language", None)
+    else:
+        settings["communication_language"] = code
+    clinic.settings = settings
+    await db.commit()
+
+
+async def _clinic_local_today(db: AsyncSession, clinic: Clinic) -> date:
+    """Today in the clinic's timezone, computed with stdlib only.
+
+    Deliberately not the module's own helper: the point is to catch "call
+    today" landing on the server's calendar day instead of the clinic's.
+    """
+    tz_name = (await db.execute(select(Clinic.timezone).where(Clinic.id == clinic.id))).scalar_one()
+    return datetime.now(ZoneInfo(tz_name)).date()
 
 
 async def _leads(db: AsyncSession, clinic_id) -> list[Lead]:
@@ -86,13 +118,20 @@ async def test_phone_match_becomes_a_recall_not_a_lead(
     assert recall.priority == "high"
     assert recall.reason == "other"
     assert recall.status == "pending"
-    assert recall.due_month == date(date.today().year, date.today().month, 1)
-    assert recall.due_date == date.today()
+    # "Call today" is the clinic's today, not the server's calendar day.
+    clinic_today = await _clinic_local_today(db_session, test_clinic)
+    assert recall.due_month == date(clinic_today.year, clinic_today.month, 1)
+    assert recall.due_date == clinic_today
     assert "Presupuesto de ortodoncia" in (recall.reason_note or "")
     assert "Viene de Instagram." in (recall.reason_note or "")
-    # The availability travels to the call list as a language-free token, so
-    # the front desk knows when to ring (the recall path has no lead card).
-    assert "mon, wed · afternoon" in (recall.reason_note or "")
+    # The submitted availability is NOT carried into the call-back: it is a
+    # booking window for a first appointment, and the note records what the
+    # patient wanted to say. (On this path there is no lead row either, so it
+    # is not stored anywhere — pinned here so it cannot come back by accident.)
+    note = recall.reason_note or ""
+    assert "mon" not in note
+    assert "wed" not in note
+    assert "afternoon" not in note
 
 
 @pytest.mark.asyncio
@@ -202,6 +241,7 @@ async def test_repeat_match_refreshes_one_recall_and_appends_once(
     db_session: AsyncSession, test_clinic: Clinic
 ):
     patient = await make_patient(db_session, test_clinic.id, phone="600111222")
+    await _use_clinic_language(db_session, test_clinic, "en")
 
     # The same enquiry twice: one row, one copy of the block.
     await _route(db_session, test_clinic.id)
@@ -210,7 +250,10 @@ async def test_repeat_match_refreshes_one_recall_and_appends_once(
     recalls = await _recalls(db_session, patient.id)
     assert len(recalls) == 1
     note = recalls[0].reason_note or ""
-    assert note == "Presupuesto de ortodoncia\n\nViene de Instagram.\n\nmon, wed · afternoon", note
+    assert note == (
+        f"{LABEL_EN}: Marta Ruiz · +34 600 111 222 · marta@example.com"
+        "\n\nPresupuesto de ortodoncia\n\nViene de Instagram."
+    ), note
     assert "---" not in note
 
     # A genuinely different enquiry is appended as a second block, not
@@ -219,7 +262,7 @@ async def test_repeat_match_refreshes_one_recall_and_appends_once(
     recalls = await _recalls(db_session, patient.id)
     assert len(recalls) == 1
     note = recalls[0].reason_note or ""
-    assert note.startswith("Presupuesto de ortodoncia")
+    assert note.startswith(f"{LABEL_EN}:")
     assert "Segunda consulta" in note
     assert note.count("\n\n---\n\n") == 1
 
@@ -297,6 +340,134 @@ async def test_reported_patient_is_the_highest_ranked_match(
 
     assert outcome.recalled_patients[0].id == phone_patient.id
     assert len(outcome.recalled_patients) == 2
+
+
+@pytest.mark.asyncio
+async def test_submitted_identity_is_named_in_the_note(
+    db_session: AsyncSession, test_clinic: Clinic
+):
+    """A stranger's words must not read as the patient's own.
+
+    The recall hangs off the *matched patient*, so the submitted name, phone
+    and email have nowhere else to live. Without them in the note, the front
+    desk reads "cancel my implant surgery" as if the patient wrote it — which
+    is what a relative, a one-digit typo or a shared phone number produces.
+    """
+    patient = await make_patient(
+        db_session, test_clinic.id, first_name="Juan", last_name="Garcia", phone="612345678"
+    )
+    # Pin the language: the label follows the clinic's, and the fixture clinic
+    # has no communication_language set (which falls back to Spanish).
+    await _use_clinic_language(db_session, test_clinic, "en")
+
+    await _route(
+        db_session,
+        test_clinic.id,
+        full_name="Somebody Else",
+        phone="612345678",
+        email="stranger@example.com",
+        motive="Cancel my implant surgery",
+    )
+
+    recalls = await _recalls(db_session, patient.id)
+    assert len(recalls) == 1
+    note = recalls[0].reason_note or ""
+    # The header is the first thing the caller reads.
+    assert note.startswith(f"{LABEL_EN}: Somebody Else · 612345678")
+    assert "stranger@example.com" in note
+    assert "Cancel my implant surgery" in note
+    # The mismatch is the point: the patient's own name is not in the note, so
+    # nothing here claims the patient said it.
+    assert "Juan" not in note
+
+
+@pytest.mark.asyncio
+async def test_identity_header_is_written_in_the_clinic_language(
+    db_session: AsyncSession, test_clinic: Clinic
+):
+    """Stored notes have no reader locale: the label is the clinic's.
+
+    The app's UI language is a browser-local preference that never reaches the
+    API, and intake has no user session at all — so the closest thing to "the
+    user's language" is `clinics.settings.communication_language`, and it is
+    frozen into the note when the enquiry arrives.
+    """
+    patient = await make_patient(db_session, test_clinic.id, phone="600111222")
+
+    await _use_clinic_language(db_session, test_clinic, "es")
+    await _route(db_session, test_clinic.id)
+    note = (await _recalls(db_session, patient.id))[0].reason_note or ""
+    assert note.startswith(f"{LABEL_ES}: Marta Ruiz")
+    assert LABEL_EN not in note
+
+    # The clinic switches language later: the new enquiry appends its own block
+    # in the new language, in the same recall, and the old block keeps the old
+    # one — notes are append-only text, not re-rendered.
+    await _use_clinic_language(db_session, test_clinic, "ta")
+    await _route(db_session, test_clinic.id, motive="Segunda consulta")
+    note = (await _recalls(db_session, patient.id))[0].reason_note or ""
+    assert note.count("\n\n---\n\n") == 1
+    assert note.startswith(f"{LABEL_ES}: Marta Ruiz")
+    assert "இணையதளப் படிவம் — சமர்ப்பிக்கப்பட்டது" in note
+
+
+@pytest.mark.asyncio
+async def test_identity_header_falls_back_when_the_clinic_language_is_unusable(
+    db_session: AsyncSession, test_clinic: Clinic
+):
+    """Unset or unknown language must not crash intake or print a bare `None:`."""
+    patient = await make_patient(db_session, test_clinic.id, phone="600111222")
+
+    await _use_clinic_language(db_session, test_clinic, None)
+    await _route(db_session, test_clinic.id)
+    note = (await _recalls(db_session, patient.id))[0].reason_note or ""
+    assert note.startswith(f"{LABEL_ES}: Marta Ruiz")  # platform default
+
+    await _use_clinic_language(db_session, test_clinic, "xx")
+    await _route(db_session, test_clinic.id, motive="Otra consulta")
+    note = (await _recalls(db_session, patient.id))[0].reason_note or ""
+    assert f"\n\n---\n\n{LABEL_ES}: Marta Ruiz" in note
+    assert "None" not in note
+
+
+def test_identity_labels_cover_every_host_locale():
+    """A new UI locale must not silently fall back to Spanish inside stored
+    notes. Host locale list: ``core/pdf_locales.PDF_LOCALES`` (guarded against
+    the frontend i18n config by its own test)."""
+    from app.core.pdf_locales import PDF_LOCALES
+
+    assert set(_IDENTITY_LABELS) == set(PDF_LOCALES)
+    assert all(label.strip() for label in _IDENTITY_LABELS.values())
+
+
+@pytest.mark.asyncio
+async def test_clinic_local_day_follows_the_clinic_timezone(
+    db_session: AsyncSession, test_clinic: Clinic
+):
+    """One instant, two clinics, two calendar days.
+
+    Pins the semantics deterministically: a bare ``date.today()`` would answer
+    the same thing for both clinics. Exercises the two functions the routing
+    path actually uses (`_clinic_context` → `_local_day`).
+    """
+    instant = datetime(2026, 9, 18, 23, 30, tzinfo=UTC)
+
+    async def local_day() -> date:
+        tz, _locale = await _clinic_context(db_session, test_clinic.id)
+        return _local_day(tz, instant)
+
+    test_clinic.timezone = "Pacific/Kiritimati"  # UTC+14 -> already tomorrow
+    await db_session.commit()
+    assert await local_day() == date(2026, 9, 19)
+
+    test_clinic.timezone = "Pacific/Midway"  # UTC-11 -> still today
+    await db_session.commit()
+    assert await local_day() == date(2026, 9, 18)
+
+    # A hand-edited tz id must not 500 intake.
+    test_clinic.timezone = "Not/AZone"
+    await db_session.commit()
+    assert await local_day() == date(2026, 9, 18)
 
 
 # ---------------------------------------------------------------------------

@@ -88,15 +88,35 @@ The public path returns neither.
   `activity_journal` and, when installed, `recall_reminders`. A hand-written
   insert would silently drop both.
 - `reason="other"` (already in `recalls.models.REASONS`), `priority="high"`,
-  `due_month`/`due_date` = today: that is what puts the call-back at the top of
-  the call list. On the public path `recommended_by` is `None`; on the staff
-  path it is `ctx.user_id`, so the recall records who took the enquiry.
-- The note is **composed** as motive / description verbatim, plus the
-  availability as a language-free token (`mon, wed · afternoon`), blank-line
-  separated, no invented labels — and **appended** to any existing
-  note (skipped if already present, skipped if it would exceed the
+  `due_month`/`due_date` = **today in the clinic's timezone** (`_clinic_context`
+  → `_local_day`, not `date.today()`: near midnight a server in another timezone
+  would write yesterday's or tomorrow's date on a "call today" recall). That is
+  what puts the call-back at the top of the call list. On the public path
+  `recommended_by` is `None`; on the staff path it is `ctx.user_id`, so the
+  recall records who took the enquiry.
+- The note opens with the identity **as submitted** —
+  `Web form — submitted as: Somebody Else · 612345678 · stranger@example.com`,
+  with the label in the **clinic's communication language**
+  (`clinics.settings["communication_language"]`, fallback `es`; e.g.
+  `Formulario web — enviado como` for a Spanish clinic). A stored note has no
+  reader locale — the UI language is a browser-local preference and intake has
+  no user session — so the label is frozen at write time, like every other
+  backend-authored string the platform stores (budget PDFs, notifications).
+  Then motive / description verbatim, blank-line separated, and **appended** to
+  any existing note (skipped if already present, skipped if it would exceed the
   4000-character cap), because `create` overwrites `reason_note` on its dedupe
   path and a staff member may have written their own `other` recall there.
+  The header leads because the matched path drops the submitted name, phone and
+  email — the recall hangs off the patient — so without it a stranger's words
+  (a relative's, a one-digit typo, a shared family phone) read as the patient's
+  own and the front desk acts on them. Being first also means the cap can never
+  truncate the identity away.
+- The submitted **availability is not carried into the note**: days and slot are
+  a booking window for a first appointment, not part of what the patient wanted
+  to say, and the call-back records the second thing. Because a matched enquiry
+  writes no lead row, its availability is consequently not persisted anywhere —
+  a deliberate trade, not an oversight (a dedicated recall column is the
+  additive way back if a clinic ever needs it).
 - `do_not_contact` matches are created in status `needs_review`: the default
   call list filters opted-out patients out, so a `pending` recall for one would
   be invisible and the enquiry would vanish. Outbound contact stays blocked
