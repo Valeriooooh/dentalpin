@@ -119,8 +119,8 @@ planned work instead of a free-text reason.
 > Requires `agenda.appointments.write` to mint; scanning needs no account.
 
 1. On a scheduled or confirmed appointment, open **Quick actions** and
-   press the QR button. A dialog shows the code (valid 15 minutes) plus
-   a copyable check-in link.
+   choose **Check-in QR**. A dialog shows the code (valid 15 minutes)
+   plus a copyable check-in link.
 2. The patient scans it with their phone camera and lands on a public
    page that checks them in — no login. Re-scanning the same code
    simply confirms the current status.

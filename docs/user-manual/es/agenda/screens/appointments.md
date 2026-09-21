@@ -124,8 +124,8 @@ escrito a mano.
 > necesita cuenta.
 
 1. En una cita programada o confirmada, abre **Acciones rápidas** y
-   pulsa el botón QR. Un diálogo muestra el código (válido 15 minutos)
-   más un enlace copiable.
+   elige **QR de registro**. Un diálogo muestra el código (válido
+   15 minutos) más un enlace copiable.
 2. El paciente lo escanea con la cámara del móvil y accede a una
    página pública que lo registra — sin login. Reescanear el mismo
    código simplemente confirma el estado actual.

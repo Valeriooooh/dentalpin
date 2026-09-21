@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Follow-up: QR check-in moved from its own hover button into the
+  Quick-actions dropdown (one icon per card again).
 - feat: QR check-in - signed 15-minute tokens mint a QR (or link) that
   lets patients check themselves in with no account (`POST
   /appointments/{id}/check-in-token`, `GET .../check-in-qr`,
