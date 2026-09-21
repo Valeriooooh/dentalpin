@@ -1,5 +1,5 @@
 import { mountSuspended } from '@nuxt/test-utils/runtime'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { defineComponent, h, nextTick } from 'vue'
 
 interface Filters {
@@ -9,10 +9,12 @@ interface Filters {
 
 const defaults: Filters = { q: '', status: ['active'] }
 
-async function settle(): Promise<void> {
+async function settle(urlReflects: () => void): Promise<void> {
   // The URL push is debounced behind the search key's timer, and the
-  // route watcher that re-parses it runs a tick later.
-  await new Promise(r => setTimeout(r, 400))
+  // route watcher that re-parses it runs a tick later. Poll for the URL
+  // instead of sleeping a fixed time: 400 ms against the 300 ms debounce
+  // plus an async router.replace was too tight for slow CI runners.
+  await vi.waitFor(urlReflects, { timeout: 5000 })
   await nextTick()
   await nextTick()
 }
@@ -44,16 +46,14 @@ describe('useListQuery array filters with a non-empty default', () => {
 
     // The user picks Archived: the URL records it.
     setFilter('status', ['archived'])
-    await settle()
-    expect(route.query.status).toBe('archived')
+    await settle(() => expect(route.query.status).toBe('archived'))
     expect(filters.value.status).toEqual(['archived'])
 
     // ...then clears the filter. An empty selection must survive the
     // round trip through the URL; before the fix the key was dropped
     // entirely and re-parsing brought the default back.
     setFilter('status', [])
-    await settle()
-    expect(route.query.status).toBe('')
+    await settle(() => expect(route.query.status).toBe(''))
     expect(filters.value.status).toEqual([])
   })
 
@@ -71,14 +71,12 @@ describe('useListQuery array filters with a non-empty default', () => {
     const route = useRoute()
 
     setFilter('q', 'ana')
-    await settle()
-    expect(route.query.q).toBe('ana')
+    await settle(() => expect(route.query.q).toBe('ana'))
 
     // Back to the default: nothing to record, so the key leaves the URL
     // rather than becoming `?q=` noise.
     setFilter('q', '')
-    await settle()
-    expect(route.query.q).toBeUndefined()
+    await settle(() => expect(route.query.q).toBeUndefined())
     expect(filters.value.q).toBe('')
   })
 })
