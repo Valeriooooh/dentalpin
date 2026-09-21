@@ -396,7 +396,7 @@ class InvoicePDFService:
                 th {{
                     background: #f3f4f6;
                     padding: 10px 8px;
-                    text-align: left;
+                    text-align: start;
                     font-size: 9pt;
                     font-weight: 600;
                     color: #374151;
@@ -413,10 +413,10 @@ class InvoicePDFService:
                 .number {{ width: 30px; text-align: center; }}
                 .description {{ width: auto; }}
                 .quantity {{ width: 50px; text-align: center; }}
-                .price {{ width: 90px; text-align: right; }}
-                .discount {{ width: 80px; text-align: right; color: #059669; }}
+                .price {{ width: 90px; text-align: end; }}
+                .discount {{ width: 80px; text-align: end; color: #059669; }}
                 .vat {{ width: 50px; text-align: center; }}
-                .total {{ width: 100px; text-align: right; font-weight: 500; }}
+                .total {{ width: 100px; text-align: end; font-weight: 500; }}
                 .code {{ color: #6b7280; }}
                 .tooth {{ color: #9ca3af; }}
 
