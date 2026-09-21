@@ -39,8 +39,10 @@
     "/module_layers/sdi_it/frontend",
     "/module_layers/sistema_ts/frontend",
     "/module_layers/sms_gateway/frontend",
+    "/module_layers/staff_attendance/frontend",
     "/module_layers/staff_tasks/frontend",
     "/module_layers/telephony/frontend",
+    "/module_layers/treasury/frontend",
     "/module_layers/treatment_consumables/frontend",
     "/module_layers/treatment_plan/frontend",
     "/module_layers/verifactu/frontend",
@@ -66,7 +68,8 @@
       "name": "agenda",
       "path": "/module_layers/agenda/frontend",
       "routes": [
-        "/appointments"
+        "/appointments",
+        "/p/check-in/:token"
       ]
     },
     {
@@ -312,6 +315,13 @@
       "routes": []
     },
     {
+      "name": "staff_attendance",
+      "path": "/module_layers/staff_attendance/frontend",
+      "routes": [
+        "/attendance"
+      ]
+    },
+    {
       "name": "staff_tasks",
       "path": "/module_layers/staff_tasks/frontend",
       "routes": [
@@ -323,6 +333,13 @@
       "path": "/module_layers/telephony/frontend",
       "routes": [
         "/calls"
+      ]
+    },
+    {
+      "name": "treasury",
+      "path": "/module_layers/treasury/frontend",
+      "routes": [
+        "/treasury"
       ]
     },
     {

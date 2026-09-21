@@ -61,6 +61,11 @@ _SUBSCRIBED = [
     # Prescriptions — issue/cancel lifecycle (publisher passes db=db).
     EventType.PRESCRIPTION_ISSUED,
     EventType.PRESCRIPTION_CANCELLED,
+    # Staff attendance — clock punches (publisher passes db=db).
+    EventType.STAFF_ATTENDANCE_CLOCKED,
+    # Treasury — transfers and corrections (publisher passes db=db).
+    EventType.TREASURY_TRANSFERRED,
+    EventType.TREASURY_CORRECTED,
 ]
 
 

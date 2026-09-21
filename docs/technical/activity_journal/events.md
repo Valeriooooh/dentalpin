@@ -24,6 +24,7 @@ re-run it whenever adding events.
 | `treatment_plan.*` | `treatment_added`, `treatment_removed`, `item_session_completed`, `budget_sync_requested` |
 | `document.*` | `generated` |
 | `prescription.*` | `issued`, `cancelled` |
+| `staff_attendance.*` | `clocked` |
 
 ## Deliberately NOT subscribed
 
