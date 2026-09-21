@@ -37,8 +37,11 @@
     },
     "profileLabel": "Identidad prescriptora",
     "profileDescription": "Cédula profesional y firma para tus recetas.",
-    "licenseLabel": "Cédula profesional",
-    "issueConfirm": "Emitir esta receta? No se puede deshacer.",
-    "cancelConfirm": "Anular esta receta? No se puede deshacer."
+    "licenseLabel": "N.º de colegiado",
+    "issueConfirm": "¿Emitir esta receta? No se puede deshacer.",
+    "cancelConfirm": "¿Anular esta receta? No se puede deshacer.",
+    "noLicenseWarning": "Emitirás sin número de licencia en el PDF. Puedes añadirlo en Ajustes.",
+    "emptyDraft": "Añade al menos una línea antes de guardar.",
+    "route": "Vía"
   }
 }

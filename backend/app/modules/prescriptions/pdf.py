@@ -38,10 +38,13 @@ def _get_labels(locale: str) -> dict[str, str]:
     """Localized captions for the PDF (billing _get_labels approach:
     es + en sets, English fallback until translated)."""
     labels_es = {
+        "title": "Receta médica",
         "date": "Fecha",
         "patient": "Paciente",
         "prescriber": "Prescriptor",
-        "license": "Licencia n.º",
+        "license": "N.º de colegiado",
+        "signature": "Firma",
+        "date_format": "%d/%m/%Y",
         "medication": "Medicamento",
         "dose": "Dosis",
         "route": "Vía",
@@ -53,10 +56,13 @@ def _get_labels(locale: str) -> dict[str, str]:
         "cancelled": "CANCELADA",
     }
     labels_en = {
+        "title": "Prescription",
         "date": "Date",
         "patient": "Patient",
         "prescriber": "Prescriber",
         "license": "License no.",
+        "signature": "Signature",
+        "date_format": "%m/%d/%Y",
         "medication": "Medication",
         "dose": "Dose",
         "route": "Route",
@@ -99,9 +105,9 @@ def build_pdf_data(
         "status": status,
         "status_mark": _e(labels.get("draft" if status == "draft" else "cancelled", "")),
         "date": _e(
-            prescription.issued_at.strftime("%Y-%m-%d")
+            prescription.issued_at.strftime(labels["date_format"])
             if prescription.issued_at
-            else datetime.now().strftime("%Y-%m-%d")
+            else datetime.now().strftime(labels["date_format"])
         ),
         "patient_name": _e(patient_name),
         "prescriber_name": _e(prescription.prescriber_name),
@@ -142,6 +148,7 @@ def render_html(data: dict[str, Any]) -> str:
     )
     notices = "".join(f"<p class='notice'>{notice}</p>" for notice in data["legal_notices"])
     mark = f"<p class='mark'>{data['status_mark']}</p>" if data["status"] != "issued" else ""
+    notes = f"<p>{labels['notes']}: {data['notes']}</p>" if data["notes"] else ""
     return f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <style>
@@ -155,12 +162,14 @@ td, th {{ border: 1px solid #999; padding: 6px; font-size: 12px; }}
 </style></head><body>
 <h1>{data["clinic_name"]}</h1>
 <p>{data["clinic_address"]}</p>
+<h2>{labels["title"]}</h2>
 {mark}
 <p>{labels["date"]}: {data["date"]} — {labels["patient"]}: {data["patient_name"]}</p>
 <p>{labels["prescriber"]}: {data["prescriber_name"]} ({data["license_label"]}: {data["license_number"]})</p>
 <table><tr><th>{labels["medication"]}</th><th>{labels["dose"]}</th><th>{labels["route"]}</th>
 <th>{labels["frequency"]}</th><th>{labels["duration"]}</th><th>{labels["instructions"]}</th></tr>{rows}</table>
-<p>{labels["notes"]}: {data["notes"]}</p>
+{notes}
+<p class="signature">{labels["signature"]}: ________________________</p>
 {compliance}{notices}
 </body></html>"""
 

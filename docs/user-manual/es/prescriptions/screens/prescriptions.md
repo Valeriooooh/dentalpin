@@ -34,6 +34,10 @@ borrador desde la ficha del paciente (acción "Nueva receta").
   El PDF sale en el idioma de la receta y marca BORRADOR/CANCELADA
   cuando corresponde.
 - **Emitir** y **Anular** piden confirmación (son irreversibles).
+  Al emitir sin cédula guardada verás un aviso (no un bloqueo).
 - Tu **cédula profesional** se configura en Ajustes (sección
   clínica, identidad prescriptora) y queda impresa en el PDF.
+- La cabecera muestra el nombre del paciente con enlace a su ficha.
+- El editor exige al menos una línea, incluye campo de vía y limpia
+  `&new=1` de la URL al abrir.
 - Atiende el aviso de alergias/interacciones — avisa, nunca bloquea.

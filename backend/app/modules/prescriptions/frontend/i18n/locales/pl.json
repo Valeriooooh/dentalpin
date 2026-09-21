@@ -39,6 +39,9 @@
     "profileDescription": "Numer licencji i podpis do recept.",
     "licenseLabel": "Numer licencji",
     "issueConfirm": "Wystawić tę receptę? Tego nie można cofnąć.",
-    "cancelConfirm": "Anulować tę receptę? Tego nie można cofnąć."
+    "cancelConfirm": "Anulować tę receptę? Tego nie można cofnąć.",
+    "noLicenseWarning": "Wystawiasz bez numeru licencji w PDF. Możesz go dodać w Ustawieniach.",
+    "emptyDraft": "Dodaj co najmniej jedną pozycję przed zapisaniem.",
+    "route": "Podanie"
   }
 }

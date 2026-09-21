@@ -52,10 +52,10 @@ export function usePrescriptions() {
     return response.data
   }
 
-  async function createDraft(patientId: string, items: PrescriptionItem[] = [], notes?: string): Promise<Prescription> {
+  async function createDraft(patientId: string, items: PrescriptionItem[] = [], notes?: string, locale?: string): Promise<Prescription> {
     const response = await api.post<ApiResponse<Prescription>>(
       `/api/v1/prescriptions/patients/${patientId}/prescriptions`,
-      { patient_id: patientId, notes: notes ?? null, items },
+      { patient_id: patientId, notes: notes ?? null, items, ...(locale ? { locale } : {}) },
       { errorToast: false }
     )
     return response.data
@@ -116,6 +116,18 @@ export function usePrescriptions() {
     return response.data
   }
 
+  async function getPatientName(patientId: string): Promise<string | null> {
+    try {
+      const response = await api.get<ApiResponse<{ first_name: string, last_name: string }>>(
+        `/api/v1/patients/${patientId}`,
+        { errorToast: false }
+      )
+      return `${response.data.first_name} ${response.data.last_name}`
+    } catch {
+      return null
+    }
+  }
+
   async function listTemplates(): Promise<PrescriptionTemplate[]> {
     const response = await api.get<ApiResponse<PrescriptionTemplate[]>>(
       '/api/v1/prescriptions/templates'
@@ -145,7 +157,7 @@ export function usePrescriptions() {
 
   return {
     listForPatient, createDraft, updateDraft, issue, cancel, downloadPdf,
-    getPrescriberProfile, upsertPrescriberProfile,
+    getPatientName, getPrescriberProfile, upsertPrescriberProfile,
     warnings, listTemplates, createTemplate, updateTemplate, deleteTemplate
   }
 }

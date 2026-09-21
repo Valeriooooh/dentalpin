@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Follow-up: UI sends its locale on create (PDFs render in pt, not
+  always es); license-missing warning in the issue confirm; patient
+  name + record link header; empty-draft guard, `&new=1` URL cleanup,
+  route field in the editor; PDF title, signature line, skipped empty
+  notes, localized dates; es "N.º de colegiado" in PDF + UI; confirm
+  modal keeps its kind until closed.
 - Maintainer round 3: active-only allergies in the safety banner,
   readable interaction flags, locale-aware PDFs with full-address
   letterhead and DRAFT/CANCELLED marks, prescriber license settings

@@ -39,6 +39,9 @@
     "profileDescription": "Numero professionale e firma per le tue ricette.",
     "licenseLabel": "Numero professionale",
     "issueConfirm": "Emettere questa ricetta? L'azione è irreversibile.",
-    "cancelConfirm": "Annullare questa ricetta? L'azione è irreversibile."
+    "cancelConfirm": "Annullare questa ricetta? L'azione è irreversibile.",
+    "noLicenseWarning": "Stai emettendo senza numero professionale nel PDF. Aggiungilo nelle impostazioni.",
+    "emptyDraft": "Aggiungi almeno una riga prima di salvare.",
+    "route": "Via"
   }
 }

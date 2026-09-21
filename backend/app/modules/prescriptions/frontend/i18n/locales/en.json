@@ -39,6 +39,9 @@
     "profileDescription": "Professional license and signature for your prescriptions.",
     "licenseLabel": "License number",
     "issueConfirm": "Issue this prescription? This cannot be undone.",
-    "cancelConfirm": "Cancel this prescription? This cannot be undone."
+    "cancelConfirm": "Cancel this prescription? This cannot be undone.",
+    "noLicenseWarning": "You are issuing without a license number on the PDF. You can add it in Settings.",
+    "emptyDraft": "Add at least one line before saving.",
+    "route": "Route"
   }
 }

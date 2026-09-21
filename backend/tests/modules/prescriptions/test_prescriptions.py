@@ -306,6 +306,9 @@ def test_pdf_labels_follow_locale_and_marks_non_issued():
     html = render_html(data)
     assert "BORRADOR" in html
     assert "Fecha:" in html
+    assert "Receta médica" in html
+    assert "Firma:" in html
+    assert "Notas:" not in html  # empty notes leave no row
 
     issued = SimpleNamespace(
         status="issued",
@@ -318,3 +321,24 @@ def test_pdf_labels_follow_locale_and_marks_non_issued():
     assert data_en["labels"]["date"] == "Date"
     assert "DRAFT" not in render_html(data_en)
     assert "CANCELLED" not in render_html(data_en)
+    assert "Prescription" in render_html(data_en)
+    assert "Signature:" in render_html(data_en)
+
+
+@pytest.mark.asyncio
+async def test_create_stores_locale_and_route(
+    client, auth_headers, test_clinic: Clinic, test_patient: Patient
+):
+    pid = str(test_patient.id)
+    created = await client.post(
+        f"/api/v1/prescriptions/patients/{pid}/prescriptions",
+        json={
+            "patient_id": pid,
+            "locale": "pt",
+            "items": [{"medication_name": "Amoxicilina", "route": "oral"}],
+        },
+        headers=auth_headers,
+    )
+    assert created.status_code == 201
+    assert created.json()["data"]["locale"] == "pt"
+    assert created.json()["data"]["items"][0]["route"] == "oral"
