@@ -35,5 +35,6 @@ en silencio.
   ediciones silenciosas).
 - El extracto muestra fecha e importe con signo en las salidas; los
   saldos negativos se ven en rojo (aviso, nunca bloqueo). Los
-  importes aceptan coma decimal (`25,50`) y los desplegables de
-  traspaso solo listan cuentas activas.
+  importes aceptan coma decimal (`25,50`, también `1.234,50`) y los
+  desplegables de traspaso solo listan cuentas activas. Corregir
+  exige concepto (el botón se habilita al escribirlo).

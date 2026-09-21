@@ -59,8 +59,10 @@ function fail(e: unknown) {
 }
 
 // Spanish keyboards type 25,50 — the API only accepts 25.50.
+// With a comma present the input follows the Spanish convention
+// (dots are thousand separators): 1.234,50 → 1234.50.
 function normAmount(raw: string): string {
-  return raw.replace(',', '.')
+  return raw.includes(',') ? raw.replace(/\./g, '').replace(',', '.') : raw
 }
 
 function formatDate(iso: string): string {
@@ -141,7 +143,7 @@ watch(selectedId, async () => {
       </h1>
       <div
         v-if="canWrite"
-        class="flex gap-2"
+        class="flex flex-wrap gap-2"
       >
         <UButton
           color="neutral"
@@ -289,6 +291,7 @@ watch(selectedId, async () => {
             <USelectMenu
               v-model="transferFrom"
               value-key="value"
+              :placeholder="t('treasury.fromAccount')"
               :items="activeAccounts.map(a => ({ label: a.name, value: a.id }))"
             />
           </UFormField>
@@ -296,6 +299,7 @@ watch(selectedId, async () => {
             <USelectMenu
               v-model="transferTo"
               value-key="value"
+              :placeholder="t('treasury.toAccount')"
               :items="activeAccounts.map(a => ({ label: a.name, value: a.id }))"
             />
           </UFormField>
@@ -362,7 +366,10 @@ watch(selectedId, async () => {
           >
             {{ t('common.close') }}
           </UButton>
-          <UButton @click="doCorrect">
+          <UButton
+            :disabled="!correctMemo.trim()"
+            @click="doCorrect"
+          >
             {{ t('treasury.correct') }}
           </UButton>
         </div>
