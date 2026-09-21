@@ -27,11 +27,20 @@ export function useTreasury() {
     return response.data
   }
 
-  async function createAccount(name: string, kind: string): Promise<TreasuryAccount> {
+  async function createAccount(name: string, kind: string, opening?: string): Promise<TreasuryAccount> {
     const response = await api.post<ApiResponse<TreasuryAccount>>(
       '/api/v1/treasury/accounts',
-      { name, kind },
+      opening ? { name, kind, opening_balance: opening } : { name, kind },
       // The page surfaces failures itself — keep useApi's toast off.
+      { errorToast: false }
+    )
+    return response.data
+  }
+
+  async function updateAccount(id: string, isActive: boolean): Promise<TreasuryAccount> {
+    const response = await api.patch<ApiResponse<TreasuryAccount>>(
+      `/api/v1/treasury/accounts/${id}`,
+      { is_active: isActive },
       { errorToast: false }
     )
     return response.data
@@ -64,5 +73,5 @@ export function useTreasury() {
     return response.data
   }
 
-  return { listAccounts, createAccount, transfer, statement, correct }
+  return { listAccounts, createAccount, updateAccount, transfer, statement, correct }
 }

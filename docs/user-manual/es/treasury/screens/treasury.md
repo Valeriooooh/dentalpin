@@ -28,11 +28,14 @@ en silencio.
 
 ## Qué puedes hacer
 
-- **Crear** cuentas de efectivo o banco (nombres únicos por clínica).
+- **Crear** cuentas de efectivo o banco (nombres únicos por
+  clínica), con saldo inicial opcional.
 - **Transferir** entre cuentas — ambas patas comparten una operación
   y aparecen en ambos movimientos.
 - **Corregir** una cuenta con concepto obligatorio (auditoría, nunca
   ediciones silenciosas).
+- **Desactivar** cuentas en desuso (reversible, desde la cabecera del
+  extracto); las desactivadas salen de los desplegables de traspaso.
 - El extracto muestra fecha e importe con signo en las salidas; los
   saldos negativos se ven en rojo (aviso, nunca bloqueo). Los
   importes aceptan coma decimal (`25,50`, también `1.234,50`) y los

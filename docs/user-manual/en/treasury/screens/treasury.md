@@ -27,11 +27,14 @@ error instead of closing the modal silently.
 
 ## What you can do
 
-- **Create** cash or bank accounts (names unique per clinic).
+- **Create** cash or bank accounts (names unique per clinic), with
+  an optional opening balance.
 - **Transfer** between accounts — both legs share one operation and
   appear in both statements.
 - **Correct** an account with a mandatory memo (audit trail, never
   silent edits).
+- **Deactivate** accounts you no longer use (reversible, from the
+  statement header); deactivated accounts leave the transfer pickers.
 - The statement shows dates and signed amounts on outgoing legs;
   negative balances render red (warning, never a block). Amounts
   accept a decimal comma (`25,50`, also `1.234,50`), and the transfer

@@ -13,7 +13,7 @@ definePageMeta({ middleware: ['auth'] })
 
 const { t, locale } = useI18n()
 const { can } = usePermissions()
-const { listAccounts, createAccount, transfer, statement, correct } = useTreasury()
+const { listAccounts, createAccount, updateAccount, transfer, statement, correct } = useTreasury()
 const { currentClinic } = useClinic()
 const toast = useToast()
 
@@ -29,6 +29,7 @@ const isLoading = ref(false)
 const showAccountModal = ref(false)
 const newName = ref('')
 const newKind = ref('cash')
+const newOpening = ref('')
 
 const showTransferModal = ref(false)
 const transferFrom = ref<string | undefined>(undefined)
@@ -98,9 +99,19 @@ async function refresh() {
 async function create() {
   if (!newName.value.trim()) return
   try {
-    await createAccount(newName.value.trim(), newKind.value)
+    const opening = newOpening.value.trim()
+    await createAccount(newName.value.trim(), newKind.value, opening ? normAmount(opening) : undefined)
     newName.value = ''
+    newOpening.value = ''
     showAccountModal.value = false
+    await refresh()
+  } catch (e: unknown) { fail(e) }
+}
+
+async function toggleActive() {
+  if (!selected.value) return
+  try {
+    await updateAccount(selected.value.id, !selected.value.is_active)
     await refresh()
   } catch (e: unknown) { fail(e) }
 }
@@ -213,7 +224,28 @@ watch(selectedId, async () => {
 
       <UCard class="md:col-span-2">
         <template #header>
-          {{ selected ? selected.name : t('treasury.statement') }}
+          <div class="flex items-center justify-between gap-2">
+            <span>{{ selected ? selected.name : t('treasury.statement') }}</span>
+            <div
+              v-if="selected && canWrite"
+              class="flex items-center gap-2"
+            >
+              <UBadge
+                v-if="!selected.is_active"
+                color="neutral"
+              >
+                {{ t('treasury.inactive') }}
+              </UBadge>
+              <UButton
+                size="xs"
+                color="neutral"
+                variant="ghost"
+                @click="toggleActive"
+              >
+                {{ t(selected.is_active ? 'treasury.deactivate' : 'treasury.activate') }}
+              </UButton>
+            </div>
+          </div>
         </template>
         <USkeleton
           v-if="isLoading"
@@ -261,6 +293,13 @@ watch(selectedId, async () => {
                 { label: t('treasury.kindCash'), value: 'cash' },
                 { label: t('treasury.kindBank'), value: 'bank' }
               ]"
+            />
+          </UFormField>
+          <UFormField :label="t('treasury.openingBalance')">
+            <UInput
+              v-model="newOpening"
+              inputmode="decimal"
+              placeholder="0.00"
             />
           </UFormField>
         </div>
@@ -352,7 +391,7 @@ watch(selectedId, async () => {
               inputmode="decimal"
             />
           </UFormField>
-          <UFormField :label="t('treasury.memo')">
+          <UFormField :label="t('treasury.correctMemo')">
             <UInput v-model="correctMemo" />
           </UFormField>
         </div>

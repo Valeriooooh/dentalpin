@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Follow-up round 2: Correct modal labels the memo as required
+  (`correctMemo`, per locale); new accounts accept an opening
+  balance; accounts deactivate/reactivate from the statement header
+  (PATCH `is_active`, reversible).
 - Follow-up: Correct button stays disabled until the memo is filled
   (memo is required there); header buttons wrap on narrow screens;
   transfer selects show placeholders; `normAmount` parses full
