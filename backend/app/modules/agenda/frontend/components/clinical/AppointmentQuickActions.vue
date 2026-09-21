@@ -114,7 +114,7 @@ const confirmMessage = computed(() => {
 
 <template>
   <UDropdownMenu
-    v-if="hasActions"
+    v-if="hasActions || canCheckin"
     :items="dropdownItems()"
     :ui="{ content: 'min-w-56' }"
   >
