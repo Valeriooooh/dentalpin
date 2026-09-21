@@ -31,7 +31,7 @@ const allergyWarnings = ref<string[]>([])
 const flagWarnings = ref<string[]>([])
 
 const editing = ref<Prescription | null>(null)
-const editItems = ref<PrescriptionItem[]>([])
+const editItems = ref<DraftItem[]>([])
 const editNotes = ref('')
 const showEditor = ref(false)
 
@@ -82,7 +82,10 @@ function startNew() {
   if (route.query.new === '1') void router.replace({ query: { ...route.query, new: undefined } })
 }
 
-function blankLine(item: PrescriptionItem): PrescriptionItem {
+/** Editor row: blankLine() normalizes the nullable API `route` to a plain string. */
+type DraftItem = Omit<PrescriptionItem, 'route'> & { route?: string }
+
+function blankLine(item: PrescriptionItem): DraftItem {
   return { ...item, dosage: item.dosage ?? '', unit: item.unit ?? '', route: item.route ?? '', frequency: item.frequency ?? '', duration: item.duration ?? '', instructions: item.instructions ?? '' }
 }
 

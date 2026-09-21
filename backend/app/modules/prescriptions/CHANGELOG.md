@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- fix: editor rows typed as `DraftItem` (nullable API `route`
+  normalized to string by `blankLine`); fixes TS2322 on the new route
+  input in CI typecheck.
 - Follow-up: UI sends its locale on create (PDFs render in pt, not
   always es); license-missing warning in the issue confirm; patient
   name + record link header; empty-draft guard, `&new=1` URL cleanup,
