@@ -294,7 +294,7 @@ class BudgetPDFService:
                     color: #666;
                 }}
                 .budget-info {{
-                    text-align: right;
+                    text-align: end;
                 }}
                 .budget-number {{
                     font-size: 14pt;
@@ -376,9 +376,9 @@ class BudgetPDFService:
                 .number {{ width: 30px; text-align: center; }}
                 .description {{ width: auto; }}
                 .quantity {{ width: 60px; text-align: center; }}
-                .price {{ width: 100px; text-align: right; }}
-                .discount {{ width: 100px; text-align: right; color: #059669; }}
-                .total {{ width: 100px; text-align: right; font-weight: 500; }}
+                .price {{ width: 100px; text-align: end; }}
+                .discount {{ width: 100px; text-align: end; color: #059669; }}
+                .total {{ width: 100px; text-align: end; font-weight: 500; }}
                 .tooth {{ color: #6b7280; }}
                 .notes {{ color: #9ca3af; font-style: italic; }}
 
@@ -399,7 +399,7 @@ class BudgetPDFService:
                     color: #666;
                 }}
                 .totals .value {{
-                    text-align: right;
+                    text-align: end;
                     font-weight: 500;
                 }}
                 .totals .grand-total {{

@@ -325,7 +325,7 @@ class PurchaseOrderPDFService:
             }}
             .clinic-name {{ font-size: 18pt; font-weight: bold; color: #1e40af; margin-bottom: 5px; }}
             .clinic-details {{ font-size: 9pt; color: #666; }}
-            .po-info {{ text-align: right; }}
+            .po-info {{ text-align: end; }}
             .po-number {{ font-size: 14pt; font-weight: bold; color: #1e40af; }}
             .po-meta {{ font-size: 9pt; color: #666; margin-top: 5px; }}
             .status-badge {{
@@ -354,11 +354,11 @@ class PurchaseOrderPDFService:
             td {{ padding: 10px 8px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }}
             .number {{ width: 30px; text-align: center; }}
             .qty {{ width: 70px; text-align: center; }}
-            .price {{ width: 110px; text-align: right; }}
+            .price {{ width: 110px; text-align: end; }}
             .totals {{ float: right; width: 300px; margin-top: 20px; }}
             .totals td {{ border-bottom: none; padding: 6px 8px; }}
             .totals .label {{ text-align: start; color: #666; }}
-            .totals .value {{ text-align: right; font-weight: 500; }}
+            .totals .value {{ text-align: end; font-weight: 500; }}
             .totals .grand-total {{ font-size: 13pt; font-weight: bold; color: #1e40af; }}
             .notes-section {{ clear: both; padding-top: 20px; margin-top: 20px; }}
             .notes-content {{
