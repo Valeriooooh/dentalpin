@@ -60,6 +60,9 @@ _SUBSCRIBED = [
     EventType.DOCUMENT_GENERATED,
     # Staff attendance — clock punches (publisher passes db=db).
     EventType.STAFF_ATTENDANCE_CLOCKED,
+    # Treasury — transfers and corrections (publisher passes db=db).
+    EventType.TREASURY_TRANSFERRED,
+    EventType.TREASURY_CORRECTED,
 ]
 
 

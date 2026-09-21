@@ -259,5 +259,9 @@ export const PERMISSIONS = {
   staffAttendance: {
     read: 'staff_attendance.read',
     write: 'staff_attendance.write'
+  },
+  treasury: {
+    read: 'treasury.read',
+    write: 'treasury.write'
   }
 } as const

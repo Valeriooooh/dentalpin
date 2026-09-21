@@ -120,6 +120,7 @@ razorpay = "app.modules.razorpay:RazorpayModule"
 sms_gateway = "app.modules.sms_gateway:SmsGatewayModule"
 patient_segments = "app.modules.patient_segments:PatientSegmentsModule"
 staff_attendance = "app.modules.staff_attendance:StaffAttendanceModule"
+treasury = "app.modules.treasury:TreasuryModule"
 
 [tool.setuptools.packages.find]
 where = ["."]
