@@ -20,6 +20,7 @@ from app.core.pdf_locales import PDF_LOCALES
 from app.modules.budget.models import Budget, BudgetItem
 from app.modules.budget.pdf import BudgetPDFService
 from app.modules.catalog.models import TreatmentCatalogItem
+from app.modules.prescriptions.pdf import _get_labels as rx_labels
 from app.modules.purchase_orders.pdf import _LABELS as PO_LABELS
 
 BUDGET_HEADINGS = {
@@ -107,6 +108,15 @@ def test_purchase_order_labels_exist_for_every_accepted_locale() -> None:
         assert locale in PO_LABELS, locale
         assert set(PO_LABELS[locale]) == set(english), locale
         assert set(PO_LABELS[locale]["status_label"]) == set(english["status_label"]), locale
+
+
+def test_prescription_labels_exist_for_every_accepted_locale() -> None:
+    english = rx_labels("en")
+    for locale in PDF_LOCALES:
+        labels = rx_labels(locale)
+        assert set(labels) == set(english), locale
+        if locale != "en":
+            assert labels is not english, f"{locale} still falls back to English"
 
 
 @pytest.mark.parametrize("locale", sorted(BUDGET_HEADINGS))
