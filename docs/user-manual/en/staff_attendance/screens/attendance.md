@@ -27,6 +27,7 @@ see today's punches, and review the daily pairing report.
   Punching the same kind twice answers 409 — the roster, not the log,
   is where corrections happen (a later opposite punch supersedes).
 - **Review** today's feed and the per-member daily totals, bucketed by
-  the clinic's local day. An open (unpaired) punch is flagged and
-  counted up to now, never past the end of the reported day; an
-  overnight shift counts on the day it ends.
+  the clinic's local day. Each feed line shows the punch time. An
+  open (unpaired) punch is flagged and counted up to now, never past
+  the end of the reported day; an overnight shift counts on the day
+  it ends.

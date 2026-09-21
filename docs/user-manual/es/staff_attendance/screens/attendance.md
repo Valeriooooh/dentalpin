@@ -28,6 +28,7 @@ salidas del personal, consulta los fichajes de hoy y el informe diario.
   correcciones se hacen con un fichaje opuesto posterior, nunca
   reescribiendo.
 - **Revisar** el listado de hoy y los totales por miembro, agrupados
-  por el día local de la clínica. Un fichaje abierto (sin pareja) se
+  por el día local de la clínica. Cada línea muestra la hora del
+  fichaje. Un fichaje abierto (sin pareja) se
   marca y se cuenta hasta ahora, nunca más allá del fin del día
   informado; un turno nocturno cuenta en el día en que termina.

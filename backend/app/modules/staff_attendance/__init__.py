@@ -39,6 +39,7 @@ class StaffAttendanceModule(BaseModule):
                     "to": "/attendance",
                     "icon": "i-lucide-clock",
                     "permission": "staff_attendance.read",
+                    "section": "practice",
                     "order": 93,
                 }
             ],
