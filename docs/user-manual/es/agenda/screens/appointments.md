@@ -30,7 +30,7 @@ related_paths:
   - backend/app/modules/agenda/frontend/pages/appointments/index.vue
   - backend/app/modules/agenda/frontend/pages/p/check-in/[token].vue
   - backend/app/modules/agenda/router.py
-last_verified_commit: aaf600203d8d7cfa660676946b6acbfaf98e90dd
+last_verified_commit: 3f08dd038cc70b5d2d988e49b8029c06f42ad5b3
 ---
 
 # Citas
