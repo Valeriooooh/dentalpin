@@ -2,7 +2,7 @@
 module: treasury
 screen: treasury
 route: /treasury
-last_verified_commit: 7f721882604ba9c8ae4f21229f816787e46bf7bc
+last_verified_commit: a13c7181820666c75ad7e9be7d12099fa9f330c9
 related_endpoints:
   - GET /api/v1/treasury/accounts
   - POST /api/v1/treasury/accounts
@@ -28,12 +28,16 @@ en silencio.
 
 ## Qué puedes hacer
 
-- **Crear** cuentas de efectivo o banco (nombres únicos por clínica).
+- **Crear** cuentas de efectivo o banco (nombres únicos por
+  clínica), con saldo inicial opcional.
 - **Transferir** entre cuentas — ambas patas comparten una operación
   y aparecen en ambos movimientos.
 - **Corregir** una cuenta con concepto obligatorio (auditoría, nunca
   ediciones silenciosas).
+- **Desactivar** cuentas en desuso (reversible, desde la cabecera del
+  extracto); las desactivadas salen de los desplegables de traspaso.
 - El extracto muestra fecha e importe con signo en las salidas; los
   saldos negativos se ven en rojo (aviso, nunca bloqueo). Los
-  importes aceptan coma decimal (`25,50`) y los desplegables de
-  traspaso solo listan cuentas activas.
+  importes aceptan coma decimal (`25,50`, también `1.234,50`) y los
+  desplegables de traspaso solo listan cuentas activas. Corregir
+  exige concepto (el botón se habilita al escribirlo).

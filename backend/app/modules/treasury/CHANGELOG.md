@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Follow-up round 2: Correct modal labels the memo as required
+  (`correctMemo`, per locale); new accounts accept an opening
+  balance; accounts deactivate/reactivate from the statement header
+  (PATCH `is_active`, reversible).
+- Follow-up: Correct button stays disabled until the memo is filled
+  (memo is required there); header buttons wrap on narrow screens;
+  transfer selects show placeholders; `normAmount` parses full
+  Spanish amounts (`1.234,50` → `1234.50`).
 - Maintainer round 4: `fail()` reads the API `message` envelope via
   `errorDetail()`; nav self-places under `financials`; events.md +
   CLAUDE.md document `treasury.transferred` / `treasury.corrected`

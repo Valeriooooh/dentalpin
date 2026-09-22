@@ -13,7 +13,7 @@ definePageMeta({ middleware: ['auth'] })
 
 const { t, locale } = useI18n()
 const { can } = usePermissions()
-const { listAccounts, createAccount, transfer, statement, correct } = useTreasury()
+const { listAccounts, createAccount, updateAccount, transfer, statement, correct } = useTreasury()
 const { currentClinic } = useClinic()
 const toast = useToast()
 
@@ -29,6 +29,7 @@ const isLoading = ref(false)
 const showAccountModal = ref(false)
 const newName = ref('')
 const newKind = ref('cash')
+const newOpening = ref('')
 
 const showTransferModal = ref(false)
 const transferFrom = ref<string | undefined>(undefined)
@@ -59,8 +60,10 @@ function fail(e: unknown) {
 }
 
 // Spanish keyboards type 25,50 — the API only accepts 25.50.
+// With a comma present the input follows the Spanish convention
+// (dots are thousand separators): 1.234,50 → 1234.50.
 function normAmount(raw: string): string {
-  return raw.replace(',', '.')
+  return raw.includes(',') ? raw.replace(/\./g, '').replace(',', '.') : raw
 }
 
 function formatDate(iso: string): string {
@@ -96,9 +99,19 @@ async function refresh() {
 async function create() {
   if (!newName.value.trim()) return
   try {
-    await createAccount(newName.value.trim(), newKind.value)
+    const opening = newOpening.value.trim()
+    await createAccount(newName.value.trim(), newKind.value, opening ? normAmount(opening) : undefined)
     newName.value = ''
+    newOpening.value = ''
     showAccountModal.value = false
+    await refresh()
+  } catch (e: unknown) { fail(e) }
+}
+
+async function toggleActive() {
+  if (!selected.value) return
+  try {
+    await updateAccount(selected.value.id, !selected.value.is_active)
     await refresh()
   } catch (e: unknown) { fail(e) }
 }
@@ -141,7 +154,7 @@ watch(selectedId, async () => {
       </h1>
       <div
         v-if="canWrite"
-        class="flex gap-2"
+        class="flex flex-wrap gap-2"
       >
         <UButton
           color="neutral"
@@ -211,7 +224,28 @@ watch(selectedId, async () => {
 
       <UCard class="md:col-span-2">
         <template #header>
-          {{ selected ? selected.name : t('treasury.statement') }}
+          <div class="flex items-center justify-between gap-2">
+            <span>{{ selected ? selected.name : t('treasury.statement') }}</span>
+            <div
+              v-if="selected && canWrite"
+              class="flex items-center gap-2"
+            >
+              <UBadge
+                v-if="!selected.is_active"
+                color="neutral"
+              >
+                {{ t('treasury.inactive') }}
+              </UBadge>
+              <UButton
+                size="xs"
+                color="neutral"
+                variant="ghost"
+                @click="toggleActive"
+              >
+                {{ t(selected.is_active ? 'treasury.deactivate' : 'treasury.activate') }}
+              </UButton>
+            </div>
+          </div>
         </template>
         <USkeleton
           v-if="isLoading"
@@ -261,6 +295,13 @@ watch(selectedId, async () => {
               ]"
             />
           </UFormField>
+          <UFormField :label="t('treasury.openingBalance')">
+            <UInput
+              v-model="newOpening"
+              inputmode="decimal"
+              placeholder="0.00"
+            />
+          </UFormField>
         </div>
       </template>
       <template #footer>
@@ -289,6 +330,7 @@ watch(selectedId, async () => {
             <USelectMenu
               v-model="transferFrom"
               value-key="value"
+              :placeholder="t('treasury.fromAccount')"
               :items="activeAccounts.map(a => ({ label: a.name, value: a.id }))"
             />
           </UFormField>
@@ -296,6 +338,7 @@ watch(selectedId, async () => {
             <USelectMenu
               v-model="transferTo"
               value-key="value"
+              :placeholder="t('treasury.toAccount')"
               :items="activeAccounts.map(a => ({ label: a.name, value: a.id }))"
             />
           </UFormField>
@@ -348,7 +391,7 @@ watch(selectedId, async () => {
               inputmode="decimal"
             />
           </UFormField>
-          <UFormField :label="t('treasury.memo')">
+          <UFormField :label="t('treasury.correctMemo')">
             <UInput v-model="correctMemo" />
           </UFormField>
         </div>
@@ -362,7 +405,10 @@ watch(selectedId, async () => {
           >
             {{ t('common.close') }}
           </UButton>
-          <UButton @click="doCorrect">
+          <UButton
+            :disabled="!correctMemo.trim()"
+            @click="doCorrect"
+          >
             {{ t('treasury.correct') }}
           </UButton>
         </div>
