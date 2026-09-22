@@ -2,7 +2,7 @@
 module: staff_attendance
 screen: attendance
 route: /attendance
-last_verified_commit: 8c5f0c5998e1fb219ac5a40399d809494dd4f2a9
+last_verified_commit: b0b60f850768f81f85f295dac1b3239eaff25a21
 related_endpoints:
   - POST /api/v1/staff_attendance/events
   - GET /api/v1/staff_attendance/members
@@ -27,6 +27,7 @@ see today's punches, and review the daily pairing report.
   Punching the same kind twice answers 409 — the roster, not the log,
   is where corrections happen (a later opposite punch supersedes).
 - **Review** today's feed and the per-member daily totals, bucketed by
-  the clinic's local day. An open (unpaired) punch is flagged and
-  counted up to now, never past the end of the reported day; an
-  overnight shift counts on the day it ends.
+  the clinic's local day. Each feed line shows the punch time. An
+  open (unpaired) punch is flagged and counted up to now, never past
+  the end of the reported day; an overnight shift counts on the day
+  it ends.

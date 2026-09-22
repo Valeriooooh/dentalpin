@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Follow-up: nav self-places under `practice`; screen docs mention
+  the feed punch times; the attendance page imports the shared core
+  `clinicToday()` instead of its own copy (review cross-ref).
 - Maintainer round 3: reject future-dated punches (422 past now + 5 min
   skew), cross-day open shifts appear on later days (pre-window
   unclosed `in` seeds the report), `punch()` reads the API `message`

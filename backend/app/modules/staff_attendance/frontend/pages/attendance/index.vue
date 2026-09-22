@@ -7,6 +7,7 @@
 import type { AttendanceEvent, AttendanceReportRow, StaffMember } from '../../composables/useAttendance'
 import { PERMISSIONS } from '~~/app/config/permissions'
 import { errorDetail } from '~~/app/utils/error'
+import { clinicToday } from '~~/app/utils/wallClock'
 
 definePageMeta({ middleware: ['auth'] })
 
@@ -21,25 +22,9 @@ const canWrite = computed(() => can(PERMISSIONS.staffAttendance.write))
 if (!can(PERMISSIONS.staffAttendance.read)) await navigateTo('/')
 
 const staff = ref<StaffMember[]>([])
-// Default day in the clinic's timezone (house rule: wall-clock, not UTC,
-// not the device timezone) — falls back to UTC when unknown.
-function clinicToday(): string {
-  const tz = currentClinic.value?.timezone
-  try {
-    if (tz) {
-      const parts = new Intl.DateTimeFormat('en-CA', {
-        timeZone: tz,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      }).formatToParts(new Date())
-      const get = (type: string) => parts.find(p => p.type === type)?.value ?? ''
-      return `${get('year')}-${get('month')}-${get('day')}`
-    }
-  } catch { /* fall through to UTC */ }
-  return new Date().toISOString().slice(0, 10)
-}
-const today = ref(clinicToday())
+// Default day in the clinic's timezone — the shared core helper
+// (#474 cross-ref: one copy, not one per module).
+const today = ref(clinicToday(currentClinic.value?.timezone))
 const events = ref<AttendanceEvent[]>([])
 const report = ref<AttendanceReportRow[]>([])
 const isLoading = ref(false)
