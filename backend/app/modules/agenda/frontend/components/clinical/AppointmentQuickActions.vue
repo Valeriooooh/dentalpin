@@ -47,8 +47,9 @@ function dropdownItems() {
     items.push({
       label: t('appointments.checkin.qr'),
       icon: 'i-lucide-qr-code',
-      onSelect: (e?: Event) => {
-        e?.preventDefault?.()
+      // No preventDefault: transitions keep the menu open to chain
+      // statuses, but this opens a modal and the menu must close.
+      onSelect: () => {
         showCheckinQr.value = true
       }
     })
