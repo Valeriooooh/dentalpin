@@ -25,6 +25,7 @@ _LABELS = {
         "created_at": "Fecha",
         "notes": "Observaciones",
         "item": "Artículo",
+        "items": "Artículos",
         "qty_ordered": "Cant. pedida",
         "qty_received": "Cant. recibida",
         "unit_price": "Precio unit.",
@@ -48,6 +49,7 @@ _LABELS = {
         "created_at": "Date",
         "notes": "Notes",
         "item": "Item",
+        "items": "Items",
         "qty_ordered": "Qty ordered",
         "qty_received": "Qty received",
         "unit_price": "Unit price",
@@ -71,6 +73,7 @@ _LABELS = {
         "created_at": "Date",
         "notes": "Observations",
         "item": "Article",
+        "items": "Articles",
         "qty_ordered": "Qté commandée",
         "qty_received": "Qté reçue",
         "unit_price": "Prix unitaire",
@@ -94,6 +97,7 @@ _LABELS = {
         "created_at": "Data",
         "notes": "Observações",
         "item": "Artigo",
+        "items": "Artigos",
         "qty_ordered": "Qtd. encomendada",
         "qty_received": "Qtd. recebida",
         "unit_price": "Preço unitário",
@@ -117,6 +121,7 @@ _LABELS = {
         "created_at": "Datum",
         "notes": "Anmerkungen",
         "item": "Artikel",
+        "items": "Artikel",
         "qty_ordered": "Bestellmenge",
         "qty_received": "Erhaltene Menge",
         "unit_price": "Einzelpreis",
@@ -140,6 +145,7 @@ _LABELS = {
         "created_at": "Dátum",
         "notes": "Megjegyzések",
         "item": "Cikk",
+        "items": "Tételek",
         "qty_ordered": "Rendelt mennyiség",
         "qty_received": "Beérkezett mennyiség",
         "unit_price": "Egységár",
@@ -163,6 +169,7 @@ _LABELS = {
         "created_at": "Data",
         "notes": "Uwagi",
         "item": "Pozycja",
+        "items": "Pozycje",
         "qty_ordered": "Ilość zamówiona",
         "qty_received": "Ilość otrzymana",
         "unit_price": "Cena jednostkowa",
@@ -186,6 +193,7 @@ _LABELS = {
         "created_at": "Data",
         "notes": "Note",
         "item": "Articolo",
+        "items": "Articoli",
         "qty_ordered": "Qtà ordinata",
         "qty_received": "Qtà ricevuta",
         "unit_price": "Prezzo unitario",
@@ -209,6 +217,7 @@ _LABELS = {
         "created_at": "التاريخ",
         "notes": "ملاحظات",
         "item": "الصنف",
+        "items": "الأصناف",
         "qty_ordered": "الكمية المطلوبة",
         "qty_received": "الكمية المستلمة",
         "unit_price": "سعر الوحدة",
@@ -232,6 +241,7 @@ _LABELS = {
         "created_at": "தேதி",
         "notes": "குறிப்புகள்",
         "item": "பொருள்",
+        "items": "பொருட்கள்",
         "qty_ordered": "ஆர்டர் அளவு",
         "qty_received": "பெறப்பட்ட அளவு",
         "unit_price": "அலகு விலை",
@@ -396,7 +406,7 @@ class PurchaseOrderPDFService:
             </div>
 
             <div class="section">
-                <div class="section-title">{labels["item"]}s</div>
+                <div class="section-title">{labels["items"]}</div>
                 <table>
                     <thead>
                         <tr>
