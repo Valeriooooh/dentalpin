@@ -63,7 +63,10 @@ const form = reactive({
 
 const isConverted = computed(() => props.lead?.status === 'converted')
 const convertedPatientId = computed(() => createdPatientId.value ?? props.lead?.patient_id ?? null)
-const canConvert = computed(() => can(PERMISSIONS.patients.write))
+// Mirrors the backend: PATCH needs leads.write, /convert needs leads.write + patients.write.
+// Gating on patients.write alone let a dentist (patients.*, leads.read) click into a 403.
+const canEdit = computed(() => can(PERMISSIONS.leads.write))
+const canConvert = computed(() => canEdit.value && can(PERMISSIONS.patients.write))
 
 // --- Validation -----------------------------------------------------------
 // The server would answer 422 and create nothing; catching it here keeps a
@@ -236,7 +239,7 @@ async function convert() {
                 <div class="flex items-center justify-between gap-2">
                   <span class="text-ui font-medium text-default">{{ t('leads.convert.enquiry') }}</span>
                   <UButton
-                    v-if="canConvert"
+                    v-if="canEdit"
                     variant="ghost"
                     color="neutral"
                     size="xs"

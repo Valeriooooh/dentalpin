@@ -13,7 +13,7 @@ related_permissions:
 related_paths:
   - backend/app/modules/leads/router.py
   - backend/app/modules/leads/frontend/components/settings/LeadsIntakeSettingsPage.vue
-last_verified_commit: dd2611ce
+last_verified_commit: ecda1519
 ---
 
 # Ajustes del formulario web

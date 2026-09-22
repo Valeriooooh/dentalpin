@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Fixed
+
+- Convert drawer: the Edit button now requires `leads.write` and Create
+  patient `leads.write` + `patients.write`, mirroring the API — a dentist
+  (`patients.*`, `leads.read`) no longer clicks into a 403.
+- Edit modal success toast no longer shows the "Status" label as its message.
+
+### Changed
+
+- Manifest `category` is `community` and `author` the contributor.
+
 ### Added
 
 - `leads` module: inbound enquiries from the clinic external website form,

@@ -43,9 +43,9 @@ class LeadsModule(BaseModule):
             "Inbound leads from external forms: new enquiries become leads, "
             "known patients become recalls."
         ),
-        "author": "DentalPin Core Team",
+        "author": "Valeriooooh",
         "license": "BSL-1.1",
-        "category": "official",
+        "category": "community",
         # recalls: a matched enquiry is routed to the call list (D8), so
         #   leads cannot be installed without recalls installed.
         # patients: FK + PatientService.create_patient on conversion.

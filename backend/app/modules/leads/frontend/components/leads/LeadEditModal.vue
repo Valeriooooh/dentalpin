@@ -178,7 +178,7 @@ async function submit() {
       status: form.status
     })
     close()
-    toast.add({ title: t('common.success'), description: t('leads.fields.status'), color: 'success' })
+    toast.add({ title: t('common.success'), color: 'success' })
     emit('saved', updated.data)
   } catch (e: unknown) {
     toast.add({
