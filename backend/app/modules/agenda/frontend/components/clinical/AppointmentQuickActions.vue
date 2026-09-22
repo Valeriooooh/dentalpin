@@ -36,21 +36,42 @@ const transitions = computed(() => nextTransitions(props.appointment.status))
 const hasActions = computed(() => transitions.value.length > 0)
 
 function dropdownItems() {
-  return transitions.value.map((tr, idx) => ({
-    label: t(tr.labelKey),
-    icon: tr.icon,
-    color: tr.destructive ? ('error' as const) : undefined,
-    onSelect: (e?: Event) => {
-      e?.preventDefault?.()
-      if (tr.destructive) {
-        pendingDescriptor.value = tr
-        pendingNote.value = ''
-      } else {
-        void runTransition(tr)
+  const items: Array<{
+    label: string
+    icon?: string
+    color?: 'error'
+    kbd?: string[]
+    onSelect: (e?: Event) => void
+  }> = []
+  if (canCheckin.value) {
+    items.push({
+      label: t('appointments.checkin.qr'),
+      icon: 'i-lucide-qr-code',
+      // No preventDefault: transitions keep the menu open to chain
+      // statuses, but this opens a modal and the menu must close.
+      onSelect: () => {
+        showCheckinQr.value = true
       }
-    },
-    kbd: idx === 0 ? ['enter'] : undefined
-  }))
+    })
+  }
+  transitions.value.forEach((tr, idx) => {
+    items.push({
+      label: t(tr.labelKey),
+      icon: tr.icon,
+      color: tr.destructive ? ('error' as const) : undefined,
+      onSelect: (e?: Event) => {
+        e?.preventDefault?.()
+        if (tr.destructive) {
+          pendingDescriptor.value = tr
+          pendingNote.value = ''
+        } else {
+          void runTransition(tr)
+        }
+      },
+      kbd: idx === 0 ? ['enter'] : undefined
+    })
+  })
+  return items
 }
 
 async function runTransition(tr: TransitionDescriptor, note?: string) {
@@ -93,17 +114,8 @@ const confirmMessage = computed(() => {
 </script>
 
 <template>
-  <UButton
-    v-if="canCheckin"
-    icon="i-lucide-qr-code"
-    :size="props.dense ? 'xs' : 'sm'"
-    color="neutral"
-    variant="ghost"
-    :aria-label="t('appointments.checkin.qr')"
-    @click.stop="showCheckinQr = true"
-  />
   <UDropdownMenu
-    v-if="hasActions"
+    v-if="hasActions || canCheckin"
     :items="dropdownItems()"
     :ui="{ content: 'min-w-56' }"
   >

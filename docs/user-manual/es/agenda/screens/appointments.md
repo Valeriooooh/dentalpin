@@ -30,7 +30,7 @@ related_paths:
   - backend/app/modules/agenda/frontend/pages/appointments/index.vue
   - backend/app/modules/agenda/frontend/pages/p/check-in/[token].vue
   - backend/app/modules/agenda/router.py
-last_verified_commit: cf863c34c6bcf3ccfdfb5b1de38a03700ea44cbd
+last_verified_commit: 3f08dd038cc70b5d2d988e49b8029c06f42ad5b3
 ---
 
 # Citas
@@ -124,8 +124,8 @@ escrito a mano.
 > necesita cuenta.
 
 1. En una cita programada o confirmada, abre **Acciones rápidas** y
-   pulsa el botón QR. Un diálogo muestra el código (válido 15 minutos)
-   más un enlace copiable.
+   elige **QR de registro**. Un diálogo muestra el código (válido
+   15 minutos) más un enlace copiable.
 2. El paciente lo escanea con la cámara del móvil y accede a una
    página pública que lo registra — sin login. Reescanear el mismo
    código simplemente confirma el estado actual.
