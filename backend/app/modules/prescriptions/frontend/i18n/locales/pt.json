@@ -39,6 +39,9 @@
     "profileDescription": "Licença profissional e assinatura para as suas receitas.",
     "licenseLabel": "Licença profissional",
     "issueConfirm": "Emitir esta receita? Não é possível anular.",
-    "cancelConfirm": "Anular esta receita? Não é possível anular."
+    "cancelConfirm": "Anular esta receita? Não é possível anular.",
+    "noLicenseWarning": "Vai emitir sem número de licença no PDF. Pode adicioná-lo nas definições.",
+    "emptyDraft": "Adicione pelo menos uma linha antes de guardar.",
+    "route": "Via"
   }
 }

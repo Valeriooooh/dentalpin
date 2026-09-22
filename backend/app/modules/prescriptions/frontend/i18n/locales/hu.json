@@ -39,6 +39,9 @@
     "profileDescription": "Szakmai engedélyszám és aláírás a receptekhez.",
     "licenseLabel": "Engedélyszám",
     "issueConfirm": "Kiadja ezt a receptet? Ez nem vonható vissza.",
-    "cancelConfirm": "Törli ezt a receptet? Ez nem vonható vissza."
+    "cancelConfirm": "Törli ezt a receptet? Ez nem vonható vissza.",
+    "noLicenseWarning": "Licencszám nélkül állítja ki a PDF-et. Megadhatja a Beállításokban.",
+    "emptyDraft": "Adjon hozzá legalább egy sort mentés előtt.",
+    "route": "Alkalmazás"
   }
 }

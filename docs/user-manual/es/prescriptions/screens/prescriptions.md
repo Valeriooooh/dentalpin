@@ -2,7 +2,7 @@
 module: prescriptions
 screen: prescriptions
 route: /prescriptions
-last_verified_commit: c07d18a6d00fd5b4b17f801b64aa9bec0e31434a
+last_verified_commit: 8ef21830e7947065d2932020e53a4abbee17c0fd
 related_endpoints:
   - GET /api/v1/prescriptions/patients/{patient_id}/prescriptions
   - POST /api/v1/prescriptions/patients/{patient_id}/prescriptions
@@ -34,6 +34,10 @@ borrador desde la ficha del paciente (acción "Nueva receta").
   El PDF sale en el idioma de la receta y marca BORRADOR/CANCELADA
   cuando corresponde.
 - **Emitir** y **Anular** piden confirmación (son irreversibles).
-- Tu **cédula profesional** se configura en Ajustes (sección
+  Al emitir sin número de colegiado guardado verás un aviso (no un bloqueo).
+- Tu **número de colegiado** se configura en Configuración (sección
   clínica, identidad prescriptora) y queda impresa en el PDF.
+- La cabecera muestra el nombre del paciente con enlace a su ficha.
+- El editor exige al menos una línea, incluye campo de vía y limpia
+  `&new=1` de la URL al abrir.
 - Atiende el aviso de alergias/interacciones — avisa, nunca bloquea.

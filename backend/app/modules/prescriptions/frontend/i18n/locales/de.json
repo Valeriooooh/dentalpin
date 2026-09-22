@@ -39,6 +39,9 @@
     "profileDescription": "Berufsnummer und Unterschrift für Ihre Rezepte.",
     "licenseLabel": "Berufsnummer",
     "issueConfirm": "Dieses Rezept ausstellen? Das kann nicht rückgängig gemacht werden.",
-    "cancelConfirm": "Dieses Rezept stornieren? Das kann nicht rückgängig gemacht werden."
+    "cancelConfirm": "Dieses Rezept stornieren? Das kann nicht rückgängig gemacht werden.",
+    "noLicenseWarning": "Sie stellen ohne Berufsnummer im PDF aus. Fügen Sie sie in den Einstellungen hinzu.",
+    "emptyDraft": "Fügen Sie vor dem Speichern mindestens eine Zeile hinzu.",
+    "route": "Anwendung"
   }
 }

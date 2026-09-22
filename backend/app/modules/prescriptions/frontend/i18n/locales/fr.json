@@ -39,6 +39,9 @@
     "profileDescription": "Numéro professionnel et signature pour vos ordonnances.",
     "licenseLabel": "Numéro professionnel",
     "issueConfirm": "Délivrer cette ordonnance ? Cette action est irréversible.",
-    "cancelConfirm": "Annuler cette ordonnance ? Cette action est irréversible."
+    "cancelConfirm": "Annuler cette ordonnance ? Cette action est irréversible.",
+    "noLicenseWarning": "Vous émettez sans numéro professionnel sur le PDF. Ajoutez-le dans les réglages.",
+    "emptyDraft": "Ajoutez au moins une ligne avant d'enregistrer.",
+    "route": "Voie"
   }
 }

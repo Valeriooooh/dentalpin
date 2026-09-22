@@ -37,10 +37,13 @@ def _format_address(address: Any) -> str:
 def _get_labels(locale: str) -> dict[str, str]:
     """Localized captions for the PDF, one set per accepted locale."""
     labels_es = {
+        "title": "Receta médica",
         "date": "Fecha",
         "patient": "Paciente",
         "prescriber": "Prescriptor",
-        "license": "Licencia n.º",
+        "license": "N.º de colegiado",
+        "signature": "Firma",
+        "date_format": "%d/%m/%Y",
         "medication": "Medicamento",
         "dose": "Dosis",
         "route": "Vía",
@@ -52,10 +55,13 @@ def _get_labels(locale: str) -> dict[str, str]:
         "cancelled": "CANCELADA",
     }
     labels_en = {
+        "title": "Prescription",
         "date": "Date",
         "patient": "Patient",
         "prescriber": "Prescriber",
         "license": "License no.",
+        "signature": "Signature",
+        "date_format": "%d/%m/%Y",
         "medication": "Medication",
         "dose": "Dose",
         "route": "Route",
@@ -67,6 +73,9 @@ def _get_labels(locale: str) -> dict[str, str]:
         "cancelled": "CANCELLED",
     }
     labels_fr = {
+        "title": "Ordonnance",
+        "signature": "Signature",
+        "date_format": "%d/%m/%Y",
         "date": "Date",
         "patient": "Patient",
         "prescriber": "Prescripteur",
@@ -82,6 +91,9 @@ def _get_labels(locale: str) -> dict[str, str]:
         "cancelled": "ANNULÉE",
     }
     labels_pt = {
+        "title": "Receita médica",
+        "signature": "Assinatura",
+        "date_format": "%d/%m/%Y",
         "date": "Data",
         "patient": "Paciente",
         "prescriber": "Prescritor",
@@ -97,6 +109,9 @@ def _get_labels(locale: str) -> dict[str, str]:
         "cancelled": "ANULADA",
     }
     labels_de = {
+        "title": "Rezept",
+        "signature": "Unterschrift",
+        "date_format": "%d.%m.%Y",
         "date": "Datum",
         "patient": "Patient",
         "prescriber": "Verordnende Person",
@@ -112,6 +127,9 @@ def _get_labels(locale: str) -> dict[str, str]:
         "cancelled": "STORNIERT",
     }
     labels_hu = {
+        "title": "Recept",
+        "signature": "Aláírás",
+        "date_format": "%Y. %m. %d.",
         "date": "Dátum",
         "patient": "Páciens",
         "prescriber": "Felíró orvos",
@@ -127,6 +145,9 @@ def _get_labels(locale: str) -> dict[str, str]:
         "cancelled": "VISSZAVONVA",
     }
     labels_pl = {
+        "title": "Recepta",
+        "signature": "Podpis",
+        "date_format": "%d.%m.%Y",
         "date": "Data",
         "patient": "Pacjent",
         "prescriber": "Wystawiający",
@@ -142,6 +163,9 @@ def _get_labels(locale: str) -> dict[str, str]:
         "cancelled": "ANULOWANA",
     }
     labels_it = {
+        "title": "Ricetta medica",
+        "signature": "Firma",
+        "date_format": "%d/%m/%Y",
         "date": "Data",
         "patient": "Paziente",
         "prescriber": "Prescrittore",
@@ -157,6 +181,9 @@ def _get_labels(locale: str) -> dict[str, str]:
         "cancelled": "ANNULLATA",
     }
     labels_ar = {
+        "title": "وصفة طبية",
+        "signature": "التوقيع",
+        "date_format": "%d/%m/%Y",
         "date": "التاريخ",
         "patient": "المريض",
         "prescriber": "الطبيب الواصف",
@@ -172,6 +199,9 @@ def _get_labels(locale: str) -> dict[str, str]:
         "cancelled": "ملغاة",
     }
     labels_ta = {
+        "title": "மருந்துச்சீட்டு",
+        "signature": "கையொப்பம்",
+        "date_format": "%d/%m/%Y",
         "date": "தேதி",
         "patient": "நோயாளி",
         "prescriber": "பரிந்துரைத்த மருத்துவர்",
@@ -231,9 +261,9 @@ def build_pdf_data(
         "status": status,
         "status_mark": _e(labels.get("draft" if status == "draft" else "cancelled", "")),
         "date": _e(
-            prescription.issued_at.strftime("%Y-%m-%d")
+            prescription.issued_at.strftime(labels["date_format"])
             if prescription.issued_at
-            else datetime.now().strftime("%Y-%m-%d")
+            else datetime.now().strftime(labels["date_format"])
         ),
         "patient_name": _e(patient_name),
         "prescriber_name": _e(prescription.prescriber_name),
@@ -274,6 +304,7 @@ def render_html(data: dict[str, Any]) -> str:
     )
     notices = "".join(f"<p class='notice'>{notice}</p>" for notice in data["legal_notices"])
     mark = f"<p class='mark'>{data['status_mark']}</p>" if data["status"] != "issued" else ""
+    notes = f"<p>{labels['notes']}: {data['notes']}</p>" if data["notes"] else ""
     # Arabic mirrors the document; the language is declared either way so
     # the renderer picks the right font and shaping (#485).
     locale = data.get("locale", "es")
@@ -291,12 +322,14 @@ td, th {{ border: 1px solid #999; padding: 6px; font-size: 12px; text-align: sta
 </style></head><body>
 <h1>{data["clinic_name"]}</h1>
 <p>{data["clinic_address"]}</p>
+<h2>{labels["title"]}</h2>
 {mark}
 <p>{labels["date"]}: {data["date"]} — {labels["patient"]}: {data["patient_name"]}</p>
 <p>{labels["prescriber"]}: {data["prescriber_name"]} ({data["license_label"]}: {data["license_number"]})</p>
 <table><tr><th>{labels["medication"]}</th><th>{labels["dose"]}</th><th>{labels["route"]}</th>
 <th>{labels["frequency"]}</th><th>{labels["duration"]}</th><th>{labels["instructions"]}</th></tr>{rows}</table>
-<p>{labels["notes"]}: {data["notes"]}</p>
+{notes}
+<p class="signature">{labels["signature"]}: ________________________</p>
 {compliance}{notices}
 </body></html>"""
 

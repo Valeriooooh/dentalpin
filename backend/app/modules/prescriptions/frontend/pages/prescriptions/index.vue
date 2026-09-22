@@ -11,9 +11,11 @@ import { errorDetail } from '~~/app/utils/error'
 const { t, locale } = useI18n()
 const { can } = usePermissions()
 const route = useRoute()
+const router = useRouter()
 const toast = useToast()
 const {
   listForPatient, createDraft, updateDraft, issue, cancel, downloadPdf,
+  getPatientName, getPrescriberProfile,
   warnings, listTemplates, createTemplate
 } = usePrescriptions()
 
@@ -21,13 +23,15 @@ const canWrite = computed(() => can(PERMISSIONS.prescriptions.write))
 const canIssue = computed(() => can(PERMISSIONS.prescriptions.issue))
 
 const patientId = ref((route.query.patient_id as string) || '')
+const patientName = ref<string | null>(null)
+const prescriberLicense = ref<string | null>(null)
 const items = ref<Prescription[]>([])
 const isLoading = ref(false)
 const allergyWarnings = ref<string[]>([])
 const flagWarnings = ref<string[]>([])
 
 const editing = ref<Prescription | null>(null)
-const editItems = ref<PrescriptionItem[]>([])
+const editItems = ref<DraftItem[]>([])
 const editNotes = ref('')
 const showEditor = ref(false)
 
@@ -35,6 +39,7 @@ const templates = ref<PrescriptionTemplate[]>([])
 const newTemplateName = ref('')
 const errorMessage = ref('')
 const pendingConfirm = ref<{ kind: 'issue' | 'cancel', rx: Prescription } | null>(null)
+const lastKind = ref<'issue' | 'cancel'>('issue')
 
 function fail(e: unknown) {
   errorMessage.value = errorDetail(e) ?? String(e)
@@ -55,8 +60,17 @@ async function refresh() {
     allergyWarnings.value = w.allergies
     flagWarnings.value = w.interaction_flags
     templates.value = await listTemplates()
+    patientName.value = await getPatientName(patientId.value)
   } finally {
     isLoading.value = false
+  }
+}
+
+async function refreshProfile() {
+  try {
+    prescriberLicense.value = (await getPrescriberProfile())?.license_number || null
+  } catch {
+    prescriberLicense.value = null
   }
 }
 
@@ -65,11 +79,19 @@ function startNew() {
   editItems.value = []
   editNotes.value = ''
   showEditor.value = true
+  if (route.query.new === '1') void router.replace({ query: { ...route.query, new: undefined } })
+}
+
+/** Editor row: blankLine() normalizes the nullable API `route` to a plain string. */
+type DraftItem = Omit<PrescriptionItem, 'route'> & { route?: string }
+
+function blankLine(item: PrescriptionItem): DraftItem {
+  return { ...item, dosage: item.dosage ?? '', unit: item.unit ?? '', route: item.route ?? '', frequency: item.frequency ?? '', duration: item.duration ?? '', instructions: item.instructions ?? '' }
 }
 
 function editDraft(rx: Prescription) {
   editing.value = rx
-  editItems.value = rx.items.map(i => ({ ...i, dosage: i.dosage ?? '', unit: i.unit ?? '', frequency: i.frequency ?? '', duration: i.duration ?? '', instructions: i.instructions ?? '' }))
+  editItems.value = rx.items.map(blankLine)
   editNotes.value = rx.notes || ''
   showEditor.value = true
 }
@@ -83,17 +105,21 @@ function removeLine(idx: number) {
 }
 
 function applyTemplate(tpl: PrescriptionTemplate) {
-  editItems.value = tpl.items.map((i, idx) => ({ ...i, sort_order: idx, dosage: i.dosage ?? '', unit: i.unit ?? '', frequency: i.frequency ?? '', duration: i.duration ?? '', instructions: i.instructions ?? '' }))
+  editItems.value = tpl.items.map((i, idx) => ({ ...blankLine(i), sort_order: idx }))
 }
 
 async function save() {
   const clean = editItems.value.filter(i => i.medication_name.trim() !== '')
   errorMessage.value = ''
+  if (clean.length === 0) {
+    fail({ data: { message: t('prescriptions.emptyDraft') } })
+    return
+  }
   try {
     if (editing.value) {
       await updateDraft(editing.value.id, { notes: editNotes.value || null, items: clean })
     } else {
-      await createDraft(patientId.value, clean, editNotes.value || undefined)
+      await createDraft(patientId.value, clean, editNotes.value || undefined, locale.value)
     }
     showEditor.value = false
     await refresh()
@@ -101,6 +127,7 @@ async function save() {
 }
 
 function askConfirm(kind: 'issue' | 'cancel', rx: Prescription) {
+  lastKind.value = kind
   pendingConfirm.value = { kind, rx }
 }
 
@@ -135,6 +162,7 @@ async function saveAsTemplate() {
 }
 
 onMounted(() => {
+  void refreshProfile()
   if (patientId.value) void refresh()
   if (route.query.new === '1' && patientId.value) startNew()
 })
@@ -144,9 +172,22 @@ watch(patientId, () => void refresh())
 <template>
   <div class="space-y-4 p-4">
     <div class="flex items-center justify-between">
-      <h1 class="text-h2">
-        {{ t('prescriptions.title') }}
-      </h1>
+      <div>
+        <h1 class="text-h2">
+          {{ t('prescriptions.title') }}
+        </h1>
+        <p
+          v-if="patientName"
+          class="text-sm text-muted"
+        >
+          <NuxtLink
+            :to="`/patients/${patientId}`"
+            class="hover:text-default"
+          >
+            {{ patientName }}
+          </NuxtLink>
+        </p>
+      </div>
       <UButton
         v-if="canWrite && patientId"
         icon="i-lucide-plus"
@@ -305,7 +346,11 @@ watch(patientId, () => void refresh())
                   :placeholder="t('prescriptions.frequency')"
                 />
               </div>
-              <div class="grid grid-cols-2 gap-2">
+              <div class="grid grid-cols-3 gap-2">
+                <UInput
+                  v-model="item.route"
+                  :placeholder="t('prescriptions.route')"
+                />
                 <UInput
                   v-model="item.duration"
                   :placeholder="t('prescriptions.duration')"
@@ -373,13 +418,21 @@ watch(patientId, () => void refresh())
 
     <UModal
       :open="pendingConfirm !== null"
-      :title="t(pendingConfirm?.kind === 'issue' ? 'prescriptions.issue' : 'prescriptions.cancel')"
+      :title="t(lastKind === 'issue' ? 'prescriptions.issue' : 'prescriptions.cancel')"
       @update:open="(v: boolean) => { if (!v) pendingConfirm = null }"
     >
       <template #body>
-        <p class="p-4 text-sm">
-          {{ t(pendingConfirm?.kind === 'issue' ? 'prescriptions.issueConfirm' : 'prescriptions.cancelConfirm') }}
-        </p>
+        <div class="space-y-2 p-4 text-sm">
+          <p>
+            {{ t(lastKind === 'issue' ? 'prescriptions.issueConfirm' : 'prescriptions.cancelConfirm') }}
+          </p>
+          <p
+            v-if="lastKind === 'issue' && !prescriberLicense"
+            class="text-warning"
+          >
+            {{ t('prescriptions.noLicenseWarning') }}
+          </p>
+        </div>
       </template>
       <template #footer>
         <div class="flex justify-end gap-2 p-2">
