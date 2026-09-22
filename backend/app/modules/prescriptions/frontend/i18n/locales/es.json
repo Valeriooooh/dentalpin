@@ -36,11 +36,11 @@
       "cancelled": "Cancelada"
     },
     "profileLabel": "Identidad prescriptora",
-    "profileDescription": "Cédula profesional y firma para tus recetas.",
+    "profileDescription": "Número de colegiado y firma para tus recetas.",
     "licenseLabel": "N.º de colegiado",
     "issueConfirm": "¿Emitir esta receta? No se puede deshacer.",
     "cancelConfirm": "¿Anular esta receta? No se puede deshacer.",
-    "noLicenseWarning": "Emitirás sin número de licencia en el PDF. Puedes añadirlo en Ajustes.",
+    "noLicenseWarning": "Emitirás sin número de colegiado en el PDF. Puedes añadirlo en Configuración.",
     "emptyDraft": "Añade al menos una línea antes de guardar.",
     "route": "Vía"
   }

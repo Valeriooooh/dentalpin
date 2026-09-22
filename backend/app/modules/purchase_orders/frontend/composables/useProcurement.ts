@@ -259,9 +259,11 @@ export function useProcurement() {
   async function downloadPurchaseOrderPdf(id: string, locale = 'es'): Promise<void> {
     // The PDF comes back as a blob and needs the session, so it cannot be
     // a plain link; api.raw carries the cookies and refreshes on 401.
-    const pdfLocale = locale === 'en' ? 'en' : 'es'
+    // Every host locale renders now (#485); the endpoint validates the
+    // list, so a language we have not translated falls back server-side
+    // rather than silently downloading a Spanish order.
     const response = await api.raw(
-      `/api/v1/purchase_orders/${id}/pdf?locale=${pdfLocale}`
+      `/api/v1/purchase_orders/${id}/pdf?locale=${locale}`
     )
     if (!response.ok) {
       const body = await response.json().catch(() => null)

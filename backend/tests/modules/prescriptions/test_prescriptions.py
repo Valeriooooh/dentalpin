@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
@@ -342,3 +343,24 @@ async def test_create_stores_locale_and_route(
     assert created.status_code == 201
     assert created.json()["data"]["locale"] == "pt"
     assert created.json()["data"]["items"][0]["route"] == "oral"
+
+
+def test_pdf_every_locale_set_is_complete():
+    """Every label set carries the same keys, so no locale can 500 on a
+    caption that only es/en define (title/signature/date_format)."""
+    from types import SimpleNamespace
+
+    from app.modules.prescriptions.pdf import _get_labels, build_pdf_data, render_html
+
+    rx = SimpleNamespace(
+        status="issued",
+        issued_at=datetime(2026, 9, 22, tzinfo=UTC),
+        prescriber_name="Doc",
+        license_number="123",
+        notes=None,
+    )
+    expected = set(_get_labels("en"))
+    for locale in ("es", "en", "fr", "pt", "de", "hu", "pl", "it", "ar", "ta"):
+        assert set(_get_labels(locale)) == expected, locale
+        html = render_html(build_pdf_data(rx, [], "Pat", {"name": "C"}, locale=locale))
+        assert f'lang="{locale}"' in html
