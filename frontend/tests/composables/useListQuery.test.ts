@@ -1,5 +1,5 @@
 import { mountSuspended } from '@nuxt/test-utils/runtime'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h, nextTick } from 'vue'
 
 interface Filters {
@@ -19,9 +19,27 @@ async function settle(urlReflects: () => void): Promise<void> {
   await nextTick()
 }
 
+// Every test in this file shares one Nuxt app, and therefore one router.
+// A component left mounted by an earlier test keeps its own useListQuery
+// alive, watching and pushing the same URL — two instances then overwrite
+// each other's query and whichever debounced push lands last wins. That is
+// what made the second case flaky on CI (it turned #460, #464 and #476 red
+// on diffs that touch no frontend code); polling instead of sleeping made
+// it rarer but could not fix it, because the state never converges.
+let mounted: { unmount: () => void } | null = null
+
+beforeEach(async () => {
+  await useRouter().replace({ query: {} })
+})
+
+afterEach(() => {
+  mounted?.unmount()
+  mounted = null
+})
+
 async function runInSetup<T>(fn: () => T): Promise<T> {
   let captured!: T
-  await mountSuspended(defineComponent({
+  mounted = await mountSuspended(defineComponent({
     setup() {
       captured = fn()
       return () => h('div')
